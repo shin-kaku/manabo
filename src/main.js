@@ -1,9 +1,6 @@
       const SHEETS_API_URL =
         "https://script.google.com/macros/s/AKfycbwSHvHRn3Tu1iUIS6daXvI6tBPFL1bgPFN5U7wttCvw41mNOBvgK3tCSgN0d9yT4uum/exec";
-      const FALLBACK_DATA = JSON.parse(
-        document.getElementById("kanji-data").textContent,
-      );
-      let DATA = FALLBACK_DATA;
+      let DATA = [];
       const els = {
         grid: document.getElementById("grid"),
         search: document.getElementById("search"),
@@ -46,14 +43,8 @@
         gameNext: document.getElementById("gameNext"),
         gameSettingsButton: document.getElementById("gameSettingsButton"),
       };
-      const FALLBACK_STORIES = JSON.parse(
-        document.getElementById("story-data").textContent,
-      );
-      let STORIES = FALLBACK_STORIES;
-      let activeStoryId =
-        STORIES.find((s) => s.category === "학년별")?.id ||
-        STORIES[0]?.id ||
-        "";
+      let STORIES = [];
+      let activeStoryId = "";
 
       const BATCH = 96;
       let view = [];
@@ -84,6 +75,33 @@
       function rebuildDataIndexes() {
         KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
         KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
+      }
+      async function loadSavedData() {
+        const [kanjiResponse, storiesResponse] = await Promise.all([
+          fetch("/data/kanji.json"),
+          fetch("/data/stories.json"),
+        ]);
+        if (!kanjiResponse.ok || !storiesResponse.ok) {
+          throw new Error("저장된 학습 데이터 요청에 실패했습니다.");
+        }
+        const [kanji, stories] = await Promise.all([
+          kanjiResponse.json(),
+          storiesResponse.json(),
+        ]);
+        if (!Array.isArray(kanji) || !kanji.length) {
+          throw new Error("한자 데이터 형식이 올바르지 않습니다.");
+        }
+        if (!Array.isArray(stories) || !stories.length) {
+          throw new Error("독해 데이터 형식이 올바르지 않습니다.");
+        }
+        DATA = kanji;
+        STORIES = stories;
+        activeStoryId =
+          STORIES.find((s) => s.category === "학년별")?.id ||
+          STORIES[0]?.id ||
+          "";
+        rebuildDataIndexes();
+        document.documentElement.dataset.dataSource = "saved";
       }
       function loadJsonp(url) {
         return new Promise((resolve, reject) => {
@@ -141,13 +159,6 @@
           return true;
         } catch (error) {
           console.warn("[마나보] 저장된 데이터를 사용합니다.", error);
-          DATA = FALLBACK_DATA;
-          STORIES = FALLBACK_STORIES;
-          activeStoryId =
-            STORIES.find((s) => s.category === "학년별")?.id ||
-            STORIES[0]?.id ||
-            "";
-          rebuildDataIndexes();
           document.documentElement.dataset.dataSource = "saved";
           return false;
         }
@@ -1332,15 +1343,32 @@
       updateScrollTopButton();
 
       async function bootstrap() {
-        await loadSheetsData();
-        populateFilters();
-        renderStory();
-        apply();
-        const requestedKanji = decodeURIComponent(
-          (location.hash.match(/^#kanji=(.*)$/) || [])[1] || "",
-        );
-        if (requestedKanji && KANJI_SET.has(requestedKanji)) {
-          requestAnimationFrame(() => navigateToKanji(requestedKanji, true));
+        try {
+          await loadSavedData();
+          populateFilters();
+          renderStory();
+          apply();
+          const requestedKanji = decodeURIComponent(
+            (location.hash.match(/^#kanji=(.*)$/) || [])[1] || "",
+          );
+          if (requestedKanji && KANJI_SET.has(requestedKanji)) {
+            requestAnimationFrame(() => navigateToKanji(requestedKanji, true));
+          }
+        } catch (error) {
+          console.error("[마나보] 학습 데이터를 불러오지 못했습니다.", error);
+          document.documentElement.dataset.dataSource = "error";
+          els.resultCount.textContent = "0";
+          els.grid.replaceChildren();
+          els.sentinel.replaceChildren();
+          const message = document.createElement("span");
+          message.setAttribute("role", "alert");
+          message.textContent =
+            "학습 데이터를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요. ";
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.textContent = "다시 시도";
+          retry.addEventListener("click", bootstrap, { once: true });
+          els.sentinel.append(message, retry);
         }
       }
       bootstrap();
