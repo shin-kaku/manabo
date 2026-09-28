@@ -10,7 +10,1890 @@
       href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      :root {
+        --bg: #f1f1f1;
+        --paper: #fff;
+        --ink: #181817;
+        --muted: #707070;
+        --line: #d9d9d9;
+        --line-dark: #bcbcbc;
+        --accent: #bc002d;
+        --accent-soft: #f8e6ea;
+        --radius: 16px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        overflow-x: clip;
+      }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--bg);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Noto Sans KR",
+          "Noto Sans JP", "Yu Gothic", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      .wrap {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 0 28px 64px;
+      }
+      header,
+      .status,
+      .grid,
+      .sentinel {
+        width: 100%;
+        max-width: 1544px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      header {
+        width: auto;
+        max-width: none;
+        min-height: 118px;
+        display: flex;
+        align-items: center;
+        margin-left: -28px;
+        margin-right: -28px;
+        padding: 28px 28px 24px;
+        background: #fff;
+        box-shadow: 0 0 0 100vmax #fff;
+        clip-path: inset(0 -100vmax);
+        border-bottom: 0;
+      }
+      h1 {
+        font-size: 28px;
+        line-height: 1;
+        letter-spacing: -0.045em;
+        margin: 0;
+        font-weight: 700;
+      }
+      .header-meta {
+        text-align: right;
+        align-self: flex-end;
+        padding-bottom: 2px;
+      }
+      .header-meta strong {
+        display: block;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+      }
+      .header-meta span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .toolbar-wrap {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        margin: 0 -28px;
+        padding: 20px 28px;
+        background: color-mix(in srgb, var(--bg) 93%, transparent);
+        backdrop-filter: blur(14px);
+        border-bottom: 0;
+      }
+      .toolbar {
+        display: grid;
+        grid-template-columns: minmax(240px, 1.35fr) repeat(
+            3,
+            minmax(135px, 0.48fr)
+          ) auto;
+        gap: 8px;
+        max-width: 1544px;
+        min-width: 0;
+        margin: 0 auto;
+      }
+      .control {
+        width: 100%;
+        min-width: 0;
+        height: 44px;
+        border: 1px solid var(--line-dark);
+        border-radius: 999px;
+        background: var(--paper);
+        padding: 0 15px;
+        outline: none;
+      }
+      .control:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(188, 0, 45, 0.18);
+      }
+      select.control {
+        appearance: none;
+        background-image:
+          linear-gradient(45deg, transparent 50%, #555 50%),
+          linear-gradient(135deg, #555 50%, transparent 50%);
+        background-position:
+          calc(100% - 17px) 18px,
+          calc(100% - 12px) 18px;
+        background-size:
+          5px 5px,
+          5px 5px;
+        background-repeat: no-repeat;
+        padding-right: 32px;
+      }
+      .reset {
+        height: 44px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        padding: 0 19px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .status {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 18px;
+        padding: 24px 0 14px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .status b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .status-summary {
+        color: var(--muted);
+        font: inherit;
+        font-weight: 400;
+      }
+      .status-summary b {
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+      }
+      .hint {
+        grid-column: 3;
+        display: flex;
+        align-items: center;
+        justify-self: end;
+        text-align: right;
+        white-space: nowrap;
+        font-weight: 800;
+      }
+      .attention-text {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      .sort-index {
+        grid-column: 2;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        overflow-x: auto;
+        scrollbar-width: none;
+        white-space: nowrap;
+        padding: 3px 0;
+      }
+      .sort-index[hidden] {
+        display: none;
+      }
+      .sort-index::-webkit-scrollbar {
+        display: none;
+      }
+      .sort-index-button {
+        flex: 0 0 auto;
+        border: 0;
+        border-left: 1px solid var(--line-dark);
+        background: transparent;
+        padding: 2px 10px;
+        color: #77746d;
+        font-size: 12px;
+        line-height: 1.2;
+      }
+      .sort-index-button:first-child {
+        border-left: 0;
+      }
+      .sort-index-button:hover,
+      .sort-index-button:focus-visible {
+        color: var(--ink);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        outline: none;
+      }
+      .sort-index-button.active {
+        color: var(--accent);
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 16px;
+        align-items: start;
+        width: 100%;
+      }
+      .card {
+        perspective: 1200px;
+        aspect-ratio: 2/3;
+        min-width: 0;
+        outline: none;
+      }
+      .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.62s cubic-bezier(0.2, 0.72, 0.18, 1);
+        will-change: transform;
+      }
+      .card.flipped .card-inner {
+        transform: rotateY(180deg);
+      }
+      .face {
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--paper);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.045);
+      }
+      .front {
+        display: grid;
+        place-items: center;
+        padding: 18px 14px 52px;
+      }
+      .front::after {
+        content: "";
+        position: absolute;
+        inset: 9px;
+        border: 1px solid rgba(0, 0, 0, 0.035);
+        border-radius: 11px;
+        pointer-events: none;
+      }
+      .glyph {
+        font-family:
+          "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif CJK JP",
+          "Noto Serif JP", serif;
+        font-size: 108px;
+        font-weight: 500;
+        line-height: 1;
+        transform: translateY(4px);
+        font-feature-settings: "palt" 1;
+      }
+      .front-meaning {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 24px;
+        text-align: center;
+        font-size: 17px;
+        line-height: 1.35;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: #6f6d66;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .card:hover .face {
+        border-color: #a5a298;
+      }
+      .card:focus-visible .face {
+        box-shadow: 0 0 0 2px var(--accent);
+      }
+
+      .back {
+        transform: rotateY(180deg);
+        display: flex;
+        flex-direction: column;
+        background: var(--paper);
+      }
+      .visual {
+        width: 100%;
+        aspect-ratio: 1/1;
+        flex: 0 0 auto;
+        position: relative;
+        display: grid;
+        place-items: center;
+        background: var(--paper);
+        border-bottom: 1px solid var(--line-dark);
+        overflow: hidden;
+      }
+      .visual img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        background: var(--paper);
+        filter: saturate(0.94) contrast(0.99);
+        -webkit-user-drag: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        pointer-events: none;
+      }
+      .visual .fallback {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+        font-size: 72px;
+        color: #9d9a90;
+        background: linear-gradient(145deg, #ebe9e2, #dedcd3);
+      }
+      .back-body {
+        flex: 1;
+        min-height: 0;
+        padding: 19px 19px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: #9f9c92 transparent;
+        scrollbar-gutter: auto;
+      }
+      .back-body::-webkit-scrollbar {
+        width: 5px;
+        background: transparent;
+      }
+      .back-body::-webkit-scrollbar-track,
+      .back-body::-webkit-scrollbar-track-piece,
+      .back-body::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+      .back-body::-webkit-scrollbar-thumb {
+        background: #9f9c92;
+        border: 0;
+        border-radius: 999px;
+      }
+      .back-body::-webkit-scrollbar-button {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+      .card:not(.detail-card) .back-body {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .card:not(.detail-card) .back-body::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+      .back-title {
+        display: flex;
+        align-items: baseline;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+      }
+      .back-title .k {
+        font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+        font-size: 52px;
+        line-height: 1;
+      }
+      .back-title .ko {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .card:not(.detail-card) .back-body > .chips {
+        display: none;
+      }
+      .chip {
+        font-size: 11.5px;
+        line-height: 1;
+        border: 1px solid #c5c2b7;
+        border-radius: 99px;
+        padding: 6px 8px;
+        color: #66645e;
+        background: rgba(255, 255, 255, 0.42);
+      }
+      .info-section {
+        display: block;
+      }
+      .card:not(.detail-card) .stroke-order-info,
+      .card:not(.detail-card) .reading-info,
+      .card:not(.detail-card) .examples-info {
+        display: none;
+      }
+      .stroke-order-info {
+        display: flex;
+        justify-content: flex-start;
+        padding: 4px 0 10px;
+      }
+      .stroke-order-frame {
+        width: 160px;
+        height: 160px;
+        flex: 0 0 160px;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        overflow: hidden;
+      }
+      .stroke-order-image {
+        display: block;
+        width: 160px;
+        height: 160px;
+        object-fit: contain;
+        background: #fff;
+      }
+      .card-detail-button {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        z-index: 2;
+        min-height: 36px;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        background: #fff;
+        padding: 0 14px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 750;
+        box-shadow: 0 3px 10px rgba(188, 0, 45, 0.1);
+        transition:
+          background 0.18s ease,
+          color 0.18s ease,
+          box-shadow 0.18s ease;
+      }
+      .card-detail-button:hover,
+      .card-detail-button:focus-visible {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 5px 16px rgba(188, 0, 45, 0.24);
+        outline: none;
+      }
+      .card-detail-button:active {
+        background: #990025;
+        border-color: #990025;
+        box-shadow: none;
+      }
+      .detail-card .card-detail-button {
+        display: none;
+      }
+      .section-label {
+        font-size: 10.5px;
+        line-height: 1.2;
+        letter-spacing: 0.12em;
+        color: #8c8980;
+        text-transform: uppercase;
+        margin: 0 0 10px;
+      }
+      .info-section + .info-section {
+        border-top: 1px solid var(--line-dark);
+        padding-top: 16px;
+      }
+      .stroke-order-info + .mnemonic-info {
+        border-top: 0;
+        padding-top: 10px;
+      }
+      .reading-groups {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+      }
+      .reading-row {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 6px;
+        align-items: baseline;
+        font-size: 17.5px;
+        line-height: 1.62;
+      }
+      .reading-type,
+      .example-type {
+        font-size: 12.5px;
+        color: #77746d;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .reading-value {
+        font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+      }
+      .desc {
+        font-size: 17.5px;
+        line-height: 1.7;
+        word-break: keep-all;
+        white-space: pre-line;
+        margin: 0;
+      }
+      .example-groups {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+      }
+      .example-group {
+        padding-top: 0;
+      }
+      .example-heading {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 5px;
+      }
+      .example-marker {
+        display: inline-grid;
+        place-items: center;
+        min-width: 23px;
+        height: 23px;
+        padding: 0 5px;
+        border: 1px solid #c5c2b7;
+        border-radius: 999px;
+        font-size: 10px;
+        background: rgba(255, 255, 255, 0.42);
+      }
+      .example-list {
+        font-size: 17px;
+        line-height: 1.72;
+        color: #55534d;
+        white-space: pre-line;
+        word-break: keep-all;
+      }
+      .kanji-link {
+        appearance: none;
+        -webkit-appearance: none;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        line-height: inherit;
+        color: inherit;
+        cursor: pointer;
+        border-radius: 0;
+      }
+      .kanji-link:hover,
+      .kanji-link:focus-visible {
+        background: var(--accent-soft);
+        outline: none;
+      }
+      .card.jump-target {
+        animation: kanji-jump 1.25s ease;
+      }
+      @keyframes kanji-jump {
+        0%,
+        100% {
+          box-shadow: none;
+        }
+        30%,
+        70% {
+          box-shadow: 0 0 0 3px rgba(84, 81, 72, 0.28);
+        }
+      }
+
+      .sentinel {
+        height: 80px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .empty {
+        grid-column: 1/-1;
+        border-top: 1px solid var(--line-dark);
+        padding: 80px 0;
+        text-align: center;
+        color: var(--muted);
+      }
+      .scroll-top {
+        position: fixed;
+        right: max(18px, env(safe-area-inset-right));
+        bottom: max(18px, env(safe-area-inset-bottom));
+        z-index: 50;
+        width: 52px;
+        height: 52px;
+        border: 1px solid var(--line-dark);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: color-mix(in srgb, var(--paper) 94%, transparent);
+        color: var(--ink);
+        box-shadow: 0 8px 26px rgba(24, 24, 23, 0.14);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        font-size: 22px;
+        line-height: 1;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition:
+          opacity 0.2s ease,
+          visibility 0.2s ease,
+          transform 0.2s ease,
+          background 0.2s ease;
+      }
+      .scroll-top.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .scroll-top:hover,
+      .scroll-top:focus-visible {
+        background: var(--accent);
+        color: #fff;
+        outline: none;
+      }
+
+      .site-nav-wrap {
+        position: relative;
+        margin: 0 -28px;
+        padding: 0 28px;
+        background: #fff;
+        box-shadow: 0 0 0 100vmax #fff;
+        clip-path: inset(0 -100vmax);
+        border: 0;
+      }
+      .site-nav-wrap::before,
+      .site-nav-wrap::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        z-index: 2;
+        width: 100vw;
+        height: 1px;
+        background: var(--line);
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+      .site-nav-wrap::before {
+        top: 0;
+      }
+      .site-nav-wrap::after {
+        bottom: 0;
+      }
+      .site-nav {
+        width: 100%;
+        max-width: 1544px;
+        height: 52px;
+        margin: 0 auto;
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+      }
+      .site-nav::-webkit-scrollbar {
+        display: none;
+      }
+      .site-tab {
+        position: relative;
+        flex: 0 0 auto;
+        border: 0;
+        background: #fff;
+        border-radius: 0;
+        padding: 0 24px;
+        font-size: 14px;
+        font-weight: 650;
+        color: #696760;
+        white-space: nowrap;
+      }
+      .site-tab + .site-tab {
+        border-left: 1px solid var(--line);
+      }
+      .site-tab:first-child {
+        border-left: 1px solid var(--line);
+      }
+      .site-tab:last-child {
+        border-right: 1px solid var(--line);
+      }
+      .site-tab:not(.active):hover,
+      .site-tab:not(.active):focus-visible {
+        color: var(--ink);
+        background: var(--accent-soft);
+        outline: none;
+      }
+      .site-tab.active {
+        color: var(--accent);
+        background: #fff;
+        font-weight: 750;
+        cursor: default;
+      }
+      .site-tab.active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 3px;
+        background: var(--accent);
+      }
+      .site-tab.active:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -4px;
+      }
+      .kanji-view[hidden],
+      .story-view[hidden],
+      .game-view[hidden] {
+        display: none !important;
+      }
+      .kanji-view {
+        position: relative;
+      }
+      .story-view {
+        position: relative;
+        width: 100%;
+        max-width: 1544px;
+        margin: 0 auto;
+        padding-top: 20px;
+      }
+      .story-layout {
+        display: grid;
+        grid-template-columns: minmax(210px, 280px) minmax(0, 1fr);
+        gap: 48px;
+        align-items: start;
+      }
+      .story-sidebar {
+        position: static;
+        padding: 20px 16px 22px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.045);
+      }
+      .story-group + .story-group {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+      }
+      .story-group-title {
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        color: #8c8980;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .story-levels {
+        display: grid;
+        gap: 4px;
+      }
+      .story-level {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        padding: 9px 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #65635d;
+      }
+      .story-level.available:not(.active):hover,
+      .story-level.available:not(.active):focus-visible {
+        background: var(--accent-soft);
+        outline: none;
+      }
+      .story-level.active {
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        cursor: default;
+      }
+      .story-level.active:focus-visible {
+        outline: 2px solid var(--ink);
+        outline-offset: 2px;
+      }
+      .story-level.disabled {
+        color: #aaa79e;
+        cursor: default;
+      }
+      .story-article {
+        max-width: 860px;
+        margin: 0 auto 30px;
+        padding: 32px 36px 60px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.045);
+      }
+      .story-meta {
+        display: flex;
+        align-items: baseline;
+        justify-content: flex-start;
+        margin: 3px 0 14px;
+      }
+      .story-title {
+        font-family:
+          "Nanum Myeongjo", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho",
+          "Noto Serif CJK JP", "Noto Serif JP", serif;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.18;
+        letter-spacing: -0.045em;
+        margin: 0;
+      }
+      .story-guide {
+        font-size: 13px;
+        color: var(--muted);
+        text-align: left;
+        font-weight: 400;
+      }
+      .story-copy {
+        margin-top: 28px;
+        padding-top: 28px;
+        border-top: 1px solid var(--line);
+        font-family:
+          "Nanum Myeongjo", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho",
+          "Noto Serif CJK JP", "Noto Serif JP", serif;
+        font-size: 20px;
+        line-height: 2.05;
+        letter-spacing: -0.012em;
+        word-break: keep-all;
+        color: #302f2c;
+      }
+      .story-copy p {
+        margin: 0 0 1.35em;
+      }
+      .story-copy .story-quote {
+        padding-left: 2em;
+        border-left: 0;
+        text-indent: 0;
+        color: #55524b;
+      }
+      .story-copy .kanji-link {
+        font-family: inherit;
+        font-weight: inherit;
+      }
+      .story-empty {
+        border-top: 1px solid var(--line-dark);
+        padding: 60px 0;
+        color: var(--muted);
+      }
+      .game-view {
+        width: 100%;
+        max-width: 1544px;
+        margin: 0 auto;
+        padding-top: 20px;
+      }
+      .game-shell {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 32px 36px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.045);
+      }
+      .game-title {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.18;
+        letter-spacing: -0.045em;
+      }
+      .game-description {
+        margin: 3px 0 14px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 400;
+        line-height: normal;
+      }
+      .game-settings {
+        display: grid;
+        grid-template-columns: 1fr 1fr 150px;
+        gap: 10px;
+        margin-top: 28px;
+        padding-top: 28px;
+        border-top: 1px solid var(--line);
+      }
+      .game-settings[hidden] {
+        display: none;
+      }
+      .game-setting {
+        display: grid;
+        gap: 8px;
+      }
+      .game-setting label {
+        padding-left: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .game-start {
+        grid-column: 1/-1;
+        height: 50px;
+        margin-top: 6px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 800;
+      }
+      .game-start:hover,
+      .game-start:focus-visible,
+      .game-next:hover,
+      .game-next:focus-visible {
+        background: #990025;
+        outline: none;
+      }
+      .game-play {
+        margin-top: 28px;
+        padding-top: 28px;
+        border-top: 1px solid var(--line);
+      }
+      .game-play[hidden] {
+        display: none;
+      }
+      .game-progress-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 10px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .game-progress-track {
+        height: 5px;
+        border-radius: 0;
+        background: #e8e8e8;
+        overflow: hidden;
+      }
+      .game-progress-bar {
+        width: 0;
+        height: 100%;
+        background: var(--accent);
+        transition: width 0.22s ease;
+      }
+      .game-question {
+        position: relative;
+        margin: 26px 0 22px;
+        padding: 28px 18px;
+        text-align: center;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+      .game-question-label {
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .game-question-label[hidden] {
+        display: none;
+      }
+      .game-glyph {
+        font-family:
+          "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif CJK JP",
+          "Noto Serif JP", serif;
+        font-size: clamp(100px, 16vw, 164px);
+        font-weight: 500;
+        line-height: 1.05;
+      }
+      .game-question.result .game-glyph {
+        font-family: inherit;
+        font-size: clamp(20px, 3vw, 28px);
+        font-weight: 700;
+        line-height: 1.5;
+        letter-spacing: -0.02em;
+      }
+      .game-question.result {
+        padding-bottom: 28px;
+      }
+      .game-question.result ~ .game-feedback {
+        display: none;
+      }
+      .game-picture {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        min-height: 36px;
+        border: 1px solid var(--line-dark);
+        border-radius: 999px;
+        background: #fff;
+        padding: 0 14px;
+        font-size: 12px;
+        font-weight: 750;
+      }
+      .game-picture:hover,
+      .game-picture:focus-visible {
+        border-color: var(--accent);
+        color: var(--accent);
+        outline: none;
+      }
+      .game-picture[hidden] {
+        display: none;
+      }
+      .game-choices {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .game-choices[hidden] {
+        display: none;
+      }
+      .game-choice {
+        min-height: 60px;
+        border: 1px solid var(--line-dark);
+        border-radius: 12px;
+        background: #fff;
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 15px;
+        font-weight: 650;
+        line-height: 1.45;
+      }
+      .game-choice:not(:disabled):hover,
+      .game-choice:not(:disabled):focus-visible {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        outline: none;
+      }
+      .game-choice.correct {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+      .game-choice.wrong {
+        border-color: #aaa;
+        background: #ededed;
+        color: #777;
+      }
+      .game-choice:disabled {
+        cursor: default;
+      }
+      .game-feedback {
+        min-height: 24px;
+        margin: 18px 0 0;
+        font-size: 14px;
+        font-weight: 750;
+        line-height: 1.6;
+      }
+      .game-mistakes {
+        margin-top: 22px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+      }
+      .game-mistakes[hidden] {
+        display: none;
+      }
+      .game-mistakes-title {
+        margin-bottom: 12px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .game-mistakes-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+        gap: 8px;
+      }
+      .game-mistake {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: stretch;
+        gap: 10px;
+        padding: 13px;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      .game-mistake-info {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 9px;
+      }
+      .game-mistake-glyph {
+        font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
+        font-size: 38px;
+        line-height: 1;
+      }
+      .game-mistake-meaning {
+        color: #5f5d57;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.45;
+        word-break: keep-all;
+      }
+      .game-mistake-detail {
+        align-self: center;
+        width: 64px;
+        height: 64px;
+        border: 1px solid var(--line-dark);
+        border-radius: 8px;
+        background: #fff;
+        padding: 0 7px;
+        font-size: 10px;
+        font-weight: 750;
+        line-height: 1.2;
+        white-space: pre-line;
+      }
+      .game-mistake-detail:hover,
+      .game-mistake-detail:focus-visible {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+        outline: none;
+      }
+      .game-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .game-next,
+      .game-settings-button {
+        min-height: 44px;
+        border-radius: 999px;
+        padding: 0 20px;
+        font-size: 13px;
+        font-weight: 750;
+      }
+      .game-next {
+        border: 0;
+        background: var(--accent);
+        color: #fff;
+      }
+      .game-settings-button {
+        border: 1px solid var(--line-dark);
+        background: #fff;
+      }
+      .game-next[hidden],
+      .game-settings-button[hidden] {
+        display: none;
+      }
+      .game-settings-button:hover,
+      .game-settings-button:focus-visible {
+        border-color: var(--accent);
+        color: var(--accent);
+        outline: none;
+      }
+      .kanji-popover {
+        position: fixed;
+        z-index: 120;
+        width: min(280px, calc(100vw - 28px));
+        padding: 17px;
+        border: 1px solid var(--line-dark);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 16px 44px rgba(24, 24, 23, 0.2);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
+      .kanji-popover[hidden] {
+        display: none;
+      }
+      .popover-main {
+        display: flex;
+        align-items: baseline;
+        gap: 13px;
+      }
+      .popover-glyph {
+        font-family:
+          "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif CJK JP",
+          "Noto Serif JP", serif;
+        font-size: 54px;
+        line-height: 1;
+      }
+      .popover-meaning {
+        font-size: 17px;
+        font-weight: 650;
+        line-height: 1.4;
+      }
+      .popover-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin: 13px 0;
+      }
+      .popover-note {
+        font-size: 13px;
+        line-height: 1.55;
+        color: #66645e;
+        white-space: pre-line;
+        margin: 0 0 14px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .popover-go {
+        width: 100%;
+        height: 40px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .popover-go:hover,
+      .popover-go:focus-visible {
+        background: #990025;
+        color: #fff;
+        outline: none;
+      }
+      body.detail-open {
+        overflow: hidden;
+      }
+      .detail-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(24, 24, 23, 0.58);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+      }
+      .detail-overlay[hidden] {
+        display: none;
+      }
+      .detail-dialog {
+        position: relative;
+        width: min(980px, 100%);
+        height: min(760px, calc(100dvh - 48px));
+        border: 1px solid var(--line-dark);
+        border-radius: 20px;
+        background: var(--paper);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+      .detail-back {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 5;
+        height: 42px;
+        border: 1px solid var(--line-dark);
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(251, 250, 246, 0.95);
+        padding: 0 15px;
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 750;
+        line-height: 1;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      }
+      .detail-back:hover,
+      .detail-back:focus-visible {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+        outline: none;
+      }
+      .detail-back[hidden] {
+        display: none;
+      }
+      .detail-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 5;
+        width: 42px;
+        height: 42px;
+        border: 1px solid var(--line-dark);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: rgba(251, 250, 246, 0.95);
+        font-size: 24px;
+        line-height: 1;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      }
+      .detail-close:hover,
+      .detail-close:focus-visible {
+        background: var(--accent);
+        color: #fff;
+        outline: none;
+      }
+      .detail-content {
+        width: 100%;
+        height: 100%;
+      }
+      .detail-card {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: auto;
+        perspective: none;
+      }
+      .detail-card .card-inner {
+        transform: rotateY(180deg);
+        transition: none;
+      }
+      .detail-card .back {
+        display: grid;
+        grid-template-columns: minmax(300px, 46%) minmax(0, 1fr);
+      }
+      .detail-card .visual {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: auto;
+        border-bottom: 0;
+        border-right: 1px solid var(--line-dark);
+        background: var(--bg);
+      }
+      .detail-card .visual img {
+        background: var(--bg);
+      }
+      .detail-card .visual {
+        cursor: default;
+      }
+      .detail-card .visual-zoom-hint {
+        display: none;
+      }
+      .detail-card .back-body {
+        padding: 34px 38px 42px;
+        gap: 18px;
+      }
+      .detail-card .face {
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .visual {
+        cursor: pointer;
+      }
+      .visual-zoom-hint {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        z-index: 3;
+        padding: 7px 10px;
+        border: 1px solid rgba(24, 24, 23, 0.2);
+        border-radius: 999px;
+        background: rgba(251, 250, 246, 0.9);
+        color: #55534d;
+        font-size: 11px;
+        font-weight: 650;
+        line-height: 1;
+        opacity: 0;
+        transform: translateY(3px);
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s ease;
+        cursor: zoom-in;
+      }
+      .visual:hover .visual-zoom-hint,
+      .visual:focus-visible .visual-zoom-hint {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .visual-zoom-hint:hover,
+      .visual-zoom-hint:focus-visible {
+        background: var(--accent);
+        color: #fff;
+        outline: none;
+      }
+      .back-flip {
+        position: absolute;
+        left: 10px;
+        bottom: 10px;
+        z-index: 4;
+        padding: 7px 10px;
+        border: 1px solid rgba(24, 24, 23, 0.2);
+        border-radius: 999px;
+        background: rgba(251, 250, 246, 0.92);
+        color: #55534d;
+        font-size: 11px;
+        font-weight: 650;
+        line-height: 1;
+        opacity: 0;
+        transform: translateY(3px);
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s ease;
+      }
+      .visual:hover .back-flip,
+      .back-flip:focus-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .back-flip:hover,
+      .back-flip:focus-visible {
+        background: var(--accent);
+        color: #fff;
+        outline: none;
+      }
+      .detail-card .back-flip {
+        display: none;
+      }
+      .image-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 130;
+        display: grid;
+        place-items: center;
+        padding: 28px;
+        background: rgba(14, 14, 13, 0.9);
+        touch-action: pinch-zoom;
+      }
+      .image-overlay[hidden] {
+        display: none;
+      }
+      .image-stage {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: grid;
+        place-items: center;
+      }
+      .visual,
+      .visual img,
+      .image-overlay,
+      .image-stage,
+      .image-stage img {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .image-stage img {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        -webkit-user-drag: none;
+        pointer-events: none;
+      }
+      .image-fallback {
+        font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+        font-size: min(34vw, 260px);
+        color: #aaa79e;
+      }
+      .image-close {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 2;
+        width: 46px;
+        height: 46px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: rgba(24, 24, 23, 0.65);
+        color: #fff;
+        font-size: 26px;
+        line-height: 1;
+      }
+      .image-close:hover,
+      .image-close:focus-visible {
+        background: #fff;
+        color: #181817;
+        outline: none;
+      }
+      @media (min-width: 601px) {
+        .image-stage img {
+          max-width: min(640px, calc(100vw - 112px));
+          max-height: min(640px, calc(100dvh - 96px));
+        }
+        .image-fallback {
+          font-size: min(18vw, 180px);
+        }
+      }
+
+      @media (max-width: 1400px) {
+        .status {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+        .status-summary {
+          grid-column: 1;
+          grid-row: 1;
+          min-width: 0;
+        }
+        .hint {
+          grid-column: 2;
+          grid-row: 1;
+        }
+        .sort-index {
+          grid-column: 1/-1;
+          grid-row: 2;
+          width: 100%;
+          flex-wrap: wrap;
+          overflow-x: visible;
+          row-gap: 8px;
+          white-space: normal;
+        }
+      }
+
+      @media (max-width: 920px) {
+        header {
+          min-height: 110px;
+        }
+        .story-layout {
+          grid-template-columns: 190px minmax(0, 1fr);
+          gap: 28px;
+        }
+        .story-copy {
+          font-size: 19px;
+        }
+        .toolbar {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+        .search {
+          grid-column: 1/-1;
+        }
+        .reset {
+          grid-column: 3;
+        }
+        .toolbar-wrap {
+          padding-top: 16px;
+          padding-bottom: 16px;
+        }
+        .story-view {
+          padding-top: 16px;
+        }
+        .grid {
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        }
+      }
+      @media (max-width: 600px) {
+        .wrap {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+        .toolbar-wrap {
+          margin: 0 -14px;
+          padding: 14px 14px 8px;
+        }
+        header {
+          width: auto;
+          min-height: auto;
+          margin-left: -14px;
+          margin-right: -14px;
+          padding: 24px 14px 22px;
+        }
+        .site-nav-wrap {
+          margin: 0 -14px;
+          padding: 0 14px;
+        }
+        .site-nav {
+          height: 50px;
+          display: grid;
+          grid-auto-flow: column;
+          grid-auto-columns: minmax(140px, 1fr);
+          gap: 0;
+        }
+        .site-tab {
+          width: 100%;
+          padding: 0 14px;
+          text-align: center;
+        }
+        .story-view {
+          padding-top: 14px;
+        }
+        .story-layout {
+          display: block;
+        }
+        .story-sidebar {
+          position: static;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px;
+          margin-bottom: 14px;
+          padding: 18px 14px 20px;
+        }
+        .story-group + .story-group {
+          margin-top: 0;
+        }
+        .story-levels {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 4px;
+        }
+        .story-level {
+          width: 100%;
+        }
+        .story-article {
+          position: relative;
+          padding: 24px 18px 30px;
+        }
+        .story-meta {
+          align-items: flex-start;
+        }
+        .story-guide {
+          max-width: none;
+          font-size: 13px;
+        }
+        .story-copy {
+          font-size: 18px;
+          line-height: 2;
+        }
+        .header-meta {
+          text-align: left;
+        }
+        .header-meta strong {
+          font-size: 22px;
+        }
+        .toolbar {
+          grid-template-columns: 1fr 1fr;
+        }
+        .search {
+          grid-column: 1/-1;
+        }
+        .reset {
+          grid-column: auto;
+        }
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 9px;
+        }
+        .card {
+          aspect-ratio: 2/3;
+        }
+        .front {
+          padding-bottom: 42px;
+        }
+        .glyph {
+          font-size: 108px;
+        }
+        .front-meaning {
+          bottom: 18px;
+          font-size: 14px;
+        }
+        .status {
+          align-items: flex-start;
+          gap: 12px;
+        }
+        .hint {
+          max-width: 150px;
+          text-align: right;
+        }
+        .back-body {
+          padding: 14px 13px 19px;
+          gap: 12px;
+        }
+        .reading-row {
+          grid-template-columns: max-content 1fr;
+          column-gap: 6px;
+          font-size: 14.5px;
+        }
+        .reading-type,
+        .example-type {
+          font-size: 10.8px;
+        }
+        .desc {
+          font-size: 14.5px;
+        }
+        .example-list {
+          font-size: 14px;
+        }
+      }
+      @media (max-width: 600px) {
+        .scroll-top {
+          right: max(14px, env(safe-area-inset-right));
+          bottom: max(14px, env(safe-area-inset-bottom));
+          width: 48px;
+          height: 48px;
+          font-size: 20px;
+        }
+        .kanji-popover {
+          padding: 16px;
+        }
+        .popover-glyph {
+          font-size: 50px;
+        }
+        .detail-overlay {
+          padding: 0;
+          place-items: stretch;
+        }
+        .detail-dialog {
+          width: 100%;
+          height: 100dvh;
+          border: 0;
+          border-radius: 0;
+        }
+        .detail-card .back {
+          display: flex;
+        }
+        .detail-card .visual {
+          height: auto;
+          aspect-ratio: 1/1;
+          border-right: 0;
+          border-bottom: 1px solid var(--line-dark);
+        }
+        .detail-card .back-body {
+          padding: 22px 20px 36px;
+        }
+        .detail-back {
+          top: max(10px, env(safe-area-inset-top));
+          left: 10px;
+        }
+        .detail-close {
+          top: max(10px, env(safe-area-inset-top));
+          right: 10px;
+        }
+        .visual-zoom-hint,
+        .back-flip {
+          opacity: 1;
+          transform: none;
+        }
+        .image-overlay {
+          padding: max(14px, env(safe-area-inset-top)) 10px
+            max(14px, env(safe-area-inset-bottom));
+        }
+        .image-close {
+          top: 4px;
+          right: 4px;
+        }
+      }
+      @media (max-width: 600px) {
+        .story-sidebar {
+          gap: 0;
+        }
+        .story-group:first-child {
+          padding-right: 18px;
+        }
+        .story-group + .story-group {
+          margin-top: 0;
+          padding-top: 0;
+          padding-left: 18px;
+          border-top: 0;
+          border-left: 1px solid var(--line);
+        }
+      }
+      @media (max-width: 600px) {
+        .status {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 10px;
+        }
+        .status-summary {
+          grid-column: 1;
+          grid-row: 1;
+          min-width: 0;
+        }
+        .sort-index {
+          grid-column: 1;
+          grid-row: 2;
+          width: 100%;
+          flex-wrap: wrap;
+          overflow-x: visible;
+          row-gap: 8px;
+          padding-top: 3px;
+          white-space: normal;
+        }
+        .sort-index-button {
+          padding-left: 9px;
+          padding-right: 9px;
+        }
+        .hint {
+          grid-column: 1;
+          grid-row: 3;
+          justify-self: start;
+          max-width: none;
+          text-align: left;
+          white-space: normal;
+        }
+      }
+      @media (max-width: 600px) {
+        .game-view {
+          padding-top: 14px;
+        }
+        .game-shell {
+          padding: 24px 18px;
+        }
+        .game-settings {
+          grid-template-columns: 1fr;
+        }
+        .game-setting,
+        .game-start {
+          grid-column: 1;
+        }
+        .game-play {
+          margin-top: 24px;
+          padding-top: 24px;
+        }
+        .game-question {
+          padding: 24px 12px 58px;
+        }
+        .game-choices {
+          grid-template-columns: 1fr;
+        }
+        .game-choice {
+          min-height: 54px;
+        }
+        .game-feedback {
+          text-align: center;
+        }
+        .game-mistakes-list {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .game-actions {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+        .game-next,
+        .game-settings-button {
+          grid-column: 1;
+          justify-self: center;
+          width: min(220px, 100%);
+          padding: 0 12px;
+        }
+      }
+      @media (max-width: 600px) {
+        .site-nav {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-auto-flow: row;
+          grid-auto-columns: auto;
+          overflow-x: hidden;
+        }
+        .site-tab {
+          min-width: 0;
+          padding: 0 6px;
+        }
+      }
+      @media (max-width: 1520px) {
+        .grid {
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 1224px) {
+        .grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 928px) {
+        .grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 632px) {
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .card-inner,
+        .scroll-top {
+          transition: none;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="wrap">
@@ -44645,6 +46528,1353 @@
         }
       ]
     </script>
-    <script type="module" src="/src/main.js"></script>
+    <script>
+      const SHEETS_API_URL =
+        "https://script.google.com/macros/s/AKfycbwSHvHRn3Tu1iUIS6daXvI6tBPFL1bgPFN5U7wttCvw41mNOBvgK3tCSgN0d9yT4uum/exec";
+      const FALLBACK_DATA = JSON.parse(
+        document.getElementById("kanji-data").textContent,
+      );
+      let DATA = FALLBACK_DATA;
+      const els = {
+        grid: document.getElementById("grid"),
+        search: document.getElementById("search"),
+        grade: document.getElementById("grade"),
+        jlpt: document.getElementById("jlpt"),
+        sort: document.getElementById("sort"),
+        reset: document.getElementById("reset"),
+        resultCount: document.getElementById("resultCount"),
+        sentinel: document.getElementById("sentinel"),
+        sortLabel: document.getElementById("sortLabel"),
+        sortIndex: document.getElementById("sortIndex"),
+        kanjiView: document.getElementById("kanjiView"),
+        storyView: document.getElementById("storyView"),
+        gameView: document.getElementById("gameView"),
+        navKanji: document.getElementById("navKanji"),
+        navStory: document.getElementById("navStory"),
+        navGame: document.getElementById("navGame"),
+        storyCopy: document.getElementById("storyCopy"),
+        storyTitle: document.getElementById("storyTitle"),
+        gradeStoryLevels: document.getElementById("gradeStoryLevels"),
+        jlptStoryLevels: document.getElementById("jlptStoryLevels"),
+        gameSetup: document.getElementById("gameSetup"),
+        gameGrade: document.getElementById("gameGrade"),
+        gameJlpt: document.getElementById("gameJlpt"),
+        gameCount: document.getElementById("gameCount"),
+        gameStart: document.getElementById("gameStart"),
+        gamePlay: document.getElementById("gamePlay"),
+        gameProgress: document.getElementById("gameProgress"),
+        gameProgressBar: document.getElementById("gameProgressBar"),
+        gameScore: document.getElementById("gameScore"),
+        gameQuestion: document.getElementById("gameQuestion"),
+        gameQuestionLabel: document.getElementById("gameQuestionLabel"),
+        gameGlyph: document.getElementById("gameGlyph"),
+        gamePicture: document.getElementById("gamePicture"),
+        gameChoices: document.getElementById("gameChoices"),
+        gameFeedback: document.getElementById("gameFeedback"),
+        gameMistakes: document.getElementById("gameMistakes"),
+        gameMistakesTitle: document.getElementById("gameMistakesTitle"),
+        gameMistakesList: document.getElementById("gameMistakesList"),
+        gameNext: document.getElementById("gameNext"),
+        gameSettingsButton: document.getElementById("gameSettingsButton"),
+      };
+      const FALLBACK_STORIES = JSON.parse(
+        document.getElementById("story-data").textContent,
+      );
+      let STORIES = FALLBACK_STORIES;
+      let activeStoryId =
+        STORIES.find((s) => s.category === "학년별")?.id ||
+        STORIES[0]?.id ||
+        "";
+
+      const BATCH = 96;
+      let view = [];
+      let rendered = 0;
+      let selectedStroke = null;
+      let selectedSound = null;
+
+      const text = (v) => (v ?? "").toString().trim();
+      const displayLabel = (v) =>
+        text(v)
+          .replace(/^중학\s*(\d+)$/, "중학교 $1학년")
+          .replace(/^고교\s*(\d+)$/, "고등학교 $1학년")
+          .replace(/^중학(?=\s|$)/, "중학교")
+          .replace(/^고교(?=\s|$)/, "고등학교")
+          .replace("초등학교 ", "초");
+      const storyDisplayLabel = (v) =>
+        text(v)
+          .replace(/^JLPT N(?!4-5$)([1-5])-(\d+)$/, "JLPT N$1($2)")
+          .replace(/^초\s*(\d+)학년$/, "초등학교 $1학년")
+          .replace(/^중학교\s*(\d+)학년$/, "중학교 $1")
+          .replace(/^고등학교\s*(\d+)학년$/, "고등학교 $1")
+          .replace(/^중학\s*(\d+)$/, "중학교 $1")
+          .replace(/^고교\s*(\d+)$/, "고등학교 $1")
+          .replace(/^중학(?=\s|$)/, "중학교")
+          .replace(/^고교(?=\s|$)/, "고등학교");
+      let KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
+      let KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
+      function rebuildDataIndexes() {
+        KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
+        KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
+      }
+      function loadJsonp(url) {
+        return new Promise((resolve, reject) => {
+          const callback = `__manaboSheets_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          const script = document.createElement("script");
+          const timer = setTimeout(
+            () => finish(new Error("스프레드시트 응답 시간이 초과되었습니다.")),
+            15000,
+          );
+          function cleanup() {
+            clearTimeout(timer);
+            delete window[callback];
+            script.remove();
+          }
+          function finish(error, data) {
+            cleanup();
+            error ? reject(error) : resolve(data);
+          }
+          window[callback] = (data) => finish(null, data);
+          script.onerror = () =>
+            finish(new Error("스프레드시트 데이터를 불러오지 못했습니다."));
+          const separator = url.includes("?") ? "&" : "?";
+          script.src = `${url}${separator}callback=${encodeURIComponent(callback)}&_=${Date.now()}`;
+          document.head.append(script);
+        });
+      }
+      async function loadSheetsData() {
+        const url = text(SHEETS_API_URL);
+        if (!url) {
+          document.documentElement.dataset.dataSource = "saved";
+          return false;
+        }
+        try {
+          const payload = await loadJsonp(url);
+          if (
+            !payload ||
+            payload.ok === false ||
+            !Array.isArray(payload.kanji) ||
+            payload.kanji.length < 1 ||
+            !Array.isArray(payload.stories) ||
+            payload.stories.length < 1
+          ) {
+            throw new Error(
+              payload?.error || "스프레드시트 데이터 형식이 올바르지 않습니다.",
+            );
+          }
+          DATA = payload.kanji;
+          STORIES = payload.stories;
+          activeStoryId =
+            STORIES.find((s) => s.category === "학년별")?.id ||
+            STORIES[0]?.id ||
+            "";
+          rebuildDataIndexes();
+          document.documentElement.dataset.dataSource = "sheets";
+          return true;
+        } catch (error) {
+          console.warn("[마나보] 저장된 데이터를 사용합니다.", error);
+          DATA = FALLBACK_DATA;
+          STORIES = FALLBACK_STORIES;
+          activeStoryId =
+            STORIES.find((s) => s.category === "학년별")?.id ||
+            STORIES[0]?.id ||
+            "";
+          rebuildDataIndexes();
+          document.documentElement.dataset.dataSource = "saved";
+          return false;
+        }
+      }
+      const numberOrInf = (v) => {
+        const s = text(v);
+        if (!s) return Infinity;
+        const n = Number(s);
+        return Number.isFinite(n) ? n : Infinity;
+      };
+      const koreanCollator = new Intl.Collator("ko", {
+        sensitivity: "base",
+        numeric: true,
+      });
+      const primaryReading = (v) => text(v).split(/\s*[,|/]\s*/)[0] || "";
+      const compareKorean = (a, b) => {
+        const aa = primaryReading(a),
+          bb = primaryReading(b);
+        if (!aa && !bb) return 0;
+        if (!aa) return 1;
+        if (!bb) return -1;
+        return koreanCollator.compare(aa, bb);
+      };
+      const SOUND_GROUP_LABELS = [
+        "가",
+        "가",
+        "나",
+        "다",
+        "다",
+        "라",
+        "마",
+        "바",
+        "바",
+        "사",
+        "사",
+        "아",
+        "자",
+        "자",
+        "차",
+        "카",
+        "타",
+        "파",
+        "하",
+      ];
+      function soundGroup(v) {
+        const first = Array.from(primaryReading(v))[0] || "";
+        const code = first.charCodeAt(0);
+        if (code < 0xac00 || code > 0xd7a3) return "";
+        return SOUND_GROUP_LABELS[Math.floor((code - 0xac00) / 588)] || "";
+      }
+      function renderSortIndex(sortMode, source = view) {
+        els.sortIndex.replaceChildren();
+        let items = [];
+        if (sortMode === "strokes") {
+          const seen = new Set();
+          source.forEach((d) => {
+            const n = numberOrInf(d["획"]);
+            if (Number.isFinite(n) && !seen.has(n)) {
+              seen.add(n);
+              items.push({ label: `${n}획`, stroke: n });
+            }
+          });
+          items.sort((a, b) => a.stroke - b.stroke);
+          els.sortIndex.setAttribute("aria-label", "획수 필터");
+        } else if (sortMode === "sound") {
+          const groups = new Set(
+            source.map((d) => soundGroup(d["음"])).filter(Boolean),
+          );
+          [
+            "가",
+            "나",
+            "다",
+            "라",
+            "마",
+            "바",
+            "사",
+            "아",
+            "자",
+            "차",
+            "카",
+            "타",
+            "파",
+            "하",
+          ].forEach((label) => {
+            if (groups.has(label)) items.push({ label, sound: label });
+          });
+          els.sortIndex.setAttribute("aria-label", "한자음 초성 필터");
+        }
+        els.sortIndex.hidden = !items.length;
+        items.forEach((item) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "sort-index-button";
+          button.textContent = item.label;
+          if (sortMode === "strokes") {
+            const active = selectedStroke === item.stroke;
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-pressed", String(active));
+            button.addEventListener("click", () => {
+              selectedStroke = active ? null : item.stroke;
+              apply();
+            });
+          } else {
+            const active = selectedSound === item.sound;
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-pressed", String(active));
+            button.addEventListener("click", () => {
+              selectedSound = active ? null : item.sound;
+              apply();
+            });
+          }
+          els.sortIndex.append(button);
+        });
+      }
+      const pad = (v) => {
+        const n = numberOrInf(v);
+        return Number.isFinite(n) ? String(n).padStart(4, "0") : "—";
+      };
+      function driveFileId(url) {
+        const u = text(url);
+        if (!u) return "";
+        const patterns = [
+          /\/file\/d\/([^/?#]+)/i,
+          /\/d\/([^/?#]+)/i,
+          /[?&]id=([^&#]+)/i,
+        ];
+        for (const p of patterns) {
+          const m = u.match(p);
+          if (m) return decodeURIComponent(m[1]);
+        }
+        return "";
+      }
+      function imageCandidates(...sources) {
+        const urls = [];
+        sources.forEach((source) => {
+          const u = text(source);
+          if (!u) return;
+          const id = driveFileId(u);
+          if (id) {
+            const e = encodeURIComponent(id);
+            // Drive's public-image endpoints occasionally behave differently per file/browser.
+            // Keep three forms, then move to the next sheet image if one fails.
+            urls.push(`https://drive.google.com/uc?export=view&id=${e}`);
+            urls.push(`https://drive.google.com/thumbnail?id=${e}&sz=w1200`);
+            urls.push(`https://lh3.googleusercontent.com/d/${e}=w1200`);
+          } else {
+            urls.push(u);
+          }
+        });
+        return [...new Set(urls)];
+      }
+      function sortGrade(a, b) {
+        const rank = (s) => {
+          const elementary = s.match(/초등(?:학교)?\s*(\d+)학년/);
+          if (elementary) return Number(elementary[1]);
+
+          const middle = s.match(/중학(?:교)?\s*(\d+)?/);
+          if (middle) return 20 + Number(middle[1] || 0);
+
+          const high = s.match(/(?:고교|고등(?:학교)?)\s*(\d+)?/);
+          if (high) return 30 + Number(high[1] || 0);
+
+          return 99;
+        };
+        return rank(a) - rank(b) || a.localeCompare(b, "ko");
+      }
+      function populateFilters() {
+        const grades = [
+          ...new Set(
+            DATA.map((d) => text(d["학년"])).filter((v) => v && v !== "참고"),
+          ),
+        ].sort(sortGrade);
+        grades.forEach((v) =>
+          els.grade.add(new Option(storyDisplayLabel(v), v)),
+        );
+        const jlpts = [
+          ...new Set(DATA.map((d) => text(d["등급"])).filter(Boolean)),
+        ].sort((a, b) => {
+          const na = Number((a.match(/N(\d)/) || [])[1] || 99),
+            nb = Number((b.match(/N(\d)/) || [])[1] || 99);
+          return nb - na || a.localeCompare(b); // N5 -> N1
+        });
+        jlpts.forEach((v) => els.jlpt.add(new Option(displayLabel(v), v)));
+        grades.forEach((v) =>
+          els.gameGrade.add(new Option(storyDisplayLabel(v), v)),
+        );
+        jlpts.forEach((v) => els.gameJlpt.add(new Option(displayLabel(v), v)));
+      }
+
+      const READING_LABELS = { "㉧": "음독", "㉭": "훈독", "㉫": "특수 읽기" };
+      function parseExamples(raw) {
+        const groups = [];
+        let current = { marker: "", label: "예시", items: [] };
+        const flush = () => {
+          if (current.items.length) groups.push(current);
+        };
+        text(raw)
+          .split("\n")
+          .map((v) => v.trim())
+          .forEach((line) => {
+            if (!line || line === "-") return;
+            if (READING_LABELS[line]) {
+              flush();
+              current = {
+                marker: line,
+                label: READING_LABELS[line],
+                items: [],
+              };
+            } else {
+              current.items.push(line);
+            }
+          });
+        flush();
+        return groups;
+      }
+      function parseReadings(raw) {
+        const value = text(raw);
+        if (!value || value === "無し") return [];
+        return value
+          .split(/\s*\|\s*/)
+          .map((part) => {
+            const m = part.trim().match(/^(㉧|㉭|㉫)\s*(.*)$/);
+            return m
+              ? { marker: m[1], label: READING_LABELS[m[1]], value: m[2] }
+              : { marker: "", label: "읽기", value: part.trim() };
+          })
+          .filter((v) => v.value && v.value !== "無し");
+      }
+      const popover = {
+        root: document.getElementById("kanjiPopover"),
+        glyph: document.getElementById("popoverGlyph"),
+        meaning: document.getElementById("popoverMeaning"),
+        meta: document.getElementById("popoverMeta"),
+        note: document.getElementById("popoverNote"),
+        go: document.getElementById("popoverGo"),
+      };
+      const detail = {
+        overlay: document.getElementById("detailOverlay"),
+        content: document.getElementById("detailContent"),
+        back: document.getElementById("detailBack"),
+        close: document.getElementById("detailClose"),
+      };
+      const imageViewer = {
+        overlay: document.getElementById("imageOverlay"),
+        image: document.getElementById("imageZoom"),
+        fallback: document.getElementById("imageFallback"),
+        close: document.getElementById("imageClose"),
+      };
+      let popoverKanji = "",
+        popoverAnchor = null,
+        popoverCloseTimer = null;
+      let detailReturnFocus = null,
+        imageReturnFocus = null,
+        detailCurrentKanji = "",
+        detailHistory = [];
+      function positionKanjiPopover(anchor) {
+        const rect = anchor.getBoundingClientRect(),
+          box = popover.root.getBoundingClientRect(),
+          gap = 2,
+          pad = 14;
+        let top = rect.top - box.height - gap;
+        if (top < pad) top = rect.bottom + gap;
+        top = Math.max(
+          pad,
+          Math.min(top, window.innerHeight - box.height - pad),
+        );
+        const left = Math.max(
+          pad,
+          Math.min(
+            rect.left + (rect.width - box.width) / 2,
+            window.innerWidth - box.width - pad,
+          ),
+        );
+        popover.root.style.top = `${top}px`;
+        popover.root.style.left = `${left}px`;
+      }
+      function showKanjiPopover(ch, anchor) {
+        const d = KANJI_MAP.get(ch);
+        if (!d) return;
+        clearTimeout(popoverCloseTimer);
+        if (popoverAnchor && popoverAnchor !== anchor)
+          popoverAnchor.setAttribute("aria-expanded", "false");
+        popoverKanji = ch;
+        popoverAnchor = anchor;
+        popover.glyph.textContent = ch;
+        popover.meaning.textContent = text(d["훈, 음"]);
+        popover.meta.replaceChildren();
+        [
+          text(d["학년"]),
+          text(d["등급"]),
+          text(d["획"]) ? `${text(d["획"])}획` : "",
+        ]
+          .filter(Boolean)
+          .forEach((v) => {
+            const c = document.createElement("span");
+            c.className = "chip";
+            c.textContent = displayLabel(v);
+            popover.meta.append(c);
+          });
+        popover.note.textContent = text(d["풀이"]);
+        popover.note.hidden = !text(d["풀이"]);
+        popover.root.hidden = false;
+        anchor.setAttribute("aria-expanded", "true");
+        requestAnimationFrame(() => positionKanjiPopover(anchor));
+      }
+      function hideKanjiPopover() {
+        clearTimeout(popoverCloseTimer);
+        if (popoverAnchor) popoverAnchor.setAttribute("aria-expanded", "false");
+        popover.root.hidden = true;
+        popoverKanji = "";
+        popoverAnchor = null;
+      }
+      function schedulePopoverClose() {
+        clearTimeout(popoverCloseTimer);
+        popoverCloseTimer = setTimeout(hideKanjiPopover, 320);
+      }
+      function renderKanjiDetail(ch) {
+        const d = KANJI_MAP.get(ch);
+        if (!d) return;
+        const card = createCard(d, true);
+        card.classList.add("flipped");
+        card.tabIndex = -1;
+        card.setAttribute("aria-pressed", "true");
+        const detailVisual = card.querySelector(".visual");
+        detailVisual.tabIndex = -1;
+        detailVisual.removeAttribute("role");
+        detailVisual.removeAttribute("aria-label");
+        detail.content.replaceChildren(card);
+        detailCurrentKanji = ch;
+        detail.back.hidden = !detailHistory.length;
+        const previous = detailHistory[detailHistory.length - 1] || "";
+        detail.back.setAttribute(
+          "aria-label",
+          previous
+            ? `${previous} 한자로 돌아가기`
+            : "이전에 본 한자로 돌아가기",
+        );
+      }
+      function openKanjiDetail(ch, returnFocus = popoverAnchor) {
+        const d = KANJI_MAP.get(ch);
+        if (!d) return;
+        const alreadyOpen = !detail.overlay.hidden;
+        if (alreadyOpen && detailCurrentKanji && detailCurrentKanji !== ch)
+          detailHistory.push(detailCurrentKanji);
+        if (!alreadyOpen) {
+          detailReturnFocus = returnFocus;
+          detailHistory = [];
+        }
+        hideKanjiPopover();
+        renderKanjiDetail(ch);
+        detail.overlay.hidden = false;
+        document.body.classList.add("detail-open");
+        (alreadyOpen && detailHistory.length
+          ? detail.back
+          : detail.close
+        ).focus();
+      }
+      function goBackKanjiDetail() {
+        if (!detailHistory.length) return;
+        const previous = detailHistory.pop();
+        hideKanjiPopover();
+        renderKanjiDetail(previous);
+        (detailHistory.length ? detail.back : detail.close).focus();
+      }
+      function closeKanjiDetail() {
+        if (detail.overlay.hidden) return;
+        detail.overlay.hidden = true;
+        detail.content.replaceChildren();
+        document.body.classList.remove("detail-open");
+        detailCurrentKanji = "";
+        detailHistory = [];
+        detail.back.hidden = true;
+        detailReturnFocus?.focus();
+        detailReturnFocus = null;
+      }
+      function openImageViewer(d, returnFocus) {
+        const ch = text(d["한자"]),
+          urls = imageCandidates(d["이미지 1"]);
+        imageReturnFocus = returnFocus;
+        imageViewer.fallback.textContent = ch;
+        imageViewer.fallback.hidden = false;
+        imageViewer.image.hidden = true;
+        imageViewer.image.alt = `${ch} 암기 이미지 크게 보기`;
+        let attempt = 0;
+        imageViewer.image.onload = () => {
+          imageViewer.image.hidden = false;
+          imageViewer.fallback.hidden = true;
+        };
+        imageViewer.image.onerror = () => {
+          attempt++;
+          if (attempt < urls.length) imageViewer.image.src = urls[attempt];
+          else imageViewer.image.hidden = true;
+        };
+        if (urls.length) imageViewer.image.src = urls[0];
+        imageViewer.overlay.hidden = false;
+        document.body.classList.add("detail-open");
+        imageViewer.close.focus();
+      }
+      function closeImageViewer() {
+        if (imageViewer.overlay.hidden) return;
+        imageViewer.overlay.hidden = true;
+        imageViewer.image.removeAttribute("src");
+        imageViewer.image.hidden = true;
+        if (detail.overlay.hidden)
+          document.body.classList.remove("detail-open");
+        imageReturnFocus?.focus();
+        imageReturnFocus = null;
+      }
+      function makeKanjiLink(ch, currentChar, context = "card") {
+        if (!KANJI_SET.has(ch) || ch === currentChar)
+          return document.createTextNode(ch);
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "kanji-link";
+        b.textContent = ch;
+        b.setAttribute("aria-label", `${ch} 간단 정보 보기`);
+        b.setAttribute("aria-haspopup", "dialog");
+        b.setAttribute("aria-expanded", "false");
+        b.title = `${ch} 간단 정보`;
+        b.dataset.targetKanji = ch;
+        const canHover = matchMedia("(hover:hover) and (pointer:fine)").matches;
+        if (canHover) {
+          b.addEventListener("mouseenter", () => showKanjiPopover(ch, b));
+          b.addEventListener("mouseleave", schedulePopoverClose);
+        }
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showKanjiPopover(ch, b);
+        });
+        return b;
+      }
+      function appendLinkedCharacters(
+        container,
+        source,
+        currentChar,
+        context = "card",
+      ) {
+        Array.from(source).forEach((ch) =>
+          container.append(makeKanjiLink(ch, currentChar, context)),
+        );
+      }
+      function appendMnemonicText(container, raw, currentChar) {
+        const source = text(raw);
+        const re = /([（(])([^()（）]+)([）)])/g;
+        let last = 0,
+          match;
+        while ((match = re.exec(source))) {
+          container.append(
+            document.createTextNode(source.slice(last, match.index) + match[1]),
+          );
+          appendLinkedCharacters(container, match[2], currentChar);
+          container.append(document.createTextNode(match[3]));
+          last = re.lastIndex;
+        }
+        container.append(document.createTextNode(source.slice(last)));
+      }
+      function appendExampleText(container, raw, currentChar) {
+        const lines = text(raw).split("\n");
+        lines.forEach((line, i) => {
+          if (i) container.append(document.createTextNode("\n"));
+          appendLinkedCharacters(container, line, currentChar);
+        });
+      }
+      function findRenderedCard(ch) {
+        return (
+          [...els.grid.querySelectorAll(".card")].find(
+            (card) => card.dataset.kanji === ch,
+          ) || null
+        );
+      }
+      function setSection(section) {
+        if (!popover.root.hidden) hideKanjiPopover();
+        const story = section === "story";
+        const game = section === "game";
+        document.title = `마나보: 일본어 ${story ? "한자 독해" : game ? "한자 문제" : "한자 도감"}`;
+        els.kanjiView.hidden = story || game;
+        els.storyView.hidden = !story;
+        els.gameView.hidden = !game;
+        els.navKanji.classList.toggle("active", !story && !game);
+        els.navStory.classList.toggle("active", story);
+        els.navGame.classList.toggle("active", game);
+        requestAnimationFrame(() =>
+          window.scrollTo({ top: 0, behavior: "smooth" }),
+        );
+      }
+      function navigateToKanji(ch, showBack = true) {
+        setSection("kanji");
+        const target = DATA.find((d) => text(d["한자"]) === ch);
+        if (!target) return;
+
+        let index = view.findIndex((d) => text(d["한자"]) === ch);
+        if (index < 0) {
+          els.search.value = "";
+          els.grade.value = "";
+          els.jlpt.value = "";
+          selectedStroke = null;
+          selectedSound = null;
+          if (
+            els.sort.value === "ministry" &&
+            !Number.isFinite(numberOrInf(target["문부성"]))
+          )
+            els.sort.value = "memory";
+          apply();
+          index = view.findIndex((d) => text(d["한자"]) === ch);
+        }
+        if (index < 0) return;
+
+        while (rendered <= index) appendBatch();
+        requestAnimationFrame(() => {
+          const card = findRenderedCard(ch);
+          if (!card) return;
+          card.classList.toggle("flipped", showBack);
+          card.setAttribute("aria-pressed", showBack ? "true" : "false");
+          card.classList.remove("jump-target");
+          void card.offsetWidth;
+          card.classList.add("jump-target");
+          card.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest",
+          });
+          setTimeout(() => card.classList.remove("jump-target"), 1400);
+        });
+      }
+      function selectStory(id, scroll = true) {
+        if (!STORIES.some((s) => s.id === id)) return;
+        activeStoryId = id;
+        renderStory();
+        if (scroll)
+          requestAnimationFrame(() =>
+            document
+              .querySelector(".story-article")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+          );
+      }
+      function renderStoryNavigation() {
+        const addButtons = (container, stories) => {
+          container.replaceChildren();
+          stories.forEach((story) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "story-level available";
+            button.textContent = storyDisplayLabel(story.level);
+            button.classList.toggle("active", story.id === activeStoryId);
+            button.setAttribute(
+              "aria-current",
+              story.id === activeStoryId ? "true" : "false",
+            );
+            button.addEventListener("click", () => selectStory(story.id));
+            container.append(button);
+          });
+        };
+        addButtons(
+          els.gradeStoryLevels,
+          STORIES.filter((s) => s.category === "학년별"),
+        );
+        addButtons(
+          els.jlptStoryLevels,
+          STORIES.filter((s) => s.category === "JLPT"),
+        );
+      }
+      function renderStory() {
+        const story = STORIES.find((s) => s.id === activeStoryId);
+        const version = story?.versions?.[0];
+        renderStoryNavigation();
+        els.storyTitle.textContent = story?.title || "";
+        if (!version || !text(version.body)) {
+          els.storyCopy.innerHTML =
+            '<div class="story-empty">등록된 스토리가 없습니다.</div>';
+          return;
+        }
+        els.storyCopy.replaceChildren();
+        text(version.body)
+          .split(/\n+/)
+          .filter(Boolean)
+          .forEach((line) => {
+            const p = document.createElement("p");
+            if (/^[“‘"']/.test(line)) p.className = "story-quote";
+            appendLinkedCharacters(p, line, "", "story");
+            els.storyCopy.append(p);
+          });
+      }
+
+      const gameState = {
+        pool: [],
+        questions: [],
+        wrong: [],
+        index: 0,
+        score: 0,
+        answered: false,
+        finished: false,
+      };
+      function shuffled(items) {
+        const copy = items.slice();
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+      }
+      function getGamePool() {
+        const grade = els.gameGrade.value,
+          jlpt = els.gameJlpt.value;
+        return DATA.filter((d) => {
+          const meaning = text(d["훈, 음"]);
+          return (
+            text(d["한자"]) &&
+            meaning &&
+            text(d["학년"]) !== "참고" &&
+            (!grade || text(d["학년"]) === grade) &&
+            (!jlpt || text(d["등급"]) === jlpt)
+          );
+        });
+      }
+      function makeGameChoices(question) {
+        const correct = text(question["훈, 음"]),
+          labels = [correct];
+        shuffled(gameState.pool).some((d) => {
+          const label = text(d["훈, 음"]);
+          if (
+            label &&
+            text(d["한자"]) !== text(question["한자"]) &&
+            !labels.includes(label)
+          )
+            labels.push(label);
+          return labels.length === 4;
+        });
+        return shuffled(labels);
+      }
+      function renderGameQuestion() {
+        const question = gameState.questions[gameState.index];
+        if (!question) return;
+        gameState.answered = false;
+        gameState.finished = false;
+        els.gameQuestion.classList.remove("result");
+        els.gameQuestionLabel.textContent = "";
+        els.gameQuestionLabel.hidden = true;
+        els.gameGlyph.textContent = text(question["한자"]);
+        els.gamePicture.hidden = false;
+        els.gameProgress.textContent = `${gameState.index + 1} / ${gameState.questions.length}`;
+        els.gameScore.textContent = gameState.score;
+        els.gameProgressBar.style.width = `${((gameState.index + 1) / gameState.questions.length) * 100}%`;
+        els.gameFeedback.textContent = "";
+        els.gameMistakes.hidden = true;
+        els.gameMistakesList.replaceChildren();
+        els.gameChoices.hidden = false;
+        els.gameChoices.replaceChildren();
+        els.gameNext.hidden = true;
+        els.gameNext.textContent =
+          gameState.index === gameState.questions.length - 1
+            ? "결과 보기"
+            : "다음 문제";
+        els.gameSettingsButton.hidden = true;
+        const correct = text(question["훈, 음"]);
+        makeGameChoices(question).forEach((label) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "game-choice";
+          button.textContent = label;
+          button.addEventListener("click", () => {
+            if (gameState.answered) return;
+            gameState.answered = true;
+            const right = label === correct;
+            if (right) gameState.score++;
+            else gameState.wrong.push(question);
+            [...els.gameChoices.children].forEach((choice) => {
+              choice.disabled = true;
+              if (choice.textContent === correct)
+                choice.classList.add("correct");
+            });
+            if (!right) button.classList.add("wrong");
+            els.gameScore.textContent = gameState.score;
+            els.gameFeedback.textContent = right
+              ? "⭕️ | 정답입니다."
+              : `❌ | 정답은 ‘${correct}’입니다.`;
+            els.gameNext.hidden = false;
+            els.gameNext.focus();
+          });
+          els.gameChoices.append(button);
+        });
+      }
+      function showGameResult() {
+        gameState.finished = true;
+        els.gameQuestion.classList.add("result");
+        els.gameQuestionLabel.textContent = "게임 완료";
+        els.gameQuestionLabel.hidden = false;
+        const rate = Math.round(
+          (gameState.score / gameState.questions.length) * 100,
+        );
+        els.gameGlyph.textContent = `${gameState.score}문제를 맞혔습니다. (정답률 ${rate}%)`;
+        els.gamePicture.hidden = true;
+        els.gameProgress.textContent = `${gameState.questions.length} / ${gameState.questions.length}`;
+        els.gameProgressBar.style.width = "100%";
+        els.gameChoices.hidden = true;
+        els.gameFeedback.textContent = "";
+        els.gameMistakes.hidden = false;
+        els.gameMistakesList.replaceChildren();
+        els.gameMistakesTitle.textContent = gameState.wrong.length
+          ? `틀린 한자 ${gameState.wrong.length}자`
+          : "틀린 한자가 없습니다.";
+        gameState.wrong.forEach((d) => {
+          const item = document.createElement("div");
+          item.className = "game-mistake";
+          const info = document.createElement("div");
+          info.className = "game-mistake-info";
+          const glyph = document.createElement("div");
+          glyph.className = "game-mistake-glyph";
+          glyph.textContent = text(d["한자"]);
+          const meaning = document.createElement("div");
+          meaning.className = "game-mistake-meaning";
+          meaning.textContent = text(d["훈, 음"]);
+          const detailButton = document.createElement("button");
+          detailButton.type = "button";
+          detailButton.className = "game-mistake-detail";
+          detailButton.textContent = "자세히\n보기";
+          detailButton.setAttribute(
+            "aria-label",
+            `${text(d["한자"])} 자세히 보기`,
+          );
+          detailButton.addEventListener("click", () =>
+            openKanjiDetail(text(d["한자"]), detailButton),
+          );
+          info.append(glyph, meaning);
+          item.append(info, detailButton);
+          els.gameMistakesList.append(item);
+        });
+        els.gameNext.textContent = "같은 조건으로 다시";
+        els.gameNext.hidden = false;
+        els.gameSettingsButton.hidden = false;
+      }
+      function startGame() {
+        const pool = getGamePool(),
+          count = Math.min(Number(els.gameCount.value) || 10, pool.length);
+        if (pool.length < 4) {
+          els.gamePlay.hidden = false;
+          els.gameFeedback.textContent =
+            "조건에 맞는 한자가 부족합니다. 다른 학년이나 JLPT를 선택해 주세요.";
+          return;
+        }
+        gameState.pool = pool;
+        gameState.questions = shuffled(pool).slice(0, count);
+        gameState.wrong = [];
+        gameState.index = 0;
+        gameState.score = 0;
+        els.gameSetup.hidden = true;
+        els.gamePlay.hidden = false;
+        renderGameQuestion();
+      }
+      function returnToGameSettings() {
+        els.gamePlay.hidden = true;
+        els.gameSetup.hidden = false;
+        els.gameFeedback.textContent = "";
+        els.gameMistakes.hidden = true;
+      }
+      els.navKanji.addEventListener("click", () => setSection("kanji"));
+      els.navStory.addEventListener("click", () => {
+        setSection("story");
+        requestAnimationFrame(() =>
+          window.scrollTo({ top: 0, behavior: "smooth" }),
+        );
+      });
+      els.navGame.addEventListener("click", () => setSection("game"));
+      els.gameStart.addEventListener("click", startGame);
+      els.gamePicture.addEventListener("click", () => {
+        const question = gameState.questions[gameState.index];
+        if (question && !gameState.finished)
+          openImageViewer(question, els.gamePicture);
+      });
+      els.gameNext.addEventListener("click", () => {
+        if (gameState.finished) {
+          startGame();
+          return;
+        }
+        gameState.index++;
+        if (gameState.index >= gameState.questions.length) showGameResult();
+        else renderGameQuestion();
+      });
+      els.gameSettingsButton.addEventListener("click", returnToGameSettings);
+      popover.go.addEventListener("click", () => {
+        if (popoverKanji) openKanjiDetail(popoverKanji);
+      });
+      popover.root.addEventListener("mouseenter", () =>
+        clearTimeout(popoverCloseTimer),
+      );
+      popover.root.addEventListener("mouseleave", schedulePopoverClose);
+      document.addEventListener("pointerdown", (e) => {
+        if (
+          !popover.root.hidden &&
+          !popover.root.contains(e.target) &&
+          !e.target.closest(".kanji-link")
+        )
+          hideKanjiPopover();
+      });
+      detail.close.addEventListener("click", closeKanjiDetail);
+      detail.back.addEventListener("click", goBackKanjiDetail);
+      detail.overlay.addEventListener("click", (e) => {
+        if (e.target === detail.overlay) closeKanjiDetail();
+      });
+      imageViewer.close.addEventListener("click", closeImageViewer);
+      imageViewer.overlay.addEventListener("click", (e) => {
+        if (
+          e.target === imageViewer.overlay ||
+          e.target.classList.contains("image-stage")
+        )
+          closeImageViewer();
+      });
+      ["contextmenu", "dragstart", "selectstart"].forEach((type) =>
+        imageViewer.overlay.addEventListener(type, (e) => e.preventDefault()),
+      );
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+          e.preventDefault();
+          return;
+        }
+        if (e.key !== "Escape") return;
+        if (!imageViewer.overlay.hidden) closeImageViewer();
+        else if (!detail.overlay.hidden) closeKanjiDetail();
+        else if (!popover.root.hidden) {
+          const anchor = popoverAnchor;
+          hideKanjiPopover();
+          anchor?.focus();
+        }
+      });
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (!popover.root.hidden) hideKanjiPopover();
+        },
+        { passive: true },
+      );
+      window.addEventListener("resize", () => {
+        if (!popover.root.hidden && popoverAnchor)
+          positionKanjiPopover(popoverAnchor);
+      });
+
+      function searchable(d) {
+        return [d["한자"], d["훈, 음"], d["훈"], d["음"]]
+          .map(text)
+          .join(" ")
+          .toLowerCase();
+      }
+      function matchesSearch(d, q) {
+        if (!q) return true;
+        const strokeQuery = q.match(/^(\d+)\s*획?$/);
+        if (strokeQuery) return numberOrInf(d["획"]) === Number(strokeQuery[1]);
+        return searchable(d).includes(q);
+      }
+      function apply() {
+        const q = els.search.value.trim().toLowerCase();
+        const g = els.grade.value;
+        const j = els.jlpt.value;
+        const sortMode = els.sort.value;
+        const isMinistry = sortMode === "ministry";
+        const base = isMinistry
+          ? DATA.filter((d) => Number.isFinite(numberOrInf(d["문부성"])))
+          : DATA;
+        const filtered = base.filter(
+          (d) =>
+            matchesSearch(d, q) &&
+            (!g || text(d["학년"]) === g) &&
+            (!j || text(d["등급"]) === j),
+        );
+        if (sortMode !== "strokes") selectedStroke = null;
+        if (sortMode !== "sound") selectedSound = null;
+        if (sortMode === "strokes" && selectedStroke !== null)
+          view = filtered.filter(
+            (d) => numberOrInf(d["획"]) === selectedStroke,
+          );
+        else if (sortMode === "sound" && selectedSound !== null)
+          view = filtered.filter((d) => soundGroup(d["음"]) === selectedSound);
+        else view = filtered.slice();
+        const sorters = {
+          memory: (a, b) => numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
+          ministry: (a, b) =>
+            numberOrInf(a["문부성"]) - numberOrInf(b["문부성"]) ||
+            numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
+          strokes: (a, b) =>
+            numberOrInf(a["획"]) - numberOrInf(b["획"]) ||
+            compareKorean(a["음"], b["음"]) ||
+            compareKorean(a["훈"], b["훈"]) ||
+            numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
+          sound: (a, b) =>
+            compareKorean(a["음"], b["음"]) ||
+            compareKorean(a["훈"], b["훈"]) ||
+            numberOrInf(a["획"]) - numberOrInf(b["획"]) ||
+            numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
+        };
+        view.sort(sorters[sortMode] || sorters.memory);
+        rendered = 0;
+        els.grid.replaceChildren();
+        els.resultCount.textContent = view.length.toLocaleString("ko-KR");
+        const sortLabel =
+          {
+            memory: "마나보 추천순",
+            ministry: "상용한자순",
+            strokes: "획순",
+            sound: "가나다순",
+          }[sortMode] || "마나보 추천순";
+        if (sortMode === "strokes" && selectedStroke !== null)
+          els.sortLabel.textContent = `${sortLabel} · ${selectedStroke}획`;
+        else if (sortMode === "sound" && selectedSound !== null)
+          els.sortLabel.textContent = `${sortLabel} · ${selectedSound}`;
+        else els.sortLabel.textContent = sortLabel;
+        renderSortIndex(sortMode, filtered);
+        if (!view.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "조건에 맞는 한자가 없습니다.";
+          els.grid.append(empty);
+          els.sentinel.textContent = "";
+          return;
+        }
+        appendBatch();
+      }
+
+      function createCard(d, isDetail = false) {
+        const card = document.createElement("article");
+        card.className = isDetail ? "card detail-card" : "card";
+        card.dataset.kanji = text(d["한자"]);
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        card.setAttribute("aria-label", `${text(d["한자"])} 카드 뒤집기`);
+        card.setAttribute("aria-pressed", "false");
+        const inner = document.createElement("div");
+        inner.className = "card-inner";
+
+        const front = document.createElement("section");
+        front.className = "face front";
+        const glyph = document.createElement("div");
+        glyph.className = "glyph";
+        glyph.textContent = text(d["한자"]);
+        const meaning = document.createElement("div");
+        meaning.className = "front-meaning";
+        meaning.textContent = text(d["훈, 음"]);
+        front.append(glyph, meaning);
+
+        const back = document.createElement("section");
+        back.className = "face back";
+        const visual = document.createElement("div");
+        visual.className = "visual";
+        visual.addEventListener("contextmenu", (e) => e.preventDefault());
+        visual.addEventListener("dragstart", (e) => e.preventDefault());
+        const fallback = document.createElement("div");
+        fallback.className = "fallback";
+        fallback.textContent = text(d["한자"]);
+        visual.append(fallback);
+        const urls = imageCandidates(d["이미지 1"]);
+        if (urls.length) {
+          const img = document.createElement("img");
+          img.alt = `${text(d["한자"])} 암기 이미지`;
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.draggable = false;
+          let attempt = 0;
+          img.addEventListener("load", () => fallback.remove());
+          img.addEventListener("error", () => {
+            attempt++;
+            if (attempt < urls.length) {
+              img.src = urls[attempt];
+            } else {
+              img.remove();
+            }
+          });
+          img.src = urls[0];
+          visual.append(img);
+        }
+        visual.tabIndex = 0;
+        visual.setAttribute("role", "button");
+        visual.setAttribute("aria-label", `${text(d["한자"])} 카드 앞면 보기`);
+        visual.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!card.classList.contains("detail-card")) toggle();
+        });
+        visual.addEventListener("keydown", (e) => {
+          if (
+            !card.classList.contains("detail-card") &&
+            e.target === visual &&
+            (e.key === "Enter" || e.key === " ")
+          ) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggle();
+          }
+        });
+        const detailButton = document.createElement("button");
+        detailButton.type = "button";
+        detailButton.className = "card-detail-button";
+        detailButton.textContent = "한자 자세히 보기";
+        detailButton.setAttribute(
+          "aria-label",
+          `${text(d["한자"])} 한자 자세히 보기`,
+        );
+        detailButton.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!card.classList.contains("detail-card"))
+            openKanjiDetail(text(d["한자"]), detailButton);
+        });
+        visual.append(detailButton);
+        const body = document.createElement("div");
+        body.className = "back-body";
+        const chips = document.createElement("div");
+        chips.className = "chips";
+        [
+          text(d["학년"]),
+          text(d["등급"]),
+          text(d["획"]) ? `${text(d["획"])}획` : "",
+        ]
+          .filter(Boolean)
+          .forEach((v) => {
+            const c = document.createElement("span");
+            c.className = "chip";
+            c.textContent = displayLabel(v);
+            chips.append(c);
+          });
+        if (chips.childElementCount) body.append(chips);
+        const strokeOrderUrls = imageCandidates(d["획순 이미지"]);
+        if (isDetail && strokeOrderUrls.length) {
+          const section = document.createElement("div");
+          section.className = "info-section stroke-order-info";
+          const frame = document.createElement("div");
+          frame.className = "stroke-order-frame";
+          const img = document.createElement("img");
+          img.className = "stroke-order-image";
+          img.alt = `${text(d["한자"])} 획순`;
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.draggable = false;
+          let attempt = 0;
+          img.addEventListener("error", () => {
+            attempt++;
+            if (attempt < strokeOrderUrls.length) {
+              img.src = strokeOrderUrls[attempt];
+            } else {
+              section.remove();
+            }
+          });
+          img.src = strokeOrderUrls[0];
+          frame.append(img);
+          section.append(frame);
+          body.append(section);
+        }
+        if (text(d["풀이"])) {
+          const l = document.createElement("div");
+          l.className = "info-section mnemonic-info";
+          l.innerHTML = '<div class="section-label">암기 풀이</div>';
+          const p = document.createElement("div");
+          p.className = "desc";
+          appendMnemonicText(p, d["풀이"], text(d["한자"]));
+          l.append(p);
+          body.append(l);
+        }
+        const readingRows = parseReadings(d["발음"]);
+        if (readingRows.length) {
+          const l = document.createElement("div");
+          l.className = "info-section reading-info";
+          l.innerHTML = '<div class="section-label">읽기</div>';
+          const groups = document.createElement("div");
+          groups.className = "reading-groups";
+          readingRows.forEach((r) => {
+            const row = document.createElement("div");
+            row.className = "reading-row";
+            const type = document.createElement("span");
+            type.className = "reading-type";
+            type.textContent = r.label;
+            const value = document.createElement("span");
+            value.className = "reading-value";
+            value.textContent = r.value;
+            row.append(type, value);
+            groups.append(row);
+          });
+          l.append(groups);
+          body.append(l);
+        }
+        const exGroups = parseExamples(d["예시단어"]);
+        if (exGroups.length) {
+          const l = document.createElement("div");
+          l.className = "info-section examples-info";
+          l.innerHTML = '<div class="section-label">예시 단어</div>';
+          const wrap = document.createElement("div");
+          wrap.className = "example-groups";
+          exGroups.forEach((g) => {
+            const group = document.createElement("div");
+            group.className = "example-group";
+            const heading = document.createElement("div");
+            heading.className = "example-heading";
+            const type = document.createElement("span");
+            type.className = "example-type";
+            type.textContent = g.label;
+            heading.append(type);
+            const list = document.createElement("div");
+            list.className = "example-list";
+            appendExampleText(list, g.items.join("\n"), text(d["한자"]));
+            group.append(heading, list);
+            wrap.append(group);
+          });
+          l.append(wrap);
+          body.append(l);
+        }
+        back.append(visual, body);
+        inner.append(front, back);
+        card.append(inner);
+        const toggle = () => {
+          card.classList.toggle("flipped");
+          card.setAttribute(
+            "aria-pressed",
+            card.classList.contains("flipped") ? "true" : "false",
+          );
+        };
+        card.addEventListener("click", (e) => {
+          if (card.classList.contains("detail-card")) return;
+          toggle();
+        });
+        card.addEventListener("keydown", (e) => {
+          if (
+            !card.classList.contains("detail-card") &&
+            (e.key === "Enter" || e.key === " ")
+          ) {
+            e.preventDefault();
+            toggle();
+          }
+        });
+        return card;
+      }
+      function appendBatch() {
+        if (rendered >= view.length) {
+          els.sentinel.textContent = "";
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        view
+          .slice(rendered, rendered + BATCH)
+          .forEach((d) => frag.append(createCard(d)));
+        els.grid.append(frag);
+        rendered = Math.min(rendered + BATCH, view.length);
+        els.sentinel.textContent =
+          rendered < view.length
+            ? `${rendered.toLocaleString("ko-KR")} / ${view.length.toLocaleString("ko-KR")} · 아래로 내려 더 보기`
+            : "";
+      }
+
+      let timer;
+      els.search.addEventListener("input", () => {
+        clearTimeout(timer);
+        timer = setTimeout(apply, 120);
+      });
+      [els.grade, els.jlpt].forEach((el) =>
+        el.addEventListener("change", apply),
+      );
+      els.sort.addEventListener("change", () => {
+        selectedStroke = null;
+        selectedSound = null;
+        apply();
+      });
+      els.reset.addEventListener("click", () => {
+        els.search.value = "";
+        els.grade.value = "";
+        els.jlpt.value = "";
+        els.sort.value = "memory";
+        selectedStroke = null;
+        selectedSound = null;
+        apply();
+      });
+      new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) appendBatch();
+        },
+        { rootMargin: "700px 0px" },
+      ).observe(els.sentinel);
+
+      const scrollTopButton = document.getElementById("scrollTop");
+      const updateScrollTopButton = () =>
+        scrollTopButton.classList.toggle("visible", window.scrollY > 480);
+      window.addEventListener("scroll", updateScrollTopButton, {
+        passive: true,
+      });
+      scrollTopButton.addEventListener("click", () =>
+        window.scrollTo({ top: 0, behavior: "smooth" }),
+      );
+      updateScrollTopButton();
+
+      async function bootstrap() {
+        await loadSheetsData();
+        populateFilters();
+        renderStory();
+        apply();
+        const requestedKanji = decodeURIComponent(
+          (location.hash.match(/^#kanji=(.*)$/) || [])[1] || "",
+        );
+        if (requestedKanji && KANJI_SET.has(requestedKanji)) {
+          requestAnimationFrame(() => navigateToKanji(requestedKanji, true));
+        }
+      }
+      bootstrap();
+    </script>
   </body>
 </html>
