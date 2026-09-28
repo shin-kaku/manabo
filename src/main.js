@@ -1,5 +1,3 @@
-      const SHEETS_API_URL =
-        "https://script.google.com/macros/s/AKfycbwSHvHRn3Tu1iUIS6daXvI6tBPFL1bgPFN5U7wttCvw41mNOBvgK3tCSgN0d9yT4uum/exec";
       let DATA = [];
       const els = {
         grid: document.getElementById("grid"),
@@ -102,66 +100,6 @@
           "";
         rebuildDataIndexes();
         document.documentElement.dataset.dataSource = "saved";
-      }
-      function loadJsonp(url) {
-        return new Promise((resolve, reject) => {
-          const callback = `__manaboSheets_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-          const script = document.createElement("script");
-          const timer = setTimeout(
-            () => finish(new Error("스프레드시트 응답 시간이 초과되었습니다.")),
-            15000,
-          );
-          function cleanup() {
-            clearTimeout(timer);
-            delete window[callback];
-            script.remove();
-          }
-          function finish(error, data) {
-            cleanup();
-            error ? reject(error) : resolve(data);
-          }
-          window[callback] = (data) => finish(null, data);
-          script.onerror = () =>
-            finish(new Error("스프레드시트 데이터를 불러오지 못했습니다."));
-          const separator = url.includes("?") ? "&" : "?";
-          script.src = `${url}${separator}callback=${encodeURIComponent(callback)}&_=${Date.now()}`;
-          document.head.append(script);
-        });
-      }
-      async function loadSheetsData() {
-        const url = text(SHEETS_API_URL);
-        if (!url) {
-          document.documentElement.dataset.dataSource = "saved";
-          return false;
-        }
-        try {
-          const payload = await loadJsonp(url);
-          if (
-            !payload ||
-            payload.ok === false ||
-            !Array.isArray(payload.kanji) ||
-            payload.kanji.length < 1 ||
-            !Array.isArray(payload.stories) ||
-            payload.stories.length < 1
-          ) {
-            throw new Error(
-              payload?.error || "스프레드시트 데이터 형식이 올바르지 않습니다.",
-            );
-          }
-          DATA = payload.kanji;
-          STORIES = payload.stories;
-          activeStoryId =
-            STORIES.find((s) => s.category === "학년별")?.id ||
-            STORIES[0]?.id ||
-            "";
-          rebuildDataIndexes();
-          document.documentElement.dataset.dataSource = "sheets";
-          return true;
-        } catch (error) {
-          console.warn("[마나보] 저장된 데이터를 사용합니다.", error);
-          document.documentElement.dataset.dataSource = "saved";
-          return false;
-        }
       }
       const numberOrInf = (v) => {
         const s = text(v);
