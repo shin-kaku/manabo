@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>마나보: 일본어 한자 도감</title>
+    <title>한자 도감 | 마나보</title>
     <meta
       name="description"
-      content="한자 도감, 독해, 문제 풀이로 일본어 한자를 익히는 학습 사이트입니다."
+      content="그림과 암기 풀이로 한자를 기억하고, 독해와 문제 풀이로 복습하는 일본어 한자 학습 사이트입니다."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="마나보: 일본어 한자 도감" />
+    <meta property="og:title" content="마나보: 그림으로 배우는 일본어 한자 공부" />
     <meta
       property="og:description"
-      content="한자 도감, 독해, 문제 풀이로 일본어 한자를 익히는 학습 사이트입니다."
+      content="그림과 암기 풀이로 한자를 기억하고, 독해와 문제 풀이로 복습하는 일본어 한자 학습 사이트입니다."
     />
     <meta name="theme-color" content="#bc002d" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -23,11 +23,22 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/site-info.css" />
   </head>
   <body>
     <div class="wrap">
-      <header>
-        <h1>마나보: 일본어 한자</h1>
+      <header class="site-header">
+        <h1><a class="brand-link" href="/"><img class="brand-icon" src="/favicon.svg" alt="" width="36" height="36" /><span>마나보: 그림으로 배우는 일본어 한자 공부</span></a></h1>
+      
+        <details class="site-info-menu">
+          <summary>사이트 안내</summary>
+          <nav class="header-info-links" aria-label="상단 사이트 안내">
+            <a href="/about/">사이트 소개</a>
+            <a href="/privacy-policy/">개인정보처리방침</a>
+            <a href="/copyright/">저작권 및 이용 안내</a>
+            <a href="/contact/">문의</a>
+          </nav>
+        </details>
       </header>
       <div class="site-nav-wrap">
         <nav class="site-nav" aria-label="콘텐츠 전환">
@@ -190,6 +201,16 @@
           </div>
         </div>
       </section>
+      <footer class="site-footer">
+        <p>마나보 · 한자 도감, 독해, 문제 풀이로 이어지는 일본어 한자 공부</p>
+        <nav class="footer-links" aria-label="사이트 안내">
+          <a href="/about/">사이트 소개</a>
+          <a href="/privacy-policy/">개인정보처리방침</a>
+          <a href="/copyright/">저작권 및 이용 안내</a>
+          <a href="/contact/">문의</a>
+        </nav>
+        <p>© <span data-copyright-year>2026</span> 마나보. 자체 제작 콘텐츠의 무단 전재 및 재배포 금지.</p>
+      </footer>
     </div>
 
     <button
@@ -266,5 +287,6 @@
     </div>
 
     <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/site-info.js"></script>
   </body>
 </html>

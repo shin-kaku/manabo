@@ -572,7 +572,7 @@
         if (!popover.root.hidden) hideKanjiPopover();
         const story = section === "story";
         const game = section === "game";
-        document.title = `마나보: 일본어 ${story ? "한자 독해" : game ? "한자 문제" : "한자 도감"}`;
+        document.title = `${story ? "한자 독해" : game ? "한자 문제" : "한자 도감"} | 마나보`;
         els.kanjiView.hidden = story || game;
         els.storyView.hidden = !story;
         els.gameView.hidden = !game;
@@ -1105,7 +1105,7 @@
         [
           text(d["학년"]),
           text(d["등급"]),
-          text(d["획"]) ? `${text(d["획"])}획` : "",
+          !isDetail && text(d["획"]) ? `${text(d["획"])}획` : "",
         ]
           .filter(Boolean)
           .forEach((v) => {
@@ -1114,31 +1114,52 @@
             c.textContent = displayLabel(v);
             chips.append(c);
           });
-        if (chips.childElementCount) body.append(chips);
+        if (chips.childElementCount) {
+          if (isDetail) {
+            chips.classList.add("detail-image-meta");
+            visual.append(chips);
+          } else body.append(chips);
+        }
         const strokeOrderUrls = imageCandidates(d["획순 이미지"]);
-        if (isDetail && strokeOrderUrls.length) {
+        const strokeCount = text(d["획"]);
+        if (isDetail && (strokeOrderUrls.length || strokeCount)) {
           const section = document.createElement("div");
           section.className = "info-section stroke-order-info";
-          const frame = document.createElement("div");
-          frame.className = "stroke-order-frame";
-          const img = document.createElement("img");
-          img.className = "stroke-order-image";
-          img.alt = `${text(d["한자"])} 획순`;
-          img.loading = "lazy";
-          img.decoding = "async";
-          img.draggable = false;
-          let attempt = 0;
-          img.addEventListener("error", () => {
-            attempt++;
-            if (attempt < strokeOrderUrls.length) {
-              img.src = strokeOrderUrls[attempt];
-            } else {
-              section.remove();
-            }
-          });
-          img.src = strokeOrderUrls[0];
-          frame.append(img);
-          section.append(frame);
+          if (strokeOrderUrls.length) {
+            const frame = document.createElement("div");
+            frame.className = "stroke-order-frame";
+            const img = document.createElement("img");
+            img.className = "stroke-order-image";
+            img.alt = `${text(d["한자"])} 획순`;
+            img.loading = "lazy";
+            img.decoding = "async";
+            img.draggable = false;
+            let attempt = 0;
+            img.addEventListener("error", () => {
+              attempt++;
+              if (attempt < strokeOrderUrls.length) {
+                img.src = strokeOrderUrls[attempt];
+              } else {
+                frame.remove();
+                if (!strokeCount) section.remove();
+              }
+            });
+            img.src = strokeOrderUrls[0];
+            frame.append(img);
+            section.append(frame);
+          }
+          if (strokeCount) {
+            const count = document.createElement("div");
+            count.className = "stroke-count-info";
+            const label = document.createElement("div");
+            label.className = "section-label";
+            label.textContent = "총획수";
+            const value = document.createElement("div");
+            value.className = "desc";
+            value.textContent = `${strokeCount}획`;
+            count.append(label, value);
+            section.append(count);
+          }
           body.append(section);
         }
         if (text(d["풀이"])) {
@@ -1150,6 +1171,18 @@
           appendMnemonicText(p, d["풀이"], text(d["한자"]));
           l.append(p);
           body.append(l);
+        }
+        if (isDetail && text(d["훈, 음"])) {
+          const section = document.createElement("div");
+          section.className = "info-section korean-reading-info";
+          const label = document.createElement("div");
+          label.className = "section-label";
+          label.textContent = "한국한자";
+          const value = document.createElement("div");
+          value.className = "desc";
+          value.textContent = text(d["훈, 음"]);
+          section.append(label, value);
+          body.append(section);
         }
         const readingRows = parseReadings(d["발음"]);
         if (readingRows.length) {
@@ -1198,7 +1231,22 @@
           l.append(wrap);
           body.append(l);
         }
-        back.append(visual, body);
+        const hasLinkedKanji = Boolean(body.querySelector(".kanji-link"));
+        const learningPanel = isDetail ? document.createElement("div") : null;
+        const mnemonic = body.querySelector(".mnemonic-info");
+        if (learningPanel) {
+          learningPanel.className = "detail-learning-panel";
+          learningPanel.append(visual);
+          if (mnemonic) learningPanel.append(mnemonic);
+        }
+        if (isDetail && hasLinkedKanji) {
+          const guide = document.createElement("p");
+          guide.className = "detail-link-guide";
+          guide.textContent =
+            "모르는 한자를 눌러 뜻과 정보를 확인해 보세요.";
+          body.prepend(guide);
+        }
+        back.append(learningPanel || visual, body);
         inner.append(front, back);
         card.append(inner);
         const toggle = () => {
