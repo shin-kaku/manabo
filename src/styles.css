@@ -491,14 +491,17 @@
           box-shadow 0.18s ease;
       }
       .card-detail-button:hover,
-      .card-detail-button:focus-visible {
+      .card-detail-button:focus-visible,
+      .detail-image-meta button.chip:hover,
+      .detail-image-meta button.chip:focus-visible {
         border-color: var(--accent);
         background: var(--accent);
         color: #fff;
         box-shadow: 0 5px 16px rgba(188, 0, 45, 0.24);
         outline: none;
       }
-      .card-detail-button:active {
+      .card-detail-button:active,
+      .detail-image-meta button.chip:active {
         background: #990025;
         border-color: #990025;
         box-shadow: none;
@@ -576,7 +579,7 @@
       .example-list {
         font-size: 17px;
         line-height: 1.72;
-        color: #55534d;
+        color: var(--ink);
         white-space: pre-line;
         word-break: keep-all;
       }
@@ -592,6 +595,28 @@
         color: inherit;
         cursor: pointer;
         border-radius: 0;
+      }
+      .related-kanji-groups {
+        display: grid;
+        gap: 8px;
+        font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+        font-size: 17.5px;
+        line-height: 1.62;
+      }
+      .related-kanji-group {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr);
+        gap: 12px;
+        align-items: baseline;
+      }
+      .related-kanji-component {
+        color: #77746d;
+        font-weight: 400;
+      }
+      .related-kanji-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 12px;
       }
       .kanji-link:hover,
       .kanji-link:focus-visible {
@@ -1362,6 +1387,7 @@
       .detail-card .visual {
         width: 100%;
         height: auto;
+        margin-block: auto;
         aspect-ratio: 1/1;
         border-bottom: 0;
         border-right: 0;
@@ -1376,6 +1402,14 @@
       }
       .detail-image-meta .chip {
         background: rgba(251, 250, 246, 0.95);
+      }
+      .detail-image-meta button.chip {
+        font-family: inherit;
+        cursor: pointer;
+        transition:
+          background 0.18s ease,
+          color 0.18s ease,
+          box-shadow 0.18s ease;
       }
       .detail-card .visual img {
         background: var(--bg);
@@ -1736,6 +1770,9 @@
           column-gap: 6px;
           font-size: 14.5px;
         }
+        .related-kanji-groups {
+          font-size: 14.5px;
+        }
         .reading-type,
         .example-type {
           font-size: 10.8px;
@@ -1788,6 +1825,7 @@
         }
         .detail-card .visual {
           height: auto;
+          margin-block: 0;
           aspect-ratio: 1/1;
           border-right: 0;
           border-bottom: 0;

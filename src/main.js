@@ -70,9 +70,32 @@
           .replace(/^고교(?=\s|$)/, "고등학교");
       let KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
       let KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
+      let RELATED_KANJI = new Map();
+      function mnemonicComponents(raw) {
+        const components = new Set();
+        for (const match of text(raw).matchAll(/[（(]([^()（）]+)[）)]/g)) {
+          for (const ch of match[1]) {
+            if (/\p{Script=Han}/u.test(ch)) components.add(ch);
+          }
+        }
+        return [...components];
+      }
       function rebuildDataIndexes() {
         KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
         KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
+        RELATED_KANJI = new Map();
+        const ordered = DATA.slice().sort(
+          (a, b) => numberOrInf(a["획"]) - numberOrInf(b["획"]) ||
+            numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
+        );
+        for (const d of ordered) {
+          const ch = text(d["한자"]);
+          if (!ch) continue;
+          for (const component of mnemonicComponents(d["풀이"])) {
+            if (!RELATED_KANJI.has(component)) RELATED_KANJI.set(component, new Set());
+            RELATED_KANJI.get(component).add(ch);
+          }
+        }
       }
       async function loadSavedData() {
         const [kanjiResponse, storiesResponse] = await Promise.all([
@@ -622,6 +645,21 @@
           setTimeout(() => card.classList.remove("jump-target"), 1400);
         });
       }
+      function navigateToKanjiFilter(filter, value) {
+        clearTimeout(timer);
+        closeKanjiDetail();
+        setSection("kanji");
+        els.search.value = "";
+        els.grade.value = "";
+        els.jlpt.value = "";
+        els.sort.value = "memory";
+        selectedStroke = null;
+        selectedSound = null;
+        els[filter].value = value;
+        history.replaceState(null, "", location.pathname + location.search);
+        apply();
+        els[filter].focus({ preventScroll: true });
+      }
       function selectStory(id, scroll = true) {
         if (!STORIES.some((s) => s.id === id)) return;
         activeStoryId = id;
@@ -1103,15 +1141,26 @@
         const chips = document.createElement("div");
         chips.className = "chips";
         [
-          text(d["학년"]),
-          text(d["등급"]),
-          !isDetail && text(d["획"]) ? `${text(d["획"])}획` : "",
+          { value: text(d["학년"]), filter: "grade" },
+          { value: text(d["등급"]), filter: "jlpt" },
+          { value: !isDetail && text(d["획"]) ? `${text(d["획"])}획` : "" },
         ]
-          .filter(Boolean)
-          .forEach((v) => {
-            const c = document.createElement("span");
+          .filter(({ value }) => Boolean(value))
+          .forEach(({ value, filter }) => {
+            const clickable = isDetail && filter &&
+              [...els[filter].options].some((option) => option.value === value);
+            const c = document.createElement(clickable ? "button" : "span");
             c.className = "chip";
-            c.textContent = displayLabel(v);
+            c.textContent = displayLabel(value);
+            if (clickable) {
+              c.type = "button";
+              c.setAttribute("aria-label", `${displayLabel(value)} 한자 모아 보기`);
+              c.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigateToKanjiFilter(filter, value);
+              });
+            }
             chips.append(c);
           });
         if (chips.childElementCount) {
@@ -1234,6 +1283,41 @@
           });
           l.append(wrap);
           body.append(l);
+        }
+        if (isDetail) {
+          const components = mnemonicComponents(d["풀이"]);
+          if (components.length) {
+            const section = document.createElement("div");
+            section.className = "info-section related-kanji-info";
+            section.innerHTML = '<div class="section-label">관련 한자</div>';
+            const groups = document.createElement("div");
+            groups.className = "related-kanji-groups";
+            for (const component of components) {
+              const group = document.createElement("div");
+              group.className = "related-kanji-group";
+              const label = document.createElement("div");
+              label.className = "related-kanji-component";
+              label.textContent = component;
+              const list = document.createElement("div");
+              list.className = "related-kanji-list";
+              const related = new Set([component, ...(RELATED_KANJI.get(component) || [])]);
+              for (const ch of related) {
+                if (ch === text(d["한자"])) continue;
+                const item = document.createElement("span");
+                item.className = "related-kanji-item";
+                item.append(makeKanjiLink(ch, text(d["한자"])));
+                list.append(item);
+              }
+              if (list.childElementCount) {
+                group.append(label, list);
+                groups.append(group);
+              }
+            }
+            if (groups.childElementCount) {
+              section.append(groups);
+              body.append(section);
+            }
+          }
         }
         const hasLinkedKanji = Boolean(body.querySelector(".kanji-link"));
         const learningPanel = isDetail ? document.createElement("div") : null;
