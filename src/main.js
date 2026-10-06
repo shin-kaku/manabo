@@ -1240,11 +1240,17 @@
           if (mnemonic) learningPanel.append(mnemonic);
         }
         if (isDetail && hasLinkedKanji) {
+          const examples = body.querySelector(".examples-info");
           const guide = document.createElement("p");
           guide.className = "detail-link-guide";
           guide.textContent =
             "모르는 한자를 눌러 뜻과 정보를 확인해 보세요.";
-          body.prepend(guide);
+          if (examples) {
+            const heading = document.createElement("div");
+            heading.className = "examples-section-heading";
+            heading.append(examples.querySelector(".section-label"), guide);
+            examples.prepend(heading);
+          }
         }
         back.append(learningPanel || visual, body);
         inner.append(front, back);
