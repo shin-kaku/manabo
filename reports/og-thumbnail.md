@@ -5,7 +5,7 @@
 - 로고 원본: `public/favicon.svg`의 Stick 글자와 포인트 컬러
 - 제작: 내장 image_gen 도구, compositing
 - 연결: 모든 페이지의 og:image 및 Twitter 큰 이미지 카드 설정
-- 공개 주소: https://manabo.no-type-shin.workers.dev/og-manabo-v2.png
+- 공개 주소: https://kanjimanabo.com/og-manabo-v2.png
 - 원본 이미지와 파비콘은 수정하지 않았습니다.
 
 ## 생성 프롬프트

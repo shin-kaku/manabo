@@ -17,7 +17,7 @@ export function writeStudyPages() {
       .replace(/(<meta\s+name="description"\s+content=")[^"]*("\s*\/>)/, `$1${page.description}$2`)
       .replace(/(<meta\s+property="og:title"\s+content=")[^"]*("\s*\/>)/, `$1마나보 | ${page.title}$2`)
       .replace(/(<meta\s+property="og:description"\s+content=")[^"]*("\s*\/>)/, `$1${page.description}$2`)
-      .replace(/(<meta\s+property="og:url"\s+content=")[^"]*("\s*\/>)/, `$1https://manabo.no-type-shin.workers.dev/${page.path}/$2`);
+      .replace(/(<meta\s+property="og:url"\s+content=")[^"]*("\s*\/>)/, `$1https://kanjimanabo.com/${page.path}/$2`);
     for (const candidate of studyPages) {
       const view = `${candidate.section === "story" ? "story" : candidate.section === "game" ? "game" : "kanji"}View`;
       html = html.replace(new RegExp(`(<section id="${view}" class="[^"]*")(?: hidden)?(>)`), `$1${candidate === page ? "" : " hidden"}$2`);
