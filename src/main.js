@@ -1122,7 +1122,8 @@
         }
         const strokeOrderUrls = imageCandidates(d["획순 이미지"]);
         const strokeCount = text(d["획"]);
-        if (isDetail && (strokeOrderUrls.length || strokeCount)) {
+        const koreanReading = text(d["훈, 음"]);
+        if (isDetail && (strokeOrderUrls.length || strokeCount || koreanReading)) {
           const section = document.createElement("div");
           section.className = "info-section stroke-order-info";
           if (strokeOrderUrls.length) {
@@ -1141,12 +1142,26 @@
                 img.src = strokeOrderUrls[attempt];
               } else {
                 frame.remove();
-                if (!strokeCount) section.remove();
+                if (!strokeCount && !koreanReading) section.remove();
               }
             });
             img.src = strokeOrderUrls[0];
             frame.append(img);
             section.append(frame);
+          }
+          const metadata = document.createElement("div");
+          metadata.className = "stroke-order-meta";
+          if (koreanReading) {
+            const reading = document.createElement("div");
+            reading.className = "korean-reading-info";
+            const label = document.createElement("div");
+            label.className = "section-label";
+            label.textContent = "한국한자";
+            const value = document.createElement("div");
+            value.className = "desc";
+            value.textContent = koreanReading;
+            reading.append(label, value);
+            metadata.append(reading);
           }
           if (strokeCount) {
             const count = document.createElement("div");
@@ -1158,8 +1173,9 @@
             value.className = "desc";
             value.textContent = `${strokeCount}획`;
             count.append(label, value);
-            section.append(count);
+            metadata.append(count);
           }
+          if (metadata.childElementCount) section.append(metadata);
           body.append(section);
         }
         if (text(d["풀이"])) {
@@ -1171,18 +1187,6 @@
           appendMnemonicText(p, d["풀이"], text(d["한자"]));
           l.append(p);
           body.append(l);
-        }
-        if (isDetail && text(d["훈, 음"])) {
-          const section = document.createElement("div");
-          section.className = "info-section korean-reading-info";
-          const label = document.createElement("div");
-          label.className = "section-label";
-          label.textContent = "한국한자";
-          const value = document.createElement("div");
-          value.className = "desc";
-          value.textContent = text(d["훈, 음"]);
-          section.append(label, value);
-          body.append(section);
         }
         const readingRows = parseReadings(d["발음"]);
         if (readingRows.length) {
@@ -1233,11 +1237,9 @@
         }
         const hasLinkedKanji = Boolean(body.querySelector(".kanji-link"));
         const learningPanel = isDetail ? document.createElement("div") : null;
-        const mnemonic = body.querySelector(".mnemonic-info");
         if (learningPanel) {
           learningPanel.className = "detail-learning-panel";
           learningPanel.append(visual);
-          if (mnemonic) learningPanel.append(mnemonic);
         }
         if (isDetail && hasLinkedKanji) {
           const examples = body.querySelector(".examples-info");

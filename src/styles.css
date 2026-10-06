@@ -436,15 +436,29 @@
         align-items: center;
         justify-content: flex-start;
         gap: 16px;
-        padding: 4px 0 10px;
+        padding: 0;
+      }
+      .stroke-order-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 0;
+      }
+      .stroke-order-meta .section-label {
+        margin-bottom: 6px;
       }
       .stroke-count-info {
         min-width: 0;
       }
+      .stroke-order-frame,
+      .stroke-order-meta {
+        font-size: 17.5px;
+        transform: translateX(-1.5em);
+      }
       .stroke-order-frame {
-        width: 120px;
-        height: 120px;
-        flex: 0 0 120px;
+        width: 168px;
+        height: 168px;
+        flex: 0 0 168px;
         display: grid;
         place-items: center;
         background: transparent;
@@ -452,8 +466,8 @@
       }
       .stroke-order-image {
         display: block;
-        width: 120px;
-        height: 120px;
+        width: 168px;
+        height: 168px;
         object-fit: contain;
         background: #fff;
       }
@@ -496,17 +510,13 @@
         font-size: 10.5px;
         line-height: 1.2;
         letter-spacing: 0.12em;
-        color: #8c8980;
+        color: #9a978e;
         text-transform: uppercase;
         margin: 0 0 10px;
       }
       .info-section + .info-section {
         border-top: 1px solid var(--line-dark);
         padding-top: 16px;
-      }
-      .stroke-order-info + .mnemonic-info {
-        border-top: 0;
-        padding-top: 10px;
       }
       .reading-groups {
         display: grid;
@@ -1357,9 +1367,6 @@
         border-right: 0;
         background: var(--bg);
       }
-      .detail-learning-panel .mnemonic-info {
-        padding: 24px 28px;
-      }
       .detail-image-meta {
         position: absolute;
         left: 12px;
@@ -1367,7 +1374,9 @@
         z-index: 2;
         max-width: calc(100% - 24px);
       }
-      .detail-image-meta .chip { background: #fff; }
+      .detail-image-meta .chip {
+        background: rgba(251, 250, 246, 0.95);
+      }
       .detail-card .visual img {
         background: var(--bg);
       }
@@ -1734,6 +1743,10 @@
         .desc {
           font-size: 14.5px;
         }
+        .stroke-order-frame,
+        .stroke-order-meta {
+          font-size: 14.5px;
+        }
         .example-list {
           font-size: 14px;
         }
@@ -1772,9 +1785,6 @@
           overflow: visible;
           border-right: 0;
           border-bottom: 1px solid var(--line-dark);
-        }
-        .detail-learning-panel .mnemonic-info {
-          padding: 24px 20px;
         }
         .detail-card .visual {
           height: auto;
