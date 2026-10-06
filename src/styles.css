@@ -1690,7 +1690,7 @@
           padding-bottom: 42px;
         }
         .glyph {
-          font-size: 108px;
+          font-size: clamp(72px, 23vw, 108px);
         }
         .front-meaning {
           bottom: 18px;
