@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>한자 도감 | 마나보</title>
+    <title>마나보 | 한자 도감</title>
     <meta
       name="description"
       content="그림과 암기 풀이로 한자를 기억하고, 독해와 문제 풀이로 복습하는 일본어 한자 학습 사이트입니다."
@@ -15,7 +15,7 @@
       content="그림과 암기 풀이로 한자를 기억하고, 독해와 문제 풀이로 복습하는 일본어 한자 학습 사이트입니다."
     />
     <meta name="theme-color" content="#bc002d" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.svg?v=stick-accent-20261007" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -28,7 +28,7 @@
   <body>
     <div class="wrap">
       <header class="site-header">
-        <h1><a class="brand-link" href="/"><img class="brand-icon" src="/favicon.svg" alt="" width="36" height="36" /><span>마나보: 그림으로 배우는 일본어 한자 공부</span></a></h1>
+        <h1><a class="brand-link" href="/"><img class="brand-icon" src="/favicon.svg?v=stick-accent-20261007" alt="" width="36" height="36" /><span class="brand-text"><span class="brand-name">마나보</span><span class="brand-subtitle">그림으로 배우는 일본어 한자 공부</span></span></a></h1>
       
         <details class="site-info-menu">
           <summary>사이트 안내</summary>
@@ -52,7 +52,6 @@
         </nav>
       </div>
 
-      <p class="study-page-intro">부수별 추천순으로 한자를 살펴보고, 직접 기획한 그림과 암기 풀이로 기억한 뒤 독해와 문제 풀이로 복습해 보세요.</p>
 
       <section id="kanjiView" class="kanji-view">
         <div class="toolbar-wrap">
@@ -93,7 +92,7 @@
             hidden
           ></nav>
           <div class="hint attention-text">
-            한자 카드를 누르면 정보를 확인할 수 있습니다.
+            <strong class="learning-action">한자 카드를 눌러</strong>, 그림과 암기 풀이로 일본어 한자를 익혀보세요.
           </div>
         </div>
 
@@ -114,6 +113,9 @@
             </div>
           </aside>
           <article class="story-article">
+            <div class="story-meta">
+              <p class="story-guide">학년·JLPT별 학습 글에서 문장 속 한자를 읽고, <strong class="learning-action">모르는 한자를 눌러</strong> 뜻과 정보를 확인해 보세요.</p>
+            </div>
             <h2 id="storyTitle" class="story-title"></h2>
             <div id="storyCopy" class="story-copy"></div>
           </article>
@@ -123,9 +125,9 @@
       <section id="gameView" class="game-view" hidden>
         <div class="game-shell">
           <p class="game-description">
-            학년이나 JLPT 단계를 고른 뒤 4개의 보기에서 정답을 선택합니다.
+            <strong class="learning-action">학년·JLPT별로 범위를 정해</strong>, 한자의 뜻과 음을 고르는 문제로 복습해 보세요.
           </p>
-          <h2 class="game-title">한자를 보고 뜻과 음을 맞혀보세요.</h2>
+          <h2 class="game-title">일본어 한자 테스트</h2>
 
           <div id="gameSetup" class="game-settings">
             <div class="game-setting">

@@ -61,14 +61,10 @@
           .replace("초등학교 ", "초");
       const storyDisplayLabel = (v) =>
         text(v)
-          .replace(/^JLPT N(?!4-5$)([1-5])-(\d+)$/, "JLPT N$1($2)")
-          .replace(/^초\s*(\d+)학년$/, "초등학교 $1학년")
-          .replace(/^중학교\s*(\d+)학년$/, "중학교 $1")
-          .replace(/^고등학교\s*(\d+)학년$/, "고등학교 $1")
-          .replace(/^중학\s*(\d+)$/, "중학교 $1")
-          .replace(/^고교\s*(\d+)$/, "고등학교 $1")
-          .replace(/^중학(?=\s|$)/, "중학교")
-          .replace(/^고교(?=\s|$)/, "고등학교");
+          .replace(/^JLPT N([1-5])\((\d+)\)$/, "JLPT N$1-$2")
+          .replace(/^(?:초등학교|초등|초)\s*(\d+)(?:학년)?$/, "초등 $1")
+          .replace(/^(?:중학교|중학|중등)\s*(\d+)(?:학년)?$/, "중등$1")
+          .replace(/^(?:고등학교|고교|고등)\s*(\d+)(?:학년)?$/, "고등 $1");
       let KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
       let KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
       let RELATED_KANJI = new Map();
@@ -592,20 +588,13 @@
         );
       }
       const sectionPaths = { kanji: "/kanji/", story: "/reading/", game: "/quiz/" };
-      const sectionDescriptions = {
-        kanji: "부수별 추천순·학년·JLPT별로 학습 범위를 찾아보고, 그림과 암기 풀이로 일본어 한자를 익혀보세요.",
-        story: "학년·JLPT별 학습 글에서 문장 속 한자를 읽고, 모르는 한자를 눌러 뜻과 정보를 확인해 보세요.",
-        game: "학년·JLPT별로 범위를 정하고, 한자의 뜻과 음을 고르는 문제로 복습해 보세요.",
-      };
       const sectionFromPath = () =>
         Object.entries(sectionPaths).find(([, path]) => path.replace(/\/$/, "") === location.pathname.replace(/\/$/, ""))?.[0] || "kanji";
       function setSection(section, updateUrl = true) {
         if (!popover.root.hidden) hideKanjiPopover();
         const story = section === "story";
         const game = section === "game";
-        document.title = `${story ? "한자 독해" : game ? "한자 문제" : "한자 도감"} | 마나보`;
-        const intro = document.querySelector(".study-page-intro");
-        if (intro && location.pathname !== "/") intro.textContent = sectionDescriptions[section];
+        document.title = `마나보 | ${story ? "한자 독해" : game ? "한자 문제" : "한자 도감"}`;
         els.kanjiView.hidden = story || game;
         els.storyView.hidden = !story;
         els.gameView.hidden = !game;
