@@ -42,15 +42,17 @@
       </header>
       <div class="site-nav-wrap">
         <nav class="site-nav" aria-label="콘텐츠 전환">
-          <button id="navKanji" class="site-tab active" type="button">
+          <a id="navKanji" class="site-tab active" href="/kanji/" aria-current="page">
             한자 도감
-          </button>
-          <button id="navStory" class="site-tab" type="button">
+          </a>
+          <a id="navStory" class="site-tab" href="/reading/">
             한자 독해
-          </button>
-          <button id="navGame" class="site-tab" type="button">한자 문제</button>
+          </a>
+          <a id="navGame" class="site-tab" href="/quiz/">한자 문제</a>
         </nav>
       </div>
+
+      <p class="study-page-intro">부수별 추천순으로 한자를 살펴보고, 직접 기획한 그림과 암기 풀이로 기억한 뒤 독해와 문제 풀이로 복습해 보세요.</p>
 
       <section id="kanjiView" class="kanji-view">
         <div class="toolbar-wrap">
@@ -112,11 +114,6 @@
             </div>
           </aside>
           <article class="story-article">
-            <div class="story-meta">
-              <div class="story-guide attention-text">
-                모르는 한자를 눌러 뜻과 정보를 확인해 보세요.
-              </div>
-            </div>
             <h2 id="storyTitle" class="story-title"></h2>
             <div id="storyCopy" class="story-copy"></div>
           </article>
@@ -182,7 +179,10 @@
               aria-live="polite"
             ></div>
             <div id="gameMistakes" class="game-mistakes" hidden>
-              <div id="gameMistakesTitle" class="game-mistakes-title"></div>
+              <div class="info-section-heading game-mistakes-heading">
+                <div id="gameMistakesTitle" class="game-mistakes-title"></div>
+                <p id="gameMistakesGuide" class="detail-link-guide">모르는 한자를 눌러 뜻과 정보를 확인해 보세요.</p>
+              </div>
               <div id="gameMistakesList" class="game-mistakes-list"></div>
             </div>
             <div class="game-actions">
@@ -202,7 +202,7 @@
         </div>
       </section>
       <footer class="site-footer">
-        <p>마나보 · 한자 도감, 독해, 문제 풀이로 이어지는 일본어 한자 공부</p>
+        <p>그림으로 배우는 일본어 한자 공부</p>
         <nav class="footer-links" aria-label="사이트 안내">
           <a href="/about/">사이트 소개</a>
           <a href="/privacy-policy/">개인정보처리방침</a>

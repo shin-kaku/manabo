@@ -37,6 +37,7 @@
         gameFeedback: document.getElementById("gameFeedback"),
         gameMistakes: document.getElementById("gameMistakes"),
         gameMistakesTitle: document.getElementById("gameMistakesTitle"),
+        gameMistakesGuide: document.getElementById("gameMistakesGuide"),
         gameMistakesList: document.getElementById("gameMistakesList"),
         gameNext: document.getElementById("gameNext"),
         gameSettingsButton: document.getElementById("gameSettingsButton"),
@@ -590,17 +591,34 @@
           ) || null
         );
       }
-      function setSection(section) {
+      const sectionPaths = { kanji: "/kanji/", story: "/reading/", game: "/quiz/" };
+      const sectionDescriptions = {
+        kanji: "부수별 추천순·학년·JLPT별로 학습 범위를 찾아보고, 그림과 암기 풀이로 일본어 한자를 익혀보세요.",
+        story: "학년·JLPT별 학습 글에서 문장 속 한자를 읽고, 모르는 한자를 눌러 뜻과 정보를 확인해 보세요.",
+        game: "학년·JLPT별로 범위를 정하고, 한자의 뜻과 음을 고르는 문제로 복습해 보세요.",
+      };
+      const sectionFromPath = () =>
+        Object.entries(sectionPaths).find(([, path]) => path.replace(/\/$/, "") === location.pathname.replace(/\/$/, ""))?.[0] || "kanji";
+      function setSection(section, updateUrl = true) {
         if (!popover.root.hidden) hideKanjiPopover();
         const story = section === "story";
         const game = section === "game";
         document.title = `${story ? "한자 독해" : game ? "한자 문제" : "한자 도감"} | 마나보`;
+        const intro = document.querySelector(".study-page-intro");
+        if (intro && location.pathname !== "/") intro.textContent = sectionDescriptions[section];
         els.kanjiView.hidden = story || game;
         els.storyView.hidden = !story;
         els.gameView.hidden = !game;
         els.navKanji.classList.toggle("active", !story && !game);
         els.navStory.classList.toggle("active", story);
         els.navGame.classList.toggle("active", game);
+        for (const [key, link] of [["kanji", els.navKanji], ["story", els.navStory], ["game", els.navGame]]) {
+          if (key === section) link.setAttribute("aria-current", "page");
+          else link.removeAttribute("aria-current");
+        }
+        if (updateUrl && location.pathname !== sectionPaths[section]) {
+          history.pushState(null, "", sectionPaths[section]);
+        }
         requestAnimationFrame(() =>
           window.scrollTo({ top: 0, behavior: "smooth" }),
         );
@@ -655,7 +673,8 @@
         selectedStroke = null;
         selectedSound = null;
         els[filter].value = value;
-        history.replaceState(null, "", location.pathname + location.search);
+        const query = new URLSearchParams({ [filter]: value });
+        history.replaceState(null, "", `${sectionPaths.kanji}?${query}`);
         apply();
         els[filter].focus({ preventScroll: true });
       }
@@ -835,31 +854,11 @@
         els.gameMistakesTitle.textContent = gameState.wrong.length
           ? `틀린 한자 ${gameState.wrong.length}자`
           : "틀린 한자가 없습니다.";
+        els.gameMistakesGuide.hidden = !gameState.wrong.length;
         gameState.wrong.forEach((d) => {
-          const item = document.createElement("div");
-          item.className = "game-mistake";
-          const info = document.createElement("div");
-          info.className = "game-mistake-info";
-          const glyph = document.createElement("div");
-          glyph.className = "game-mistake-glyph";
-          glyph.textContent = text(d["한자"]);
-          const meaning = document.createElement("div");
-          meaning.className = "game-mistake-meaning";
-          meaning.textContent = text(d["훈, 음"]);
-          const detailButton = document.createElement("button");
-          detailButton.type = "button";
-          detailButton.className = "game-mistake-detail";
-          detailButton.textContent = "자세히\n보기";
-          detailButton.setAttribute(
-            "aria-label",
-            `${text(d["한자"])} 자세히 보기`,
-          );
-          detailButton.addEventListener("click", () =>
-            openKanjiDetail(text(d["한자"]), detailButton),
-          );
-          info.append(glyph, meaning);
-          item.append(info, detailButton);
-          els.gameMistakesList.append(item);
+          const glyph = makeKanjiLink(text(d["한자"]), "");
+          glyph.classList.add("game-mistake-glyph");
+          els.gameMistakesList.append(glyph);
         });
         els.gameNext.textContent = "같은 조건으로 다시";
         els.gameNext.hidden = false;
@@ -889,14 +888,10 @@
         els.gameFeedback.textContent = "";
         els.gameMistakes.hidden = true;
       }
-      els.navKanji.addEventListener("click", () => setSection("kanji"));
-      els.navStory.addEventListener("click", () => {
-        setSection("story");
-        requestAnimationFrame(() =>
-          window.scrollTo({ top: 0, behavior: "smooth" }),
-        );
+      window.addEventListener("popstate", () => {
+        closeKanjiDetail();
+        setSection(sectionFromPath(), false);
       });
-      els.navGame.addEventListener("click", () => setSection("game"));
       els.gameStart.addEventListener("click", startGame);
       els.gamePicture.addEventListener("click", () => {
         const question = gameState.questions[gameState.index];
@@ -1420,8 +1415,14 @@
 
       async function bootstrap() {
         try {
+          setSection(sectionFromPath(), false);
           await loadSavedData();
           populateFilters();
+          const params = new URLSearchParams(location.search);
+          for (const filter of ["grade", "jlpt"]) {
+            const value = params.get(filter);
+            if (value && [...els[filter].options].some((option) => option.value === value)) els[filter].value = value;
+          }
           renderStory();
           apply();
           const requestedKanji = decodeURIComponent(

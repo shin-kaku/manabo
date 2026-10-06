@@ -733,6 +733,10 @@
         display: none;
       }
       .site-tab {
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         position: relative;
         flex: 0 0 auto;
         border: 0;
@@ -743,6 +747,13 @@
         font-weight: 650;
         color: #696760;
         white-space: nowrap;
+      }
+      .study-page-intro {
+        margin: 20px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.7;
+        word-break: keep-all;
       }
       .site-tab + .site-tab {
         border-left: 1px solid var(--line);
@@ -1122,64 +1133,24 @@
         display: none;
       }
       .game-mistakes-title {
-        margin-bottom: 12px;
+        flex: 0 0 auto;
         font-size: 14px;
         font-weight: 800;
       }
+      .info-section-heading.game-mistakes-heading {
+        margin-bottom: 12px;
+      }
       .game-mistakes-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-        gap: 8px;
-      }
-      .game-mistake {
-        min-width: 0;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: stretch;
-        gap: 10px;
-        padding: 13px;
-        background: var(--bg);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-      }
-      .game-mistake-info {
-        min-width: 0;
         display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 9px;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px 24px;
       }
-      .game-mistake-glyph {
+      .game-mistakes-list .game-mistake-glyph {
         font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
-        font-size: 38px;
-        line-height: 1;
-      }
-      .game-mistake-meaning {
-        color: #5f5d57;
-        font-size: 12px;
-        font-weight: 650;
-        line-height: 1.45;
-        word-break: keep-all;
-      }
-      .game-mistake-detail {
-        align-self: center;
-        width: 64px;
-        height: 64px;
-        border: 1px solid var(--line-dark);
-        border-radius: 8px;
-        background: #fff;
-        padding: 0 7px;
-        font-size: 10px;
-        font-weight: 750;
-        line-height: 1.2;
-        white-space: pre-line;
-      }
-      .game-mistake-detail:hover,
-      .game-mistake-detail:focus-visible {
-        border-color: var(--accent);
-        background: var(--accent);
-        color: #fff;
-        outline: none;
+        font-size: 48px;
+        font-weight: 400;
+        line-height: 1.3;
       }
       .game-actions {
         display: flex;
@@ -1770,7 +1741,7 @@
           column-gap: 6px;
           font-size: 14.5px;
         }
-        .related-kanji-groups {
+      .related-kanji-groups {
           font-size: 14.5px;
         }
         .reading-type,
@@ -1934,9 +1905,6 @@
         }
         .game-feedback {
           text-align: center;
-        }
-        .game-mistakes-list {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .game-actions {
           display: grid;
