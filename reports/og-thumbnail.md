@@ -1,22 +1,9 @@
 # 마나보 공유용 썸네일
 
-- 최신 결과: `public/og-manabo-v2.png` (1733 × 907 PNG)
-- 배경 원본: `Image/kanji_77_学.png`
-- 로고 원본: `public/favicon.svg`의 Stick 글자와 포인트 컬러
-- 제작: 내장 image_gen 도구, compositing
+- 현재 이미지: `public/og-manabo.png` (1733 × 907 PNG)
+- 출처: 운영자가 새로 제공한 이미지
 - 연결: 모든 페이지의 og:image 및 Twitter 큰 이미지 카드 설정
-- 공개 주소: https://kanjimanabo.com/og-manabo-v2.png
-- 원본 이미지와 파비콘은 수정하지 않았습니다.
+- 공개 주소: https://kanjimanabo.com/og-manabo.png?v=577dc230fb
+- 기존 썸네일 `public/og-manabo-v2.png`는 삭제했습니다.
 
-## 생성 프롬프트
-
-Use case: compositing. Create ONE finished Open Graph social sharing thumbnail for the Korean Japanese-kanji learning website 마나보, landscape 1200×630 pixels (1.905:1 aspect ratio). Image 1 is the background artwork supplied by the site owner: use this exact warm illustrated scene of a child studying as a very faint full-bleed background, cropped to landscape; fade it under a strong warm-white overlay so the image is softly visible at around 12–18% strength, with the child still discernible. Image 2 is the CURRENT logo: preserve its exact white 学 Stick-font glyph and crimson #bc002d rounded square, do not redraw the character or change the logo design. Place a simple centered branding group in the foreground: logo at the left, large bold clean Korean sans-serif text '마나보' beside it, and the smaller regular subtitle '그림으로 배우는 일본어 한자 공부' below the brand name. Main title dark near-black #20201e; subtitle medium grey. Compose the logo and two lines as one balanced centered lockup with generous empty space, safe margins on all sides, elegant and simple. Exact text only: '마나보' and '그림으로 배우는 일본어 한자 공부'. Make Korean spelling crisp and perfectly legible. No extra text, no tags, no buttons, no decorative cards, no watermark, no mockup device. This is a final flat image asset, not a webpage screenshot. Save the finished image artifact for use in the local website.
-
-도구가 출력한 최종 크기를 유지하고, 메타데이터에도 실제 크기 1733 × 907을 반영했습니다.
-
-
-## 부제 수정 (내장 image_gen 사용)
-
-기존 버전은 `public/og-manabo.png`로 보존하고, 최신 공유 이미지는 `public/og-manabo-v2.png`로 연결했습니다.
-
-프롬프트: Use case: text-localization. Edit this exact finished 마나보 website social thumbnail. Change ONLY the subtitle text from '그림으로 배우는 일본어 한자 공부' to '그림으로 배우는 일본어 한자' by removing the final word '공부'. Preserve the original Korean typography weight, size, colour and style of the remaining subtitle; center the shorter subtitle beneath the existing brand lockup. Keep the large '마나보' text, the exact red logo with white 学 glyph, their sizes and positions, the faded illustrated background, colours, overlay, spacing and canvas dimensions unchanged. The only visible change must be the shorter subtitle. Text must read verbatim '그림으로 배우는 일본어 한자'. No added text or objects.
+기존 파일명과 같은 이름으로 새 이미지를 올렸으므로 콘텐츠 해시를 URL의 버전 값으로 사용해 캐시 갱신을 돕습니다. 공유 서비스에서 이미 저장한 링크 미리보기는 별도의 캐시 갱신이 필요할 수 있습니다.
