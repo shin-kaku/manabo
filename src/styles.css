@@ -1424,14 +1424,14 @@
         padding: 34px 38px;
         gap: 18px;
       }
-      .examples-section-heading {
+      .info-section-heading {
         display: flex;
         align-items: baseline;
         justify-content: space-between;
         gap: 12px;
         margin-bottom: 10px;
       }
-      .examples-section-heading .section-label {
+      .info-section-heading .section-label {
         flex: 0 0 auto;
         margin: 0;
       }

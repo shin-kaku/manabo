@@ -410,7 +410,6 @@
         [
           text(d["학년"]),
           text(d["등급"]),
-          text(d["획"]) ? `${text(d["획"])}획` : "",
         ]
           .filter(Boolean)
           .forEach((v) => {
@@ -1326,16 +1325,15 @@
           learningPanel.append(visual);
         }
         if (isDetail && hasLinkedKanji) {
-          const examples = body.querySelector(".examples-info");
-          const guide = document.createElement("p");
-          guide.className = "detail-link-guide";
-          guide.textContent =
-            "모르는 한자를 눌러 뜻과 정보를 확인해 보세요.";
-          if (examples) {
+          for (const section of body.querySelectorAll(".examples-info, .related-kanji-info")) {
+            const guide = document.createElement("p");
+            guide.className = "detail-link-guide";
+            guide.textContent =
+              "모르는 한자를 눌러 뜻과 정보를 확인해 보세요.";
             const heading = document.createElement("div");
-            heading.className = "examples-section-heading";
-            heading.append(examples.querySelector(".section-label"), guide);
-            examples.prepend(heading);
+            heading.className = "info-section-heading";
+            heading.append(section.querySelector(".section-label"), guide);
+            section.prepend(heading);
           }
         }
         back.append(learningPanel || visual, body);
