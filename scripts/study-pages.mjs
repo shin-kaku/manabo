@@ -9,9 +9,9 @@ export const studyPages = [
   { path: "quiz", section: "game", title: "한자 문제" },
 ];
 
-// All study pages share index.html, so layout changes only need one edit.
+// All study pages share src/study.html; the home page has its own introduction.
 export function writeStudyPages() {
-  const template = readFileSync(new URL("index.html", root), "utf8");
+  const template = readFileSync(new URL("src/study.html", root), "utf8");
   for (const page of studyPages) {
     let html = template
       .replace(/<title>[^<]*<\/title>/, `<title>${studySeo[page.section].title}</title>`)
@@ -32,4 +32,4 @@ export function writeStudyPages() {
   }
 }
 
-export const studyTemplatePath = fileURLToPath(new URL("index.html", root));
+export const studyTemplatePath = fileURLToPath(new URL("src/study.html", root));

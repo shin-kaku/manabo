@@ -1,3 +1,5 @@
+import "./analytics-consent.js";
+
 // Set VITE_CONTACT_EMAIL before building to publish the operator's contact address.
 const email = (import.meta.env.VITE_CONTACT_EMAIL || "").trim();
 if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

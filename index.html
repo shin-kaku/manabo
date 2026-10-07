@@ -34,19 +34,18 @@
     />
     <link rel="stylesheet" href="/src/styles.css" />
     <link rel="stylesheet" href="/src/site-info.css" />
+    <link rel="stylesheet" href="/src/home.css" />
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://kanjimanabo.com/#website","name":"마나보","alternateName":"칸지 마나보","url":"https://kanjimanabo.com/","inLanguage":"ko","description":"마나보(칸지 마나보)는 그림과 암기 풀이로 일본어 한자를 배우는 학습 사이트입니다. 한자의 뜻과 음독·훈독을 익히고, 독해와 문제로 복습해 보세요."}</script>
     <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "ytxd59p0il");
+    window.clarity = window.clarity || function () {
+      (window.clarity.q = window.clarity.q || []).push(arguments);
+    };
   </script>
 </head>
   <body>
-    <div class="wrap">
+    <div class="wrap home-wrap">
       <header class="site-header">
-        <h1><a class="brand-link" href="/"><img class="brand-icon" src="/favicon.svg?v=stick-accent-20261007" alt="" width="36" height="36" /><span class="brand-text"><span class="brand-name">마나보</span><span class="brand-subtitle">그림으로 배우는 일본어 한자</span></span></a></h1>
+        <a class="brand-link" href="/"><img class="brand-icon" src="/favicon.svg?v=stick-accent-20261007" alt="" width="36" height="36" /><span class="brand-text"><span class="brand-name">마나보</span><span class="brand-subtitle">그림으로 배우는 일본어 한자</span></span></a>
       
         <div class="header-actions">
           <a class="header-support-link" href="https://litt.ly/no.type.shin" target="_blank" rel="noopener noreferrer" aria-label="마나보 후원하기"><span aria-hidden="true">☕</span> <span>후원하기</span></a>
@@ -61,169 +60,37 @@
         </details>
         </div>
       </header>
-      <div class="site-nav-wrap">
-        <nav class="site-nav" aria-label="콘텐츠 전환">
-          <a id="navKanji" class="site-tab active" href="/kanji/" aria-current="page">
-            한자 도감
-          </a>
-          <a id="navStory" class="site-tab" href="/reading/">
-            한자 독해
-          </a>
-          <a id="navGame" class="site-tab" href="/quiz/">한자 문제</a>
-        </nav>
-      </div>
-
-
-      <section id="kanjiView" class="kanji-view">
-        <div class="toolbar-wrap">
-          <div class="toolbar">
-            <input
-              id="search"
-              class="control search"
-              type="search"
-              autocomplete="off"
-              placeholder="한자・훈음・총획수 입력하여 검색"
-              aria-label="검색"
-            />
-            <select id="grade" class="control" aria-label="학년 필터">
-              <option value="">학년 전체</option>
-            </select>
-            <select id="jlpt" class="control" aria-label="JLPT 필터">
-              <option value="">JLPT 전체</option>
-            </select>
-            <select id="sort" class="control" aria-label="정렬">
-              <option value="memory">마나보 추천순</option>
-              <option value="ministry" selected>상용한자순</option>
-              <option value="strokes">획순</option>
-              <option value="sound">가나다순</option>
-            </select>
-            <button id="reset" class="reset" type="button">초기화</button>
+      <main class="home-main">
+        <section class="home-guide" aria-labelledby="guide-title">
+          <div class="home-guide-header">
+            <div class="home-guide-copy">
+              <h1 id="guide-title">마나보에서 쉽게 공부하세요.</h1>
+              <p class="home-guide-lead">일본어 한자를 그림으로 익히고, 문장에서 만나고, 문제로 확인하세요.</p>
+            </div>
+            <a class="home-start" href="/kanji/">한자 공부 시작하기 <span aria-hidden="true">→</span></a>
           </div>
-        </div>
-
-        <div class="status">
-          <div class="status-summary">
-            <b id="resultCount">0</b>자 표시&nbsp; | &nbsp;현재 정렬
-            <b id="sortLabel">상용한자순</b>
-          </div>
-          <nav
-            id="sortIndex"
-            class="sort-index"
-            aria-label="정렬 구간 바로가기"
-            hidden
-          ></nav>
-          <div class="hint attention-text">
-            <strong class="learning-action">한자 카드를 눌러</strong>, 그림과 암기 풀이로 일본어 한자를 익혀보세요.
-          </div>
-        </div>
-
-        <main id="grid" class="grid" aria-live="polite"></main>
-        <div id="sentinel" class="sentinel">아래로 내려 더 보기</div>
-      </section>
-
-      <section id="storyView" class="story-view" hidden>
-        <div class="story-layout">
-          <aside class="story-sidebar" aria-label="스토리 분류">
-            <div class="story-group">
-              <div class="story-group-title">학년별</div>
-              <div id="gradeStoryLevels" class="story-levels"></div>
-            </div>
-            <div class="story-group">
-              <div class="story-group-title">JLPT</div>
-              <div id="jlptStoryLevels" class="story-levels"></div>
-            </div>
-          </aside>
-          <article class="story-article">
-            <div class="story-meta">
-              <p class="story-guide">학년·JLPT별 학습 글에서 문장 속 한자를 읽고, <strong class="learning-action">모르는 한자를 눌러</strong> 뜻과 정보를 확인해 보세요.</p>
-            </div>
-            <h2 id="storyTitle" class="story-title"></h2>
-            <div id="storyCopy" class="story-copy"></div>
-          </article>
-        </div>
-      </section>
-
-      <section id="gameView" class="game-view" hidden>
-        <div class="game-shell">
-          <p class="game-description">
-            <strong class="learning-action">학년·JLPT별로 범위를 정해</strong>, 한자의 뜻과 음을 고르는 문제로 복습해 보세요.
-          </p>
-          <h2 class="game-title">일본어 한자 문제</h2>
-
-          <div id="gameSetup" class="game-settings">
-            <div class="game-setting">
-              <label for="gameGrade">학년</label>
-              <select id="gameGrade" class="control">
-                <option value="">학년 전체</option>
-              </select>
-            </div>
-            <div class="game-setting">
-              <label for="gameJlpt">JLPT</label>
-              <select id="gameJlpt" class="control">
-                <option value="">JLPT 전체</option>
-              </select>
-            </div>
-            <div class="game-setting">
-              <label for="gameCount">문제 수</label>
-              <select id="gameCount" class="control">
-                <option value="10">10문제</option>
-                <option value="25">25문제</option>
-                <option value="50">50문제</option>
-              </select>
-            </div>
-            <button id="gameStart" class="game-start" type="button">
-              문제 풀기
-            </button>
-          </div>
-
-          <div id="gamePlay" class="game-play" hidden>
-            <div class="game-progress-meta">
-              <span id="gameProgress">1 / 10</span>
-              <span>점수 <b id="gameScore">0</b></span>
-            </div>
-            <div class="game-progress-track" aria-hidden="true">
-              <div id="gameProgressBar" class="game-progress-bar"></div>
-            </div>
-            <div id="gameQuestion" class="game-question">
-              <div
-                id="gameQuestionLabel"
-                class="game-question-label"
-                hidden
-              ></div>
-              <div id="gameGlyph" class="game-glyph"></div>
-              <button id="gamePicture" class="game-picture" type="button">
-                그림 보기
-              </button>
-            </div>
-            <div id="gameChoices" class="game-choices"></div>
-            <div
-              id="gameFeedback"
-              class="game-feedback"
-              aria-live="polite"
-            ></div>
-            <div id="gameMistakes" class="game-mistakes" hidden>
-              <div class="info-section-heading game-mistakes-heading">
-                <div id="gameMistakesTitle" class="game-mistakes-title"></div>
-                <p id="gameMistakesGuide" class="detail-link-guide">모르는 한자를 눌러 뜻과 정보를 확인해 보세요.</p>
-              </div>
-              <div id="gameMistakesList" class="game-mistakes-list"></div>
-            </div>
-            <div class="game-actions">
-              <button
-                id="gameSettingsButton"
-                class="game-settings-button"
-                type="button"
-                hidden
-              >
-                처음으로
-              </button>
-              <button id="gameNext" class="game-next" type="button" hidden>
-                다음 문제
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+          <ol class="home-steps">
+            <li>
+              <span class="home-step-number" aria-hidden="true">01</span>
+              <h2>그림으로 배우기</h2>
+              <p>한자를 그림과 암기 풀이로 기억해 보세요. 한자 카드를 누르면 상세 정보를 확인할 수 있어요. 부수별로 묶어 외울 수 있도록 관련 한자도 함께 제공해요.</p>
+              <a href="/kanji/">한자 도감 보기 <span aria-hidden="true">→</span></a>
+            </li>
+            <li>
+              <span class="home-step-number" aria-hidden="true">02</span>
+              <h2>문장에서 읽기</h2>
+              <p>학년·JLPT 단계에 맞는 글을 읽어 보세요. 모르는 한자를 누르면 뜻과 읽기를 바로 확인할 수 있어요.</p>
+              <a href="/reading/">한자 독해 시작하기 <span aria-hidden="true">→</span></a>
+            </li>
+            <li>
+              <span class="home-step-number" aria-hidden="true">03</span>
+              <h2>문제로 복습하기</h2>
+              <p>학습 범위와 문제 수를 정하고 뜻과 음을 골라 보세요. 배운 한자를 얼마나 기억하는지 확인할 수 있어요.</p>
+              <a href="/quiz/">한자 문제 풀기 <span aria-hidden="true">→</span></a>
+            </li>
+          </ol>
+        </section>
+      </main>
       <footer class="site-footer">
         <nav class="footer-links" aria-label="사이트 안내">
           <a href="/">홈</a>
@@ -238,84 +105,11 @@
         <span class="footer-separator" aria-hidden="true">|</span>
           <a href="https://litt.ly/no.type.shin" target="_blank" rel="noopener noreferrer">후원하기</a>
         </nav>
-        <p>© <span data-copyright-year>2026</span> 마나보. 자체 제작 콘텐츠의 무단 전재 및 재배포 금지.</p>
-      </footer>
+        <p class="footer-meta"><span>© <span data-copyright-year>2026</span> 마나보. 자체 제작 콘텐츠의 무단 전재 및 재배포 금지.</span>
+          <button class="analytics-settings" type="button" data-analytics-settings>방문 분석 설정</button></p>
+    </footer>
     </div>
-
-    <button
-      id="scrollTop"
-      class="scroll-top"
-      type="button"
-      aria-label="페이지 맨 위로 이동"
-      title="위로"
-    >
-      ↑
-    </button>
-    <aside
-      id="kanjiPopover"
-      class="kanji-popover"
-      role="dialog"
-      aria-label="한자 간단 정보"
-      hidden
-    >
-      <div class="popover-main">
-        <div id="popoverGlyph" class="popover-glyph"></div>
-        <div id="popoverMeaning" class="popover-meaning"></div>
-      </div>
-      <div id="popoverMeta" class="popover-meta"></div>
-      <p id="popoverNote" class="popover-note"></p>
-      <button id="popoverGo" class="popover-go" type="button">
-        자세히 보기 →
-      </button>
-    </aside>
-    <div id="detailOverlay" class="detail-overlay" hidden>
-      <section
-        class="detail-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label="한자 상세 정보"
-      >
-        <button
-          id="detailBack"
-          class="detail-back"
-          type="button"
-          aria-label="이전에 본 한자로 돌아가기"
-          hidden
-        >
-          ← 이전 한자
-        </button>
-        <button
-          id="detailClose"
-          class="detail-close"
-          type="button"
-          aria-label="상세 정보 닫기"
-        >
-          ×
-        </button>
-        <div id="detailContent" class="detail-content"></div>
-      </section>
-    </div>
-    <div id="imageOverlay" class="image-overlay" hidden>
-      <section
-        class="image-stage"
-        role="dialog"
-        aria-modal="true"
-        aria-label="한자 이미지 크게 보기"
-      >
-        <button
-          id="imageClose"
-          class="image-close"
-          type="button"
-          aria-label="확대 이미지 닫기"
-        >
-          ×
-        </button>
-        <div id="imageFallback" class="image-fallback"></div>
-        <img id="imageZoom" alt="" draggable="false" hidden />
-      </section>
-    </div>
-
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/home.js"></script>
     <script type="module" src="/src/site-info.js"></script>
   </body>
 </html>

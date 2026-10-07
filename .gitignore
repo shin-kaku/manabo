@@ -11,7 +11,7 @@ node_modules
 dist
 dist-ssr
 .wrangler
-# Generated from index.html by the Vite config.
+# Generated from src/study.html by the Vite config.
 /kanji/index.html
 /reading/index.html
 /quiz/index.html

@@ -23,11 +23,9 @@
   <link rel="stylesheet" href="/src/styles.css" />
   <link rel="stylesheet" href="/src/site-info.css" />
   <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "ytxd59p0il");
+    window.clarity = window.clarity || function () {
+      (window.clarity.q = window.clarity.q || []).push(arguments);
+    };
   </script>
 </head>
 <body>
@@ -47,13 +45,13 @@
         </div>
       </header>
     <main class="info-page">
-      <a class="info-back" href="/">← 한자 공부로 돌아가기</a>
+      <a class="info-back" href="/kanji/">← 한자 공부로 돌아가기</a>
       <h1>개인정보처리방침</h1>
       
-<p class="info-meta">시행일 · 최종 수정일: 2026년 10월 6일</p>
+<p class="info-meta">시행일 · 최종 수정일: 2026년 10월 7일</p>
 <p>마나보(이하 “사이트”)는 이용자의 개인정보를 중요하게 생각하며, 사이트 이용 중 처리될 수 있는 정보와 이용자의 선택권을 다음과 같이 안내합니다.</p>
 <h2>1. 현재 제공하는 기능과 정보 처리</h2>
-<p>현재 사이트에는 회원가입, 로그인, 결제, 댓글 또는 문의 입력 폼이 없습니다. 검색어, 선택한 학습 범위와 문제 풀이 결과는 학습 화면을 제공하기 위해 브라우저 메모리에서 처리하며, 사이트 코드에서 쿠키·로컬 저장소에 저장하지 않습니다. 문제 풀이 진행 상태와 결과는 새로고침하거나 페이지를 떠나면 유지되지 않습니다.</p>
+<p>현재 사이트에는 회원가입, 로그인, 결제, 댓글 또는 문의 입력 폼이 없습니다. 검색어, 선택한 학습 범위와 문제 풀이 결과는 학습 화면을 제공하기 위해 브라우저 메모리에서 처리하며, 학습 기능 자체는 이 정보를 쿠키·로컬 저장소에 저장하지 않습니다. 다만 방문 분석에 관한 이용자의 동의·거부 선택과 선택 시각은 선택을 기억하기 위해 브라우저 로컬 저장소에 최대 180일간 보관하며, 동의한 경우 Microsoft Clarity가 쿠키와 방문 분석 정보를 처리합니다. 문제 풀이 진행 상태와 결과는 새로고침하거나 페이지를 떠나면 유지되지 않습니다.</p>
 <p>학년·JLPT 배지로 학습 목록을 열면 선택한 필터가 페이지 주소에 포함될 수 있습니다. 해당 주소를 다시 열거나 새로고침하면 필터가 적용되며, 주소에 포함된 값은 페이지 요청 과정에서 호스팅 서비스에 전달될 수 있습니다. 이름이나 이메일 등의 개인정보를 필터 주소에 넣지 않습니다.</p>
 <p>사이트는 Cloudflare, Inc.의 Cloudflare Workers를 이용해 웹페이지와 학습 데이터를 제공합니다. 사이트 접속 시 Cloudflare는 콘텐츠 전송, 서비스 운영, 보안 및 장애 대응을 위해 IP 주소, 요청 주소, 접속 시각과 브라우저·기기 정보 등의 요청 관련 정보를 처리할 수 있습니다. 관련 정보의 처리 및 보관은 사용하는 서비스의 설정과 Cloudflare의 정책에 따릅니다. 자세한 내용은 <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Cloudflare 개인정보처리방침</a>을 참고하세요.</p>
 <h2>2. 문의 시 제공하는 정보</h2>
@@ -61,20 +59,28 @@
 <p>문의 정보는 대응이 끝나고 보관 필요가 없어지면 삭제합니다. 법령에 따른 보관이 필요한 경우에는 해당 기간 동안 보관합니다. 문의 내용은 답변 및 오류 수정 등 문의 처리 목적에 사용하며, 별도 동의 없이 광고 발송 목적으로 사용하지 않습니다.</p>
 <h2>3. 외부 리소스와 서비스</h2>
 <p>사이트는 글꼴을 표시하기 위해 Google Fonts를, 학습 이미지를 표시하기 위해 Google Drive 및 Google의 이미지 제공 서버를 이용합니다. 해당 리소스를 요청하는 과정에서 이용자의 IP 주소, 브라우저 정보 및 요청 관련 정보가 Google로 전달될 수 있습니다. Google의 처리 방식은 <a href="https://policies.google.com/privacy?hl=ko" target="_blank" rel="noopener noreferrer">Google 개인정보처리방침</a>을 참고하세요.</p>
-<p>현재 Google Analytics와 같은 별도의 방문 분석 도구는 연결되어 있지 않습니다. 외부 링크로 이동한 이후에는 해당 사이트의 개인정보처리방침이 적용됩니다.</p>
-<h2>4. Google AdSense와 광고 쿠키</h2>
+<p>방문 분석에는 Microsoft Clarity를 사용하며, 자세한 내용은 아래 항목에서 안내합니다. 후원하기는 외부 리틀리 페이지로 연결되며, 후원 결제와 관련된 정보 처리는 해당 서비스의 개인정보처리방침에 따릅니다. 다른 외부 링크로 이동한 이후에도 해당 사이트의 개인정보처리방침이 적용됩니다.</p>
+<h2 id="clarity">4. Microsoft Clarity 방문 분석</h2>
+<p>사이트는 Microsoft Corporation의 Microsoft Clarity를 이용해 학습 화면의 이용 흐름을 파악하고, 사용성 개선과 오류 확인을 진행합니다. 이용자가 방문 분석에 동의한 경우에만 Clarity 스크립트를 불러옵니다. 동의하지 않거나 거부해도 학습 기능을 이용할 수 있습니다.</p>
+<p>Clarity는 방문한 페이지 주소, 접속 시각과 체류 시간, 클릭·스크롤 등 화면 상호작용, 기기·브라우저 정보와 쿠키 기반 식별자 등 방문 정보를 처리할 수 있습니다. 수집 정보는 히트맵, 이용 통계와 세션 재생에 사용됩니다. 세션 재생은 사이트 화면에서의 상호작용을 재구성하는 기능이며, 카메라 영상이나 마이크 음성을 녹음하는 기능이 아닙니다.</p>
+<p>분석에 동의하면 Clarity의 쿠키 및 관련 추적 기술이 사용될 수 있습니다. 이 사이트는 Clarity에 분석 저장 동의만 전달하며, Microsoft 광고 저장 동의는 허용하지 않습니다. 이 선택은 Google AdSense 광고에 대한 동의를 대신하지 않습니다.</p>
+<p>분석 정보는 Microsoft로 전송되어 처리되며 국외 서버에서 처리될 수 있습니다. Microsoft의 정보 수집·이용·보호 방식은 <a href="https://www.microsoft.com/ko-kr/privacy/privacystatement" target="_blank" rel="noopener noreferrer">Microsoft 개인정보처리방침</a>을 확인해 주세요.</p>
+<p>Microsoft의 현재 안내에 따르면 일반 세션 재생 데이터는 30일, 즐겨찾기·라벨을 지정한 세션과 히트맵·클릭 데이터는 최대 9개월 보관됩니다. 세부 기준 및 변경 사항은 <a href="https://learn.microsoft.com/en-us/clarity/setup-and-installation/data-retention" target="_blank" rel="noopener noreferrer">Clarity 데이터 보관 안내</a>를 따릅니다.</p>
+<p>첫 방문 시 화면 하단에서 방문 분석에 동의하거나 거부할 수 있습니다. 이후에도 푸터의 ‘방문 분석 설정’에서 선택을 변경할 수 있습니다. 동의를 철회하면 수집을 중단하기 위해 현재 페이지가 새로고침되며, 이후 Clarity를 불러오지 않습니다. 이전에 수집된 데이터가 자동으로 삭제되는 것은 아니므로 삭제 등 관련 요청은 아래 운영자 연락처로 문의해 주세요. 사이트가 관리할 수 있는 기존 Clarity 쿠키는 거부 시 삭제하며, 외부 서비스의 쿠키는 브라우저 설정에서도 관리할 수 있습니다.</p>
+<h2>5. Google AdSense와 광고 쿠키</h2>
 <p class="info-note">현재 Google AdSense 광고 코드는 연결되어 있지 않습니다. 아래 안내는 광고 서비스 도입 시 적용되며, 실제 도입 시 서비스 구성과 적용일을 이 페이지에 반영합니다.</p>
 <p>Google AdSense를 사용하는 경우 Google을 포함한 제3자 광고 제공업체는 이용자가 이 사이트 또는 다른 웹사이트를 이전에 방문한 기록을 바탕으로 광고를 제공하기 위해 쿠키를 사용할 수 있습니다. Google의 광고 쿠키는 Google과 파트너가 이 사이트 및 인터넷의 다른 사이트 방문 정보를 바탕으로 광고를 게재할 수 있도록 합니다.</p>
 <p>광고 제공 과정에서 제3자가 브라우저에 쿠키를 저장하거나 읽고, 웹 비콘·IP 주소·기기 및 브라우저 정보 등을 광고 제공, 성과 측정 및 부정 이용 방지에 사용할 수 있습니다. 자세한 내용은 <a href="https://policies.google.com/technologies/partner-sites?hl=ko" target="_blank" rel="noopener noreferrer">Google 서비스를 사용하는 사이트에서의 정보 처리 안내</a>에서 확인할 수 있습니다. Google 이외의 광고 제공업체를 이용할 경우 해당 업체와 개인정보 관련 안내를 추가합니다.</p>
-<h2>5. 쿠키와 맞춤 광고 설정</h2>
-<ul><li><a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">Google 내 광고 센터</a>에서 맞춤 광고 설정을 관리할 수 있습니다.</li>
+<h2>6. 쿠키와 분석·광고 설정</h2>
+<ul><li>Microsoft Clarity 방문 분석 선택은 모든 페이지 푸터의 ‘방문 분석 설정’에서 변경할 수 있습니다. 브라우저의 사이트 데이터를 삭제하면 저장된 선택도 초기화될 수 있습니다.</li>
+<li><a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">Google 내 광고 센터</a>에서 맞춤 광고 설정을 관리할 수 있습니다.</li>
 <li><a href="https://optout.aboutads.info/" target="_blank" rel="noopener noreferrer">Digital Advertising Alliance의 선택 도구</a>에서 참여하는 제3자 광고업체의 맞춤 광고 사용을 해제할 수 있습니다.</li>
 <li>브라우저 설정에서 쿠키를 삭제하거나 저장을 차단할 수 있습니다. 설정에 따라 외부 서비스 또는 일부 기능의 이용에 영향을 줄 수 있습니다.</li></ul>
 <p>광고 도입 시 필요한 지역에서는 동의 관리 도구를 통해 쿠키와 광고 목적의 개인정보 처리에 대한 선택권을 제공합니다. 맞춤 광고를 해제해도 일반 광고는 표시될 수 있습니다.</p>
-<h2>6. 이용자의 권리와 문의</h2>
-<p>문의 과정에서 제공한 개인정보의 열람·정정·삭제 또는 처리 정지를 요청하려면 <a href="/contact/">문의 페이지</a>의 연락처를 이용해 주세요. 요청 처리를 위해 필요한 범위에서 본인 확인을 요청할 수 있으며, 관련 법령에서 정한 제한이 있는 경우 그 사유를 안내합니다.</p>
+<h2>7. 이용자의 권리와 문의</h2>
+<p>문의 정보와 방문 분석 등 개인정보 처리에 관하여 열람·정정·삭제 또는 처리 정지를 요청하려면 <a href="/contact/">문의 페이지</a>의 연락처를 이용해 주세요. 요청 처리를 위해 필요한 범위에서 본인 확인을 요청할 수 있으며, 관련 법령에서 정한 제한이 있는 경우 그 사유를 안내합니다.</p>
 <p>운영 및 개인정보 관련 문의 담당자: 곽신<br />이메일: <span data-contact-email><a href="mailto:no.type.shin@gmail.com">no.type.shin@gmail.com</a></span></p>
-<h2>7. 방침 변경</h2>
+<h2>8. 방침 변경</h2>
 <p>사이트 기능, 외부 서비스 또는 정보 처리 방식이 바뀌면 이 페이지의 내용과 최종 수정일을 갱신합니다. 이용자의 권리에 영향을 미치는 중요한 변경은 적용 전에 사이트에 안내합니다.</p>
     </main>
     <footer class="site-footer">
@@ -89,7 +95,8 @@
 <a href="/contact/">문의하기</a><span class="footer-separator" aria-hidden="true">|</span>
           <a href="https://litt.ly/no.type.shin" target="_blank" rel="noopener noreferrer">후원하기</a>
         </nav>
-      <p>© <span data-copyright-year>2026</span> 마나보. 자체 제작 콘텐츠의 무단 전재 및 재배포 금지.</p>
+      <p class="footer-meta"><span>© <span data-copyright-year>2026</span> 마나보. 자체 제작 콘텐츠의 무단 전재 및 재배포 금지.</span>
+          <button class="analytics-settings" type="button" data-analytics-settings>방문 분석 설정</button></p>
     </footer>
   </div>
   <script type="module" src="/src/site-info.js"></script>

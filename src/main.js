@@ -369,7 +369,7 @@ import { studySeo } from "./seo.js";
       };
       let popoverKanji = "",
         popoverAnchor = null,
-        popoverCloseTimer = null;
+        popoverHoverTimer = null;
       let detailReturnFocus = null,
         imageReturnFocus = null,
         detailCurrentKanji = "",
@@ -377,7 +377,7 @@ import { studySeo } from "./seo.js";
       function positionKanjiPopover(anchor) {
         const rect = anchor.getBoundingClientRect(),
           box = popover.root.getBoundingClientRect(),
-          gap = 2,
+          gap = 0,
           pad = 14;
         let top = rect.top - box.height - gap;
         if (top < pad) top = rect.bottom + gap;
@@ -396,9 +396,9 @@ import { studySeo } from "./seo.js";
         popover.root.style.left = `${left}px`;
       }
       function showKanjiPopover(ch, anchor) {
+        clearTimeout(popoverHoverTimer);
         const d = KANJI_MAP.get(ch);
         if (!d) return;
-        clearTimeout(popoverCloseTimer);
         if (popoverAnchor && popoverAnchor !== anchor)
           popoverAnchor.setAttribute("aria-expanded", "false");
         popoverKanji = ch;
@@ -424,15 +424,18 @@ import { studySeo } from "./seo.js";
         requestAnimationFrame(() => positionKanjiPopover(anchor));
       }
       function hideKanjiPopover() {
-        clearTimeout(popoverCloseTimer);
+        clearTimeout(popoverHoverTimer);
         if (popoverAnchor) popoverAnchor.setAttribute("aria-expanded", "false");
         popover.root.hidden = true;
         popoverKanji = "";
         popoverAnchor = null;
       }
-      function schedulePopoverClose() {
-        clearTimeout(popoverCloseTimer);
-        popoverCloseTimer = setTimeout(hideKanjiPopover, 320);
+      function closePopoverOnLeave(event) {
+        clearTimeout(popoverHoverTimer);
+        const next = event.relatedTarget;
+        if (next && (popover.root.contains(next) || popoverAnchor?.contains(next)))
+          return;
+        hideKanjiPopover();
       }
       function renderKanjiDetail(ch) {
         const d = KANJI_MAP.get(ch);
@@ -540,8 +543,12 @@ import { studySeo } from "./seo.js";
         b.dataset.targetKanji = ch;
         const canHover = matchMedia("(hover:hover) and (pointer:fine)").matches;
         if (canHover) {
-          b.addEventListener("mouseenter", () => showKanjiPopover(ch, b));
-          b.addEventListener("mouseleave", schedulePopoverClose);
+          b.addEventListener("mouseenter", () => {
+            clearTimeout(popoverHoverTimer);
+            // Let the pointer cross nearby kanji on its way to the popover.
+            popoverHoverTimer = setTimeout(() => showKanjiPopover(ch, b), 200);
+          });
+          b.addEventListener("mouseleave", closePopoverOnLeave);
         }
         b.addEventListener("click", (e) => {
           e.preventDefault();
@@ -908,10 +915,10 @@ import { studySeo } from "./seo.js";
       popover.go.addEventListener("click", () => {
         if (popoverKanji) openKanjiDetail(popoverKanji);
       });
-      popover.root.addEventListener("mouseenter", () =>
-        clearTimeout(popoverCloseTimer),
-      );
-      popover.root.addEventListener("mouseleave", schedulePopoverClose);
+      popover.root.addEventListener("mouseenter", () => {
+        clearTimeout(popoverHoverTimer);
+      });
+      popover.root.addEventListener("mouseleave", closePopoverOnLeave);
       document.addEventListener("pointerdown", (e) => {
         if (
           !popover.root.hidden &&
@@ -1321,7 +1328,7 @@ import { studySeo } from "./seo.js";
             const guide = document.createElement("p");
             guide.className = "detail-link-guide";
             guide.textContent =
-              "모르는 한자를 눌러 뜻과 정보를 확인해 보세요.";
+              "한자를 눌러 뜻과 정보를 확인해 보세요.";
             const heading = document.createElement("div");
             heading.className = "info-section-heading";
             heading.append(section.querySelector(".section-label"), guide);

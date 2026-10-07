@@ -1,9 +1,9 @@
 export const studySeo = {
   kanji: {
-    title: "마나보(칸지 마나보) | 그림으로 배우는 일본어 한자",
+    title: "마나보 | 일본어 한자 도감",
     ogTitle: "마나보 | 일본어 한자, 그림으로 쉽게 외우기",
     description: "마나보(칸지 마나보)는 그림과 암기 풀이로 일본어 한자를 배우는 학습 사이트입니다. 한자의 뜻과 음독·훈독을 익히고, 독해와 문제로 복습해 보세요.",
-    canonical: "https://kanjimanabo.com/",
+    canonical: "https://kanjimanabo.com/kanji/",
   },
   story: {
     title: "마나보 | 일본어 한자 독해",
