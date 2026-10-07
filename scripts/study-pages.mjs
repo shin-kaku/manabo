@@ -16,7 +16,7 @@ export function writeStudyPages() {
     let html = template
       .replace(/<title>[^<]*<\/title>/, `<title>${studySeo[page.section].title}</title>`)
       .replace(/(<meta\s+name="description"\s+content=")[^"]*("\s*\/>)/, `$1${studySeo[page.section].description}$2`)
-      .replace(/(<meta\s+property="og:title"\s+content=")[^"]*("\s*\/>)/, `$1${studySeo[page.section].title}$2`)
+      .replace(/(<meta\s+property="og:title"\s+content=")[^"]*("\s*\/>)/, `$1${studySeo[page.section].ogTitle || studySeo[page.section].title}$2`)
       .replace(/(<meta\s+property="og:description"\s+content=")[^"]*("\s*\/>)/, `$1${studySeo[page.section].description}$2`)
       .replace(/(<link\s+rel="canonical"\s+href=")[^"]*("\s*\/>)/, `$1${studySeo[page.section].canonical}$2`)
       .replace(/(<meta\s+property="og:url"\s+content=")[^"]*("\s*\/>)/, `$1https://kanjimanabo.com/${page.path}/$2`);

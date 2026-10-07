@@ -599,7 +599,7 @@ import { studySeo } from "./seo.js";
         const seo = studySeo[section];
         document.title = seo.title;
         document.querySelector('meta[name="description"]').content = seo.description;
-        document.querySelector('meta[property="og:title"]').content = seo.title;
+        document.querySelector('meta[property="og:title"]').content = seo.ogTitle || seo.title;
         document.querySelector('meta[property="og:description"]').content = seo.description;
         document.querySelector('link[rel="canonical"]').href = seo.canonical;
         document.querySelector('meta[property="og:url"]').content = seo.canonical;
