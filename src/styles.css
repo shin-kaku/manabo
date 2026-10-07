@@ -880,7 +880,7 @@
           "Noto Serif CJK JP", "Noto Serif JP", serif;
         font-size: 32px;
         font-weight: 700;
-        line-height: 1.18;
+        line-height: 1.33;
         letter-spacing: -0.045em;
         margin: 0;
       }
@@ -1675,6 +1675,7 @@
         }
         .story-level {
           width: 100%;
+          text-align: center;
         }
         .story-article {
           position: relative;
@@ -1690,6 +1691,9 @@
         .story-copy {
           font-size: 18px;
           line-height: 2;
+        }
+        .story-title {
+          line-height: 1.28;
         }
         .header-meta {
           text-align: left;
