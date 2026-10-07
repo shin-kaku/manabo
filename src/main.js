@@ -1387,7 +1387,7 @@ import { studySeo } from "./seo.js";
         els.search.value = "";
         els.grade.value = "";
         els.jlpt.value = "";
-        els.sort.value = "memory";
+        els.sort.value = "ministry";
         selectedStroke = null;
         selectedSound = null;
         apply();
