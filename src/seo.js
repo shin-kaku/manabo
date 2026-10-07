@@ -1,6 +1,6 @@
 export const studySeo = {
   kanji: {
-    title: "마나보 | 일본어 한자 도감·그림으로 쉽게 외우기",
+    title: "마나보 | 그림으로 배우는 일본어한자",
     ogTitle: "마나보 | 일본어 한자, 그림으로 쉽게 외우기",
     description: "일본어 한자를 쉽게 외우고 싶다면 마나보에서 그림과 암기 풀이로 공부해 보세요. 2,324자의 한자를 부수별 추천순·학년·JLPT별로 찾아보고, 일본어 한자의 뜻과 음독·훈독을 익힐 수 있습니다.",
     canonical: "https://kanjimanabo.com/",
