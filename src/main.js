@@ -441,13 +441,6 @@ import { studySeo } from "./seo.js";
         const d = KANJI_MAP.get(ch);
         if (!d) return;
         const card = createCard(d, true);
-        card.classList.add("flipped");
-        card.tabIndex = -1;
-        card.setAttribute("aria-pressed", "true");
-        const detailVisual = card.querySelector(".visual");
-        detailVisual.tabIndex = -1;
-        detailVisual.removeAttribute("role");
-        detailVisual.removeAttribute("aria-label");
         detail.content.replaceChildren(card);
         detailCurrentKanji = ch;
         detail.back.hidden = !detailHistory.length;
@@ -653,8 +646,7 @@ import { studySeo } from "./seo.js";
         requestAnimationFrame(() => {
           const card = findRenderedCard(ch);
           if (!card) return;
-          card.classList.toggle("flipped", showBack);
-          card.setAttribute("aria-pressed", showBack ? "true" : "false");
+          setCardFlipped(card, showBack);
           card.classList.remove("jump-target");
           void card.offsetWidth;
           card.classList.add("jump-target");
@@ -1049,19 +1041,31 @@ import { studySeo } from "./seo.js";
         appendBatch();
       }
 
+      function setCardFlipped(card, flipped) {
+        const hadFocus = card.contains(document.activeElement);
+        card.classList.toggle("flipped", flipped);
+        card.querySelector(".front").inert = flipped;
+        card.querySelector(".back").inert = !flipped;
+        if (hadFocus) {
+          card.querySelector(flipped ? ".back-flip-button" : ".front")?.focus({ preventScroll: true });
+        }
+      }
+
       function createCard(d, isDetail = false) {
         const card = document.createElement("article");
         card.className = isDetail ? "card detail-card" : "card";
         card.dataset.kanji = text(d["한자"]);
-        card.tabIndex = 0;
-        card.setAttribute("role", "button");
-        card.setAttribute("aria-label", `${text(d["한자"])} 카드 뒤집기`);
-        card.setAttribute("aria-pressed", "false");
+        card.setAttribute("role", "group");
+        card.setAttribute("aria-label", `${text(d["한자"])} 학습 카드`);
         const inner = document.createElement("div");
         inner.className = "card-inner";
 
-        const front = document.createElement("section");
+        const front = document.createElement(isDetail ? "section" : "button");
         front.className = "face front";
+        if (!isDetail) {
+          front.type = "button";
+          front.setAttribute("aria-label", `${text(d["한자"])} 카드 뒤집기`);
+        }
         const glyph = document.createElement("div");
         glyph.className = "glyph";
         glyph.textContent = text(d["한자"]);
@@ -1100,25 +1104,13 @@ import { studySeo } from "./seo.js";
           img.src = urls[0];
           visual.append(img);
         }
-        visual.tabIndex = 0;
-        visual.setAttribute("role", "button");
-        visual.setAttribute("aria-label", `${text(d["한자"])} 카드 앞면 보기`);
-        visual.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!card.classList.contains("detail-card")) toggle();
-        });
-        visual.addEventListener("keydown", (e) => {
-          if (
-            !card.classList.contains("detail-card") &&
-            e.target === visual &&
-            (e.key === "Enter" || e.key === " ")
-          ) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggle();
-          }
-        });
+        const backFlipButton = isDetail ? null : document.createElement("button");
+        if (backFlipButton) {
+          backFlipButton.type = "button";
+          backFlipButton.className = "back-flip-button";
+          backFlipButton.setAttribute("aria-label", `${text(d["한자"])} 카드 앞면 보기`);
+          visual.append(backFlipButton);
+        }
         const detailButton = document.createElement("button");
         detailButton.type = "button";
         detailButton.className = "card-detail-button";
@@ -1133,7 +1125,7 @@ import { studySeo } from "./seo.js";
           if (!card.classList.contains("detail-card"))
             openKanjiDetail(text(d["한자"]), detailButton);
         });
-        visual.append(detailButton);
+        if (!isDetail) visual.append(detailButton);
         const body = document.createElement("div");
         body.className = "back-body";
         const chips = document.createElement("div");
@@ -1339,25 +1331,21 @@ import { studySeo } from "./seo.js";
         inner.append(front, back);
         card.append(inner);
         const toggle = () => {
-          card.classList.toggle("flipped");
-          card.setAttribute(
-            "aria-pressed",
-            card.classList.contains("flipped") ? "true" : "false",
-          );
+          setCardFlipped(card, !card.classList.contains("flipped"));
         };
-        card.addEventListener("click", (e) => {
-          if (card.classList.contains("detail-card")) return;
-          toggle();
-        });
-        card.addEventListener("keydown", (e) => {
-          if (
-            !card.classList.contains("detail-card") &&
-            (e.key === "Enter" || e.key === " ")
-          ) {
-            e.preventDefault();
-            toggle();
+        if (!isDetail) {
+          for (const button of [front, backFlipButton]) {
+            button.addEventListener("click", (e) => {
+              e.stopPropagation();
+              toggle();
+            });
           }
-        });
+          card.addEventListener("click", (e) => {
+            if (e.target.closest("button, a, input, select, textarea, [role='button']")) return;
+            toggle();
+          });
+        }
+        setCardFlipped(card, isDetail);
         return card;
       }
       function appendBatch() {

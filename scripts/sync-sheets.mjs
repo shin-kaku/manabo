@@ -4,6 +4,7 @@ import {
   copyFile,
   mkdir,
   readFile,
+  realpath,
   rename,
   rm,
   writeFile,
@@ -36,6 +37,10 @@ const KANJI_FIELDS = [
 ];
 const STORY_FIELDS = ["id", "category", "level", "title"];
 const STORY_VERSION_FIELDS = ["label", "body"];
+// The published catalog has 2,324 entries. Fail closed on truncated API responses.
+const MIN_KANJI_COUNT = 2000;
+const MIN_RETAINED_RATIO = 0.9;
+const GRADE_PATTERN = /^(?:초등학교 [1-6]학년|중학 [1-3]|고교 [1-3]|참고)$/;
 
 async function pathExists(path) {
   try {
@@ -58,19 +63,55 @@ function requireText(value, label) {
   if (!String(value ?? "").trim()) throw new Error(`${label} 값이 없습니다.`);
 }
 
-function prepareKanji(rows) {
-  if (!Array.isArray(rows) || rows.length < 1) {
-    throw new Error("한자 데이터가 비어 있거나 배열이 아닙니다.");
+export function prepareKanji(rows, previousCount = 0) {
+  if (!Array.isArray(rows) || rows.length < MIN_KANJI_COUNT) {
+    throw new Error(`한자 데이터는 최소 ${MIN_KANJI_COUNT}개가 필요합니다.`);
+  }
+  if (rows.length < previousCount * MIN_RETAINED_RATIO) {
+    throw new Error(`한자 개수가 기존 ${previousCount}개에서 ${rows.length}개로 10% 넘게 감소했습니다.`);
   }
   const seen = new Set();
   return rows.map((row, index) => {
     if (!row || typeof row !== "object" || Array.isArray(row)) {
       throw new Error(`한자 ${index + 1}번 항목이 객체가 아닙니다.`);
     }
-    requireText(row["한자"], `한자 ${index + 1}번 항목의 한자`);
-    const character = String(row["한자"]).trim();
+    const label = `한자 ${index + 1}번 항목`;
+    for (const field of ["한자", "훈, 음", "훈", "학년", "풀이", "이미지 1"]) {
+      if (typeof row[field] !== "string" || !row[field].trim()) {
+        throw new Error(`${label}의 ${field}는 비어 있지 않은 문자열이어야 합니다.`);
+      }
+    }
+    const character = row["한자"].trim();
+    if (!/^\p{Script=Han}$/u.test(character)) {
+      throw new Error(`${label}의 한자는 한 글자여야 합니다.`);
+    }
     if (seen.has(character)) throw new Error(`중복 한자가 있습니다: ${character}`);
     seen.add(character);
+    if (!GRADE_PATTERN.test(row["학년"])) {
+      throw new Error(`${label}의 학년이 올바르지 않습니다.`);
+    }
+    const isReference = row["학년"] === "참고";
+    if (typeof row["음"] !== "string" || (!isReference && !row["음"].trim())) {
+      throw new Error(`${label}의 음이 올바르지 않습니다.`);
+    }
+    if (typeof row["등급"] !== "string" ||
+        !(/^JLPT N[1-5]$/.test(row["등급"]) || (isReference && row["등급"] === ""))) {
+      throw new Error(`${label}의 등급이 올바르지 않습니다.`);
+    }
+    for (const field of ["암기순", "획"]) {
+      if (!Number.isSafeInteger(row[field]) || row[field] < 1) {
+        throw new Error(`${label}의 ${field}는 양의 정수여야 합니다.`);
+      }
+    }
+    if (!(Number.isSafeInteger(row["문부성"]) && row["문부성"] > 0) &&
+        !(isReference && row["문부성"] === "")) {
+      throw new Error(`${label}의 문부성 순서가 올바르지 않습니다.`);
+    }
+    let imageUrl;
+    try { imageUrl = new URL(row["이미지 1"]); } catch { /* Rejected below. */ }
+    if (!imageUrl || !["http:", "https:"].includes(imageUrl.protocol) || !imageUrl.hostname) {
+      throw new Error(`${label}의 이미지 1은 HTTP(S) 주소여야 합니다.`);
+    }
     return pick(row, KANJI_FIELDS);
   });
 }
@@ -156,6 +197,15 @@ async function main() {
     );
   }
 
+  let previousCount = 0;
+  if (await pathExists(kanjiPath)) {
+    const previous = JSON.parse(await readFile(kanjiPath, "utf8"));
+    if (!Array.isArray(previous) || previous.length < 1) {
+      throw new Error("기존 한자 JSON이 올바른 배열이 아니므로 교체를 중단합니다.");
+    }
+    previousCount = previous.length;
+  }
+
   const response = await fetch(url, {
     headers: { accept: "application/json" },
     redirect: "follow",
@@ -168,7 +218,7 @@ async function main() {
     throw new Error(payload?.error || "Apps Script 응답이 올바르지 않습니다.");
   }
 
-  const kanji = prepareKanji(payload.kanji);
+  const kanji = prepareKanji(payload.kanji, previousCount);
   const stories = prepareStories(payload.stories);
   await replaceDataFiles(kanji, stories);
 
@@ -177,8 +227,10 @@ async function main() {
   console.log(`독해: ${stories.length.toLocaleString("ko-KR")}개`);
 }
 
-main().catch((error) => {
-  console.error(`동기화 실패: ${error.message}`);
-  console.error("기존 JSON 파일은 유지됩니다.");
-  process.exitCode = 1;
-});
+if (process.argv[1] && await realpath(process.argv[1]) === await realpath(fileURLToPath(import.meta.url))) {
+  main().catch((error) => {
+    console.error(`동기화 실패: ${error.message}`);
+    console.error("기존 JSON 파일은 유지됩니다.");
+    process.exitCode = 1;
+  });
+}
