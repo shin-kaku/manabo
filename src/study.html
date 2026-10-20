@@ -72,6 +72,10 @@
       </div>
 
 
+      <div id="learningStatus" class="learning-status" role="status" hidden>
+        <span id="learningMessage"></span>
+        <button id="learningRetry" type="button" hidden>다시 시도</button>
+      </div>
       <section id="kanjiView" class="kanji-view">
         <div class="toolbar-wrap">
           <div class="toolbar">
@@ -174,6 +178,7 @@
             </button>
           </div>
 
+          <p id="gameSetupError" class="game-feedback" role="alert" hidden>조건에 맞는 한자가 부족합니다. 다른 학년이나 JLPT를 선택해 주세요.</p>
           <div id="gamePlay" class="game-play" hidden>
             <div class="game-progress-meta">
               <span id="gameProgress">1 / 10</span>
@@ -273,6 +278,7 @@
         role="dialog"
         aria-modal="true"
         aria-label="한자 상세 정보"
+        tabindex="-1"
       >
         <button
           id="detailBack"
@@ -300,6 +306,7 @@
         role="dialog"
         aria-modal="true"
         aria-label="한자 이미지 크게 보기"
+        tabindex="-1"
       >
         <button
           id="imageClose"

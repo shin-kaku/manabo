@@ -96,32 +96,66 @@ import { studySeo } from "./seo.js";
           }
         }
       }
-      async function loadSavedData() {
-        const [kanjiResponse, storiesResponse] = await Promise.all([
-          fetch("/data/kanji.json"),
-          fetch("/data/stories.json"),
-        ]);
-        if (!kanjiResponse.ok || !storiesResponse.ok) {
-          throw new Error("저장된 학습 데이터 요청에 실패했습니다.");
+      let kanjiReady = false, storiesReady = false;
+      let kanjiRequest = null, storiesRequest = null;
+      let activeSection = "", activation = 0;
+      const learningStatus = document.getElementById("learningStatus");
+      const learningMessage = document.getElementById("learningMessage");
+      const learningRetry = document.getElementById("learningRetry");
+      async function fetchSavedRows(name) {
+        const response = await fetch(`/data/${name}.json`);
+        if (!response.ok) throw new Error(`${name} HTTP ${response.status}`);
+        const rows = await response.json();
+        if (!Array.isArray(rows) || !rows.length) throw new Error(`${name} 데이터 형식 오류`);
+        return rows;
+      }
+      function ensureKanji() {
+        if (kanjiReady) return Promise.resolve();
+        if (!kanjiRequest) kanjiRequest = (async () => {
+          DATA = await fetchSavedRows("kanji");
+          rebuildDataIndexes();
+          populateFilters();
+          kanjiReady = true;
+        })().finally(() => { kanjiRequest = null; });
+        return kanjiRequest;
+      }
+      function ensureStories() {
+        if (storiesReady) return Promise.resolve();
+        if (!storiesRequest) storiesRequest = (async () => {
+          STORIES = await fetchSavedRows("stories");
+          activeStoryId = STORIES.find((s) => s.category === "학년별")?.id || STORIES[0].id;
+          storiesReady = true;
+        })().finally(() => { storiesRequest = null; });
+        return storiesRequest;
+      }
+      async function activateSection(section) {
+        const version = ++activation;
+        learningStatus.hidden = false;
+        learningStatus.setAttribute("role", "status");
+        learningMessage.textContent = "학습 데이터를 불러오는 중입니다.";
+        learningRetry.hidden = true;
+        els.gameStart.disabled = !kanjiReady;
+        const screen = { kanji: els.kanjiView, story: els.storyView, game: els.gameView }[section];
+        screen.setAttribute("aria-busy", "true");
+        try {
+          await Promise.all([ensureKanji(), ...(section === "story" ? [ensureStories()] : [])]);
+          if (version !== activation) return false;
+          learningStatus.hidden = true;
+          document.documentElement.dataset.dataSource = "saved";
+          els.gameStart.disabled = false;
+          if (section === "kanji") { readFilterUrl(); apply(); }
+          if (section === "story") renderStory();
+          return true;
+        } catch (error) {
+          if (version !== activation) return false;
+          document.documentElement.dataset.dataSource = "error";
+          learningStatus.setAttribute("role", "alert");
+          learningMessage.textContent = "학습 데이터를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.";
+          learningRetry.hidden = false;
+          return false;
+        } finally {
+          screen.setAttribute("aria-busy", "false");
         }
-        const [kanji, stories] = await Promise.all([
-          kanjiResponse.json(),
-          storiesResponse.json(),
-        ]);
-        if (!Array.isArray(kanji) || !kanji.length) {
-          throw new Error("한자 데이터 형식이 올바르지 않습니다.");
-        }
-        if (!Array.isArray(stories) || !stories.length) {
-          throw new Error("독해 데이터 형식이 올바르지 않습니다.");
-        }
-        DATA = kanji;
-        STORIES = stories;
-        activeStoryId =
-          STORIES.find((s) => s.category === "학년별")?.id ||
-          STORIES[0]?.id ||
-          "";
-        rebuildDataIndexes();
-        document.documentElement.dataset.dataSource = "saved";
       }
       const numberOrInf = (v) => {
         const s = text(v);
@@ -181,12 +215,15 @@ import { studySeo } from "./seo.js";
               items.push({ label: `${n}획`, stroke: n });
             }
           });
+          if (selectedStroke !== null && !seen.has(selectedStroke))
+            items.push({ label: `${selectedStroke}획`, stroke: selectedStroke });
           items.sort((a, b) => a.stroke - b.stroke);
           els.sortIndex.setAttribute("aria-label", "획수 필터");
         } else if (sortMode === "sound") {
           const groups = new Set(
             source.map((d) => soundGroup(d["음"])).filter(Boolean),
           );
+          if (selectedSound) groups.add(selectedSound);
           [
             "가",
             "나",
@@ -286,6 +323,9 @@ import { studySeo } from "./seo.js";
         return rank(a) - rank(b) || a.localeCompare(b, "ko");
       }
       function populateFilters() {
+        for (const [select, label] of [[els.grade, "학년 전체"], [els.jlpt, "JLPT 전체"], [els.gameGrade, "학년 전체"], [els.gameJlpt, "JLPT 전체"]]) {
+          select.replaceChildren(new Option(label, ""));
+        }
         const grades = [
           ...new Set(
             DATA.map((d) => text(d["학년"])).filter((v) => v && v !== "참고"),
@@ -374,6 +414,46 @@ import { studySeo } from "./seo.js";
         imageReturnFocus = null,
         detailCurrentKanji = "",
         detailHistory = [];
+      const backgroundInert = new Map();
+      function activeModal() {
+        return !imageViewer.overlay.hidden ? imageViewer.overlay : !detail.overlay.hidden ? detail.overlay : null;
+      }
+      function syncModalState() {
+        const modal = activeModal();
+        if (!modal) {
+          for (const [node, wasInert] of backgroundInert) node.inert = wasInert;
+          backgroundInert.clear();
+        } else {
+          const allowPopover = !popover.root.hidden && modal.contains(popoverAnchor);
+          for (const node of document.body.children) {
+            if (["SCRIPT", "STYLE", "LINK"].includes(node.tagName)) continue;
+            if (!backgroundInert.has(node)) backgroundInert.set(node, node.inert);
+            node.inert = node !== modal && !(allowPopover && node === popover.root);
+          }
+        }
+        document.body.classList.toggle("detail-open", Boolean(modal));
+      }
+      function modalFocusables() {
+        const modal = activeModal();
+        if (!modal) return [];
+        const roots = [modal];
+        if (!popover.root.hidden && modal.contains(popoverAnchor)) roots.push(popover.root);
+        return roots.flatMap((root) => [...root.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')])
+          .filter((node) => node.tabIndex >= 0 && !node.disabled && !node.closest('[inert], [hidden]') && node.getClientRects().length);
+      }
+      function restoreFocus(opener) {
+        const available = (node) => node?.isConnected && !node.closest('[hidden], [inert]') && node.getClientRects().length && !node.disabled;
+        const fallback = activeModal()?.querySelector('[role="dialog"]') || document.querySelector('.site-tab[aria-current="page"]') || els.search;
+        const target = available(opener) ? opener : modalFocusables()[0] || fallback;
+        target?.focus({ preventScroll: true });
+      }
+      document.addEventListener("focusin", (event) => {
+        const modal = activeModal();
+        if (!modal || modal.contains(event.target) || (!popover.root.hidden && popover.root.contains(event.target))) return;
+        (modalFocusables()[0] || modal.querySelector('[role="dialog"]')).focus();
+      });
+      new MutationObserver(() => { if (activeModal()) syncModalState(); })
+        .observe(document.body, { childList: true });
       function positionKanjiPopover(anchor) {
         const rect = anchor.getBoundingClientRect(),
           box = popover.root.getBoundingClientRect(),
@@ -421,6 +501,7 @@ import { studySeo } from "./seo.js";
         popover.note.hidden = !text(d["풀이"]);
         popover.root.hidden = false;
         anchor.setAttribute("aria-expanded", "true");
+        syncModalState();
         requestAnimationFrame(() => positionKanjiPopover(anchor));
       }
       function hideKanjiPopover() {
@@ -429,6 +510,7 @@ import { studySeo } from "./seo.js";
         popover.root.hidden = true;
         popoverKanji = "";
         popoverAnchor = null;
+        syncModalState();
       }
       function closePopoverOnLeave(event) {
         clearTimeout(popoverHoverTimer);
@@ -438,6 +520,7 @@ import { studySeo } from "./seo.js";
         hideKanjiPopover();
       }
       function renderKanjiDetail(ch) {
+        hideKanjiPopover();
         const d = KANJI_MAP.get(ch);
         if (!d) return;
         const card = createCard(d, true);
@@ -465,7 +548,7 @@ import { studySeo } from "./seo.js";
         hideKanjiPopover();
         renderKanjiDetail(ch);
         detail.overlay.hidden = false;
-        document.body.classList.add("detail-open");
+        syncModalState();
         (alreadyOpen && detailHistory.length
           ? detail.back
           : detail.close
@@ -480,16 +563,19 @@ import { studySeo } from "./seo.js";
       }
       function closeKanjiDetail() {
         if (detail.overlay.hidden) return;
+        closeImageViewer();
+        hideKanjiPopover();
         detail.overlay.hidden = true;
         detail.content.replaceChildren();
-        document.body.classList.remove("detail-open");
+        syncModalState();
         detailCurrentKanji = "";
         detailHistory = [];
         detail.back.hidden = true;
-        detailReturnFocus?.focus();
+        restoreFocus(detailReturnFocus);
         detailReturnFocus = null;
       }
       function openImageViewer(d, returnFocus) {
+        hideKanjiPopover();
         const ch = text(d["한자"]),
           urls = imageCandidates(d["이미지 1"]);
         imageReturnFocus = returnFocus;
@@ -509,7 +595,7 @@ import { studySeo } from "./seo.js";
         };
         if (urls.length) imageViewer.image.src = urls[0];
         imageViewer.overlay.hidden = false;
-        document.body.classList.add("detail-open");
+        syncModalState();
         imageViewer.close.focus();
       }
       function closeImageViewer() {
@@ -517,9 +603,10 @@ import { studySeo } from "./seo.js";
         imageViewer.overlay.hidden = true;
         imageViewer.image.removeAttribute("src");
         imageViewer.image.hidden = true;
-        if (detail.overlay.hidden)
-          document.body.classList.remove("detail-open");
-        imageReturnFocus?.focus();
+        imageViewer.image.onload = null;
+        imageViewer.image.onerror = null;
+        syncModalState();
+        restoreFocus(imageReturnFocus);
         imageReturnFocus = null;
       }
       function makeKanjiLink(ch, currentChar, context = "card") {
@@ -592,8 +679,29 @@ import { studySeo } from "./seo.js";
       const sectionPaths = { kanji: "/kanji/", story: "/reading/", game: "/quiz/" };
       const sectionFromPath = () =>
         Object.entries(sectionPaths).find(([, path]) => path.replace(/\/$/, "") === location.pathname.replace(/\/$/, ""))?.[0] || "kanji";
+      function readFilterUrl() {
+        const params = new URLSearchParams(location.search);
+        for (const filter of ["grade", "jlpt"]) {
+          const value = params.get(filter) || "";
+          els[filter].value = [...els[filter].options].some((option) => option.value === value) ? value : "";
+        }
+      }
+      function writeFilterUrl(mode = "replaceState", clearHash = false) {
+        const url = new URL(location.href);
+        if (activeSection === "kanji") url.pathname = sectionPaths.kanji;
+        for (const filter of ["grade", "jlpt"]) {
+          if (els[filter].value) url.searchParams.set(filter, els[filter].value);
+          else url.searchParams.delete(filter);
+        }
+        if (clearHash && url.hash.startsWith("#kanji=")) url.hash = "";
+        if (url.href !== location.href) history[mode](null, "", url);
+        handledLocation = location.href;
+      }
       function setSection(section, updateUrl = true) {
-        if (!popover.root.hidden) hideKanjiPopover();
+        hideKanjiPopover();
+        closeKanjiDetail();
+        closeImageViewer();
+        activeSection = section;
         const story = section === "story";
         const game = section === "game";
         const seo = studySeo[section];
@@ -614,16 +722,21 @@ import { studySeo } from "./seo.js";
           else link.removeAttribute("aria-current");
         }
         if (updateUrl && location.pathname !== sectionPaths[section]) {
-          history.pushState(null, "", sectionPaths[section]);
+          const url = new URL(location.href);
+          url.pathname = sectionPaths[section];
+          if (url.hash.startsWith("#kanji=")) url.hash = "";
+          history.pushState(null, "", url);
+          handledLocation = location.href;
         }
         requestAnimationFrame(() =>
           window.scrollTo({ top: 0, behavior: "smooth" }),
         );
+        return activateSection(section);
       }
-      function navigateToKanji(ch, showBack = true) {
-        setSection("kanji");
+      async function navigateToKanji(ch, showBack = true) {
+        if (!await setSection("kanji")) return false;
         const target = DATA.find((d) => text(d["한자"]) === ch);
-        if (!target) return;
+        if (!target) return false;
 
         let index = view.findIndex((d) => text(d["한자"]) === ch);
         if (index < 0) {
@@ -637,15 +750,16 @@ import { studySeo } from "./seo.js";
             !Number.isFinite(numberOrInf(target["문부성"]))
           )
             els.sort.value = "memory";
+          writeFilterUrl();
           apply();
           index = view.findIndex((d) => text(d["한자"]) === ch);
         }
-        if (index < 0) return;
+        if (index < 0) return false;
 
         while (rendered <= index) appendBatch();
         requestAnimationFrame(() => {
           const card = findRenderedCard(ch);
-          if (!card) return;
+          if (!card) return false;
           setCardFlipped(card, showBack);
           card.classList.remove("jump-target");
           void card.offsetWidth;
@@ -657,11 +771,12 @@ import { studySeo } from "./seo.js";
           });
           setTimeout(() => card.classList.remove("jump-target"), 1400);
         });
+        return true;
       }
-      function navigateToKanjiFilter(filter, value) {
+      async function navigateToKanjiFilter(filter, value) {
         clearTimeout(timer);
         closeKanjiDetail();
-        setSection("kanji");
+        if (!await setSection("kanji", false)) return;
         els.search.value = "";
         els.grade.value = "";
         els.jlpt.value = "";
@@ -669,8 +784,7 @@ import { studySeo } from "./seo.js";
         selectedStroke = null;
         selectedSound = null;
         els[filter].value = value;
-        const query = new URLSearchParams({ [filter]: value });
-        history.replaceState(null, "", `${sectionPaths.kanji}?${query}`);
+        writeFilterUrl("pushState", true);
         apply();
         els[filter].focus({ preventScroll: true });
       }
@@ -860,13 +974,33 @@ import { studySeo } from "./seo.js";
         els.gameNext.hidden = false;
         els.gameSettingsButton.hidden = false;
       }
+      function resetGame() {
+        Object.assign(gameState, { pool: [], questions: [], wrong: [], index: 0, score: 0, answered: false, finished: false });
+        els.gamePlay.hidden = true;
+        els.gameSetup.hidden = false;
+        els.gameQuestion.classList.remove("result");
+        els.gameQuestionLabel.hidden = true;
+        els.gameQuestionLabel.textContent = "";
+        els.gameGlyph.textContent = "";
+        els.gamePicture.hidden = true;
+        els.gameChoices.replaceChildren();
+        els.gameFeedback.textContent = "";
+        els.gameProgress.textContent = "";
+        els.gameScore.textContent = "0";
+        els.gameProgressBar.style.width = "0%";
+        els.gameNext.hidden = true;
+        els.gameSettingsButton.hidden = true;
+        els.gameMistakes.hidden = true;
+        els.gameMistakesList.replaceChildren();
+        document.getElementById("gameSetupError").hidden = true;
+      }
       function startGame() {
+        resetGame();
+        if (!kanjiReady) return;
         const pool = getGamePool(),
           count = Math.min(Number(els.gameCount.value) || 10, pool.length);
-        if (pool.length < 4) {
-          els.gamePlay.hidden = false;
-          els.gameFeedback.textContent =
-            "조건에 맞는 한자가 부족합니다. 다른 학년이나 JLPT를 선택해 주세요.";
+        if (pool.length < 4 || new Set(pool.map((row) => text(row["훈, 음"]))).size < 4) {
+          document.getElementById("gameSetupError").hidden = false;
           return;
         }
         gameState.pool = pool;
@@ -878,16 +1012,16 @@ import { studySeo } from "./seo.js";
         els.gamePlay.hidden = false;
         renderGameQuestion();
       }
-      function returnToGameSettings() {
-        els.gamePlay.hidden = true;
-        els.gameSetup.hidden = false;
-        els.gameFeedback.textContent = "";
-        els.gameMistakes.hidden = true;
+      function returnToGameSettings() { resetGame(); }
+      window.addEventListener("popstate", () => { bootstrap(); });
+      window.addEventListener("hashchange", (event) => { if (event.newURL === location.href) bootstrap(); });
+      for (const [section, link] of [["kanji", els.navKanji], ["story", els.navStory], ["game", els.navGame]]) {
+        link.addEventListener("click", (event) => {
+          if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
+          event.preventDefault();
+          setSection(section);
+        });
       }
-      window.addEventListener("popstate", () => {
-        closeKanjiDetail();
-        setSection(sectionFromPath(), false);
-      });
       els.gameStart.addEventListener("click", startGame);
       els.gamePicture.addEventListener("click", () => {
         const question = gameState.questions[gameState.index];
@@ -940,14 +1074,28 @@ import { studySeo } from "./seo.js";
           e.preventDefault();
           return;
         }
+        if (e.key === "Tab" && activeModal()) {
+          const targets = modalFocusables();
+          const index = targets.indexOf(document.activeElement);
+          if (!targets.length) {
+            e.preventDefault();
+            activeModal().querySelector('[role="dialog"]').focus();
+          } else if ((e.shiftKey && index <= 0) || (!e.shiftKey && (index < 0 || index === targets.length - 1))) {
+            e.preventDefault();
+            targets[e.shiftKey ? targets.length - 1 : 0].focus();
+          }
+          return;
+        }
         if (e.key !== "Escape") return;
-        if (!imageViewer.overlay.hidden) closeImageViewer();
-        else if (!detail.overlay.hidden) closeKanjiDetail();
-        else if (!popover.root.hidden) {
+        if (!popover.root.hidden) {
           const anchor = popoverAnchor;
           hideKanjiPopover();
-          anchor?.focus();
-        }
+          restoreFocus(anchor);
+        } else if (!imageViewer.overlay.hidden) closeImageViewer();
+        else if (!detail.overlay.hidden) closeKanjiDetail();
+        else return;
+        e.preventDefault();
+        e.stopPropagation();
       });
       window.addEventListener(
         "scroll",
@@ -974,6 +1122,7 @@ import { studySeo } from "./seo.js";
         return searchable(d).includes(q);
       }
       function apply() {
+        if (!kanjiReady || activeSection !== "kanji") return;
         const q = els.search.value.trim().toLowerCase();
         const g = els.grade.value;
         const j = els.jlpt.value;
@@ -1105,6 +1254,14 @@ import { studySeo } from "./seo.js";
           visual.append(img);
         }
         const backFlipButton = isDetail ? null : document.createElement("button");
+        if (isDetail) {
+          const zoom = document.createElement("button");
+          zoom.type = "button";
+          zoom.className = "detail-image-zoom";
+          zoom.setAttribute("aria-label", `${text(d["한자"])} 암기 이미지 크게 보기`);
+          zoom.addEventListener("click", () => openImageViewer(d, zoom));
+          visual.append(zoom);
+        }
         if (backFlipButton) {
           backFlipButton.type = "button";
           backFlipButton.className = "back-flip-button";
@@ -1349,6 +1506,7 @@ import { studySeo } from "./seo.js";
         return card;
       }
       function appendBatch() {
+        if (!kanjiReady || activeSection !== "kanji") return;
         if (rendered >= view.length) {
           els.sentinel.textContent = "";
           return;
@@ -1371,7 +1529,7 @@ import { studySeo } from "./seo.js";
         timer = setTimeout(apply, 120);
       });
       [els.grade, els.jlpt].forEach((el) =>
-        el.addEventListener("change", apply),
+        el.addEventListener("change", () => { writeFilterUrl("pushState", true); apply(); }),
       );
       els.sort.addEventListener("change", () => {
         selectedStroke = null;
@@ -1385,6 +1543,9 @@ import { studySeo } from "./seo.js";
         els.sort.value = "ministry";
         selectedStroke = null;
         selectedSound = null;
+        closeKanjiDetail();
+        hideKanjiPopover();
+        writeFilterUrl("pushState", true);
         apply();
       });
       new IntersectionObserver(
@@ -1405,39 +1566,28 @@ import { studySeo } from "./seo.js";
       );
       updateScrollTopButton();
 
-      async function bootstrap() {
-        try {
-          setSection(sectionFromPath(), false);
-          await loadSavedData();
-          populateFilters();
-          const params = new URLSearchParams(location.search);
-          for (const filter of ["grade", "jlpt"]) {
-            const value = params.get(filter);
-            if (value && [...els[filter].options].some((option) => option.value === value)) els[filter].value = value;
+      let handledLocation = "";
+      async function bootstrap({ force = false } = {}) {
+        const requestedLocation = location.href;
+        if (!force && handledLocation === requestedLocation) return;
+        handledLocation = requestedLocation;
+        const loaded = await setSection(sectionFromPath(), false);
+        if (!loaded) return;
+        let requestedKanji = "";
+        if (location.hash.startsWith("#kanji=")) {
+          try { requestedKanji = decodeURIComponent(location.hash.slice(7)); }
+          catch {
+            const url = new URL(location.href);
+            url.hash = "";
+            history.replaceState(null, "", url);
           }
-          renderStory();
-          apply();
-          const requestedKanji = decodeURIComponent(
-            (location.hash.match(/^#kanji=(.*)$/) || [])[1] || "",
-          );
-          if (requestedKanji && KANJI_SET.has(requestedKanji)) {
-            requestAnimationFrame(() => navigateToKanji(requestedKanji, true));
-          }
-        } catch (error) {
-          console.error("[마나보] 학습 데이터를 불러오지 못했습니다.", error);
-          document.documentElement.dataset.dataSource = "error";
-          els.resultCount.textContent = "0";
-          els.grid.replaceChildren();
-          els.sentinel.replaceChildren();
-          const message = document.createElement("span");
-          message.setAttribute("role", "alert");
-          message.textContent =
-            "학습 데이터를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요. ";
-          const retry = document.createElement("button");
-          retry.type = "button";
-          retry.textContent = "다시 시도";
-          retry.addEventListener("click", bootstrap, { once: true });
-          els.sentinel.append(message, retry);
         }
+        if (requestedKanji && KANJI_SET.has(requestedKanji)) {
+          if (await navigateToKanji(requestedKanji, true)) {
+            openKanjiDetail(requestedKanji, findRenderedCard(requestedKanji)?.querySelector(".card-detail-button"));
+          }
+        }
+        handledLocation = location.href;
       }
+      learningRetry.addEventListener("click", () => bootstrap({ force: true }));
       bootstrap();

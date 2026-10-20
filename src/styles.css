@@ -235,6 +235,22 @@
         align-items: start;
         width: 100%;
       }
+      .learning-status {
+        padding: 16px;
+        margin: 16px 0;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--paper);
+        line-height: 1.6;
+      }
+      .learning-status button {
+        margin-left: 12px;
+        padding: 6px 12px;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        color: var(--accent);
+        background: var(--paper);
+      }
       .card {
         perspective: 1200px;
         aspect-ratio: 2/3;
@@ -315,7 +331,8 @@
         color: inherit;
         text-align: inherit;
       }
-      .back-flip-button {
+      .back-flip-button,
+      .detail-image-zoom {
         position: absolute;
         inset: 0;
         z-index: 1;
@@ -325,7 +342,9 @@
         border: 0;
         background: transparent;
       }
-      .back-flip-button:focus-visible {
+      .detail-image-zoom { cursor: zoom-in; }
+      .back-flip-button:focus-visible,
+      .detail-image-zoom:focus-visible {
         outline: 2px solid var(--accent);
         outline-offset: -3px;
       }
