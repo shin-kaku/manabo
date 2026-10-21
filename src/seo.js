@@ -7,7 +7,7 @@ export const studySeo = {
   },
   story: {
     title: "마나보 | 일본어 한자 독해",
-    description: "학년·JLPT별 일본어 학습 글로 한자 독해를 연습해 보세요. 문장 속 모르는 한자를 누르면 뜻과 읽기를 확인하고, 그림과 암기 풀이로 복습할 수 있습니다.",
+    description: "학년·JLPT 범위의 한자를 섞은 한국어 창작 글로 한자의 뜻을 복습해 보세요. 문장 속 모르는 한자를 누르면 뜻과 읽기를 확인하고, 그림과 암기 풀이로 복습할 수 있습니다.",
     canonical: "https://kanjimanabo.com/reading/",
   },
   game: {

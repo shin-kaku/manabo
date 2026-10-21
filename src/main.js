@@ -791,6 +791,10 @@ import { studySeo } from "./seo.js";
       function selectStory(id, scroll = true) {
         if (!STORIES.some((s) => s.id === id)) return;
         activeStoryId = id;
+        const url = new URL(location.href);
+        url.searchParams.set("story", id);
+        history.replaceState(null, "", url);
+        handledLocation = location.href;
         renderStory();
         if (scroll)
           requestAnimationFrame(() =>
@@ -1573,6 +1577,10 @@ import { studySeo } from "./seo.js";
         handledLocation = requestedLocation;
         const loaded = await setSection(sectionFromPath(), false);
         if (!loaded) return;
+        if (activeSection === "story") {
+          const requestedStory = new URLSearchParams(location.search).get("story");
+          if (STORIES.some((story) => story.id === requestedStory)) selectStory(requestedStory, false);
+        }
         let requestedKanji = "";
         if (location.hash.startsWith("#kanji=")) {
           try { requestedKanji = decodeURIComponent(location.hash.slice(7)); }

@@ -71,6 +71,7 @@ npm run sync-data -- --allow-story-removal=story-ID
 | `index.html`, `src/home.js`, `src/home.css` | 별도 홈 `/` |
 | `src/study.html` | 학습 HTML 원본 |
 | `scripts/study-pages.mjs` | `/kanji/`, `/reading/`, `/quiz/` HTML 생성 |
+| `src/materials.html`, `scripts/material-pages.mjs` | 학습 자료 모음과 학년별 한자·독해 본문 HTML 생성 |
 | `src/main.js`, `src/styles.css` | 학습 로직과 스타일 |
 | `src/seo.js` | 학습 페이지별 제목·설명·canonical |
 | `public/data/*.json` | Sheets에서 동기화한 공개 학습 데이터 |
@@ -81,8 +82,14 @@ npm run sync-data -- --allow-story-removal=story-ID
 | `vite.config.js`, `wrangler.jsonc` | 다중 페이지 빌드·`dist` 산출물 설정 |
 
 생성된 `kanji/index.html`, `reading/index.html`, `quiz/index.html`을 직접 고치지 마세요.
-현재 사이트맵은 `/`, `/kanji/`, `/reading/`, `/quiz/`, `/about/`,
+기본 사이트맵은 `/`, `/kanji/`, `/reading/`, `/quiz/`, `/about/`,
 `/privacy-policy/`, `/copyright/`, `/contact/`의 8개 경로입니다.
+빌드 시 `public/data`의 기존 자료로 `/materials/`, 학년별 한자 11개,
+독해 본문 19개를 생성하고 `dist/sitemap.xml`에 포함합니다. 현재 총 39개 경로입니다.
+`materials/`의 생성 HTML을 직접 편집하지 마세요. 공통 틀은 `src/materials.html`,
+본문·목록 생성은 `scripts/material-pages.mjs`, 학습 내용은 기존 JSON이 원본입니다.
+개발 중에는 자료 틀과 JSON 변경을 감지해 재생성하며, 정식 빌드는 항상 최신 JSON으로 생성합니다.
+정적 독해 본문에서 `/reading/?story=story-ID`로 해당 대화형 독해를 열 수 있습니다.
 도감의 canonical은 `/kanji/`입니다.
 
 ## 원본 데이터 후속 작업
@@ -93,5 +100,6 @@ npm run sync-data -- --allow-story-removal=story-ID
 
 중학 2 읽기의 如·嫁·慌 및 고교 2 읽기의 采 누락은 별도 콘텐츠 검토 사항입니다.
 전체 한자를 포함해야 하는 기획이 확인되지 않아 문장을 추가하지 않았습니다.
-개별 콘텐츠 SEO 구조 개편·이미지 호스팅 이전·미등록 구성 요소 추가는 이번 범위에 포함하지 않습니다.
+학습 자료 HTML 공개 구조는 [애드센스 대응 기록](reports/adsense-response-2026-10-21.md)에 설명했습니다.
+이미지 호스팅 이전·미등록 구성 요소 추가는 이번 범위에 포함하지 않습니다.
 이 문서는 실제 운영 배포·검색 색인·광고 승인 또는 외부 이미지 가용성을 보증하지 않습니다.
