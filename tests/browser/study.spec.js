@@ -1,3 +1,4 @@
+import { expectWindowedCards } from "./virtual-grid-helpers.js";
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
@@ -83,7 +84,7 @@ for (const path of ["/kanji/", "/quiz/"]) {
     await page.goto(path);
     await ready(page);
     expect(state.storiesCalls).toBe(0);
-    if (path === "/kanji/") await expect(page.locator("#grid .card")).toHaveCount(96);
+    if (path === "/kanji/") await expectWindowedCards(page);
     else {
       await expect(page.locator("#grid .card")).toHaveCount(0);
       await page.locator("#gameStart").click();
@@ -129,7 +130,7 @@ test("same-document navigation loads dependencies, retains successful data, and 
   await expect(page.locator("#learningRetry")).toBeVisible();
   await page.locator("#navKanji").click();
   await ready(page);
-  await expect(page.locator("#grid .card")).toHaveCount(96);
+  await expectWindowedCards(page);
   expect(state.kanjiCalls).toBe(1);
   state.storiesStatus = 200;
   await page.locator("#navStory").click();
@@ -212,7 +213,7 @@ for (const hash of ["%", "未登録", encodeURIComponent("文")]) {
     await mockData(page);
     await page.goto(`/kanji/#kanji=${hash}`);
     await ready(page);
-    await expect(page.locator("#grid .card")).toHaveCount(96);
+    await expectWindowedCards(page);
     if (hash === encodeURIComponent("文")) {
       await expect(page.locator("#detailOverlay")).toBeVisible();
       await page.keyboard.press("Escape");
@@ -239,7 +240,7 @@ test("same-document hash changes and repeated reset do not duplicate filters or 
   const count = await page.locator("#grade option").count();
   for (let i = 0; i < 3; i++) await page.locator("#reset").click();
   await expect(page.locator("#grade option")).toHaveCount(count);
-  await expect(page.locator("#grid .card")).toHaveCount(96);
+  await expectWindowedCards(page);
   expect(state.kanjiCalls).toBe(1);
 });
 
@@ -369,5 +370,5 @@ test("unsupported filter values are ignored without breaking the list", async ({
   await ready(page);
   await expect(page.locator("#grade")).toHaveValue("");
   await expect(page.locator("#jlpt")).toHaveValue("");
-  await expect(page.locator("#grid .card")).toHaveCount(96);
+  await expectWindowedCards(page);
 });

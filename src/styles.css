@@ -235,6 +235,13 @@
         align-items: start;
         width: 100%;
       }
+      .virtual-grid {
+        position: relative;
+        overflow-anchor: none;
+      }
+      .virtual-grid > .card {
+        position: absolute;
+      }
       .learning-status {
         padding: 16px;
         margin: 16px 0;
@@ -263,7 +270,6 @@
         height: 100%;
         transform-style: preserve-3d;
         transition: transform 0.62s cubic-bezier(0.2, 0.72, 0.18, 1);
-        will-change: transform;
       }
       .card.flipped .card-inner {
         transform: rotateY(180deg);
@@ -640,7 +646,7 @@
       }
       .example-word rt {
         color: var(--accent);
-        font-size: 0.58em;
+        font-size: 0.754em;
         font-weight: 500;
         line-height: 1;
       }

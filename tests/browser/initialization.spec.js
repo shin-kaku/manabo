@@ -1,3 +1,4 @@
+import { expectWindowedCards } from "./virtual-grid-helpers.js";
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 const rows = JSON.parse(await readFile(new URL("../../public/data/kanji.json", import.meta.url), "utf8"));
@@ -21,7 +22,7 @@ test("slow reading font never blocks kanji or reading data and is requested only
   });
   try {
     await page.goto("/kanji/", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("#grid .card")).toHaveCount(96);
+    await expectWindowedCards(page);
     expect(calls).toBe(0);
     await page.locator("#navStory").click();
     await expect(page.locator("#storyCopy")).not.toBeEmpty();
@@ -51,7 +52,7 @@ test("a stalled data request times out and a fresh retry recovers", async ({ pag
   await expect(page.locator("#learningStatus")).toHaveAttribute("role", "alert");
   stalled = false;
   await page.locator("#learningRetry").click();
-  await expect(page.locator("#grid .card")).toHaveCount(96);
+  await expectWindowedCards(page);
   await expect(page.locator("#learningStatus")).toBeHidden();
   expect(calls).toBe(2);
 });
@@ -64,17 +65,17 @@ test("a late-order direct detail link avoids creating thousands of preceding car
   await page.goto(`/kanji/#kanji=${encodeURIComponent(last["한자"])}`);
   await expect(page.locator("#detailOverlay")).toBeVisible();
   await expect(page.locator("#detailContent .card")).toHaveAttribute("data-kanji", last["한자"]);
-  await expect(page.locator("#grid .card")).toHaveCount(96);
+  await expectWindowedCards(page);
   expect(calls).toBe(1);
   await page.keyboard.press("Escape");
   await expect(page.locator("#search")).toBeFocused();
 });
 
-test("infinite scroll still loads the next batch after fast initialization", async ({ page }) => {
+test("virtual scroll reaches the last row without retaining preceding cards", async ({ page }) => {
   await fixtures(page);
   await page.goto("/kanji/");
-  await expect(page.locator("#grid .card")).toHaveCount(96);
+  await expectWindowedCards(page);
   await page.locator("#sentinel").scrollIntoViewIfNeeded();
-  await expect(page.locator("#grid .card")).toHaveCount(192);
-  expect(await page.locator("#grid .card").evaluateAll(cards => new Set(cards.map(card => card.dataset.kanji)).size)).toBe(192);
+  await expect.poll(() => page.locator("#grid .card").last().getAttribute("data-index")).toBe(String(rows.filter(row => String(row["문부성"] ?? "").trim()).length - 1));
+  await expectWindowedCards(page);
 });

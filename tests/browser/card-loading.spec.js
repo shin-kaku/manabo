@@ -1,3 +1,4 @@
+import { expectWindowedCards } from "./virtual-grid-helpers.js";
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
@@ -15,7 +16,7 @@ test("list cards request their image on first flip and retain full detail conten
   });
   await page.route("**/data/kanji.json", route => route.fulfill({ json: rows }));
   await page.goto("/kanji/");
-  await expect(page.locator("#grid .card")).toHaveCount(96);
+  await expectWindowedCards(page);
   await expect(page.locator("#grid .reading-info, #grid .examples-info")).toHaveCount(0);
   await expect(page.locator("#grid .visual img[src]")).toHaveCount(0);
   expect(images).toHaveLength(0);

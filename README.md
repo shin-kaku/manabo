@@ -73,6 +73,8 @@ npm run sync-data -- --allow-story-removal=story-ID
 | `scripts/study-pages.mjs` | `/kanji/`, `/reading/`, `/quiz/` HTML 생성 |
 | `src/materials.html`, `scripts/material-pages.mjs` | 학습 자료 모음과 학년별 한자·독해 본문 HTML 생성 |
 | `src/main.js`, `src/styles.css` | 학습 로직과 스타일 |
+| `src/virtual-grid.js` | CSS 열 수에 맞춘 가상 목록·화면 회전 시 위치 유지·키보드 이동 |
+| `src/card-images.js` | 카드 이미지 요청 지연·동시 요청 제한·최근 이미지 재사용 |
 | `src/example-ruby.js` | 상세 예시 단어의 한자별 루비 대응 및 단어 전체 표시 대체 처리 |
 | `src/seo.js` | 학습 페이지별 제목·설명·canonical |
 | `public/data/*.json` | Sheets에서 동기화한 공개 학습 데이터 |
@@ -92,6 +94,17 @@ npm run sync-data -- --allow-story-removal=story-ID
 개발 중에는 자료 틀과 JSON 변경을 감지해 재생성하며, 정식 빌드는 항상 최신 JSON으로 생성합니다.
 정적 독해 본문에서 `/reading/?story=story-ID`로 해당 대화형 독해를 열 수 있습니다.
 도감의 canonical은 `/kanji/`입니다.
+
+도감은 전체 목록의 스크롤 높이를 유지하면서 화면 주변 3개 행까지만 카드를 만듭니다.
+CSS의 2~6열 반응형 설정으로 카드 크기를 계산하고, 화면 밖 카드는 DOM에서 제거합니다.
+키보드로 포커스한 카드 1개는 유지하며, 상세보기 동안 목록을 고정해 복귀 위치를 보존합니다.
+카드 뒤집기 상태는 한자별로 보관합니다. 목록 이미지는 뒤집힌 카드가 실제 화면에 보이고
+스크롤이 160ms 이상 멈췄을 때 요청하며, 정지 상태에서 직접 뒤집으면 바로 요청합니다.
+목록 이미지 요청은 동시 2개, 제거된 카드의 완료 이미지 캐시는 최근 4개로 제한합니다.
+빠른 스크롤 중 대기 요청을 비우고 화면 밖 미완료 이미지의 `src`를 해제합니다.
+이미 서버에 전송된 요청의 네트워크 취소 시점은 브라우저가 결정합니다.
+상세보기·확대 이미지의 기존 요청 및 대체 URL 동작은 별도입니다.
+자료/이미지를 스크롤마다 다시 가져오는 API 요청은 추가하지 않았습니다.
 
 상세보기의 예시 단어는 기존 `단어(읽기) 뜻` 데이터를 루비로 표시합니다.
 `src/example-ruby.js`는 한자의 `발음`과 단어 전체 읽기를 대조하고, 오쿠리가나와 복합어의

@@ -1,6 +1,8 @@
 import { studySeo } from "./seo.js";
 import { createRubyResolver } from "./example-ruby.js";
 import { imageCandidates } from "./image-sources.js";
+import { createVirtualGrid } from "./virtual-grid.js";
+import { createCardImages } from "./card-images.js";
 
       let DATA = [];
       const els = {
@@ -49,9 +51,12 @@ import { imageCandidates } from "./image-sources.js";
       let STORIES = [];
       let activeStoryId = "";
 
-      const BATCH = 96;
       let view = [];
-      let rendered = 0;
+      let kanjiGrid;
+      const flippedCards = new Set();
+      const cardImages = createCardImages({
+        isScrolling: () => kanjiGrid?.isScrolling || activeSection !== "kanji" || !detail.overlay.hidden || !imageViewer.overlay.hidden,
+      });
       let selectedStroke = null;
       let selectedSound = null;
 
@@ -559,6 +564,7 @@ import { imageCandidates } from "./image-sources.js";
         detail.back.hidden = true;
         restoreFocus(detailReturnFocus);
         detailReturnFocus = null;
+        kanjiGrid.refresh();
       }
       function openImageViewer(d, returnFocus) {
         hideKanjiPopover();
@@ -593,6 +599,7 @@ import { imageCandidates } from "./image-sources.js";
         imageViewer.image.onerror = null;
         syncModalState();
         restoreFocus(imageReturnFocus);
+        kanjiGrid.refresh();
         imageReturnFocus = null;
       }
       function makeKanjiLink(ch, currentChar, context = "card") {
@@ -721,6 +728,7 @@ import { imageCandidates } from "./image-sources.js";
         closeKanjiDetail();
         closeImageViewer();
         activeSection = section;
+        if (section !== "kanji") kanjiGrid.setItems([]);
         const story = section === "story";
         const game = section === "game";
         const seo = studySeo[section];
@@ -747,9 +755,7 @@ import { imageCandidates } from "./image-sources.js";
           history.pushState(null, "", url);
           handledLocation = location.href;
         }
-        requestAnimationFrame(() =>
-          window.scrollTo({ top: 0, behavior: "smooth" }),
-        );
+        window.scrollTo({ top: 0, behavior: "instant" });
         return activateSection(section);
       }
       async function navigateToKanji(ch, showBack = true) {
@@ -775,7 +781,7 @@ import { imageCandidates } from "./image-sources.js";
         }
         if (index < 0) return false;
 
-        while (rendered <= index) appendBatch();
+        kanjiGrid.scrollToIndex(index);
         requestAnimationFrame(() => {
           const card = findRenderedCard(ch);
           if (!card) return false;
@@ -783,11 +789,6 @@ import { imageCandidates } from "./image-sources.js";
           card.classList.remove("jump-target");
           void card.offsetWidth;
           card.classList.add("jump-target");
-          card.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "nearest",
-          });
           setTimeout(() => card.classList.remove("jump-target"), 1400);
         });
         return true;
@@ -1197,8 +1198,6 @@ import { imageCandidates } from "./image-sources.js";
             numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
         };
         view.sort(sorters[sortMode] || sorters.memory);
-        rendered = 0;
-        els.grid.replaceChildren();
         els.resultCount.textContent = view.length.toLocaleString("ko-KR");
         const sortLabel =
           {
@@ -1213,6 +1212,8 @@ import { imageCandidates } from "./image-sources.js";
           els.sortLabel.textContent = `${sortLabel} · ${selectedSound}`;
         else els.sortLabel.textContent = sortLabel;
         renderSortIndex(sortMode, filtered);
+        kanjiGrid.setItems(view);
+        els.sentinel.textContent = "";
         if (!view.length) {
           const empty = document.createElement("div");
           empty.className = "empty";
@@ -1221,19 +1222,21 @@ import { imageCandidates } from "./image-sources.js";
           els.sentinel.textContent = "";
           return;
         }
-        appendBatch();
       }
 
-      function setCardFlipped(card, flipped) {
+      function setCardFlipped(card, flipped, loadImage = true) {
         const hadFocus = card.contains(document.activeElement);
         card.classList.toggle("flipped", flipped);
         card.querySelector(".front").inert = flipped;
         card.querySelector(".back").inert = !flipped;
-        if (flipped) {
-          const image = card.querySelector(".visual img[data-src]");
-          if (image) {
-            image.src = image.dataset.src;
-            delete image.dataset.src;
+        if (!card.classList.contains("detail-card")) {
+          if (flipped) flippedCards.add(card.dataset.kanji);
+          else flippedCards.delete(card.dataset.kanji);
+          if (flipped && loadImage) {
+            const image = card.querySelector(".visual img");
+            if (image) cardImages.activate(image);
+            // The card may still be edge-on during the flip transition.
+            kanjiGrid.refresh();
           }
         }
         if (hadFocus) {
@@ -1276,23 +1279,23 @@ import { imageCandidates } from "./image-sources.js";
         visual.append(fallback);
         const urls = imageCandidates(d["이미지 1"]);
         if (urls.length) {
-          const img = document.createElement("img");
+          const img = isDetail ? document.createElement("img") : cardImages.create(
+            text(d["한자"]), urls, () => fallback.remove(), () => img.remove(),
+          );
           img.alt = `${text(d["한자"])} 암기 이미지`;
-          img.loading = "lazy";
+          img.loading = isDetail ? "lazy" : "eager";
           img.decoding = "async";
           img.draggable = false;
-          let attempt = 0;
-          img.addEventListener("load", () => fallback.remove());
-          img.addEventListener("error", () => {
-            attempt++;
-            if (attempt < urls.length) {
-              img.src = urls[attempt];
-            } else {
-              img.remove();
-            }
-          });
-          if (isDetail) img.src = urls[0];
-          else img.dataset.src = urls[0];
+          if (isDetail) {
+            let attempt = 0;
+            img.addEventListener("load", () => fallback.remove());
+            img.addEventListener("error", () => {
+              attempt++;
+              if (attempt < urls.length) img.src = urls[attempt];
+              else img.remove();
+            });
+            img.src = urls[0];
+          }
           visual.append(img);
         }
         const backFlipButton = isDetail ? null : document.createElement("button");
@@ -1544,26 +1547,22 @@ import { imageCandidates } from "./image-sources.js";
             toggle();
           });
         }
-        setCardFlipped(card, isDetail);
+        setCardFlipped(card, isDetail || flippedCards.has(text(d["한자"])), false);
         return card;
       }
-      function appendBatch() {
-        if (!kanjiReady || activeSection !== "kanji") return;
-        if (rendered >= view.length) {
-          els.sentinel.textContent = "";
-          return;
-        }
-        const frag = document.createDocumentFragment();
-        view
-          .slice(rendered, rendered + BATCH)
-          .forEach((d) => frag.append(createCard(d)));
-        els.grid.append(frag);
-        rendered = Math.min(rendered + BATCH, view.length);
-        els.sentinel.textContent =
-          rendered < view.length
-            ? `${rendered.toLocaleString("ko-KR")} / ${view.length.toLocaleString("ko-KR")} · 아래로 내려 더 보기`
-            : "";
-      }
+      kanjiGrid = createVirtualGrid({
+        element: els.grid,
+        createItem: d => createCard(d),
+        removeItem: card => {
+          const img = card.querySelector(".visual img");
+          if (img) cardImages.release(img);
+        },
+        isActive: () => kanjiReady && activeSection === "kanji" && detail.overlay.hidden && imageViewer.overlay.hidden,
+        onScroll: () => cardImages.pause(),
+        onIdle: () => {
+          for (const img of els.grid.querySelectorAll(".card.flipped .visual img")) cardImages.activate(img);
+        },
+      });
 
       let timer;
       els.search.addEventListener("input", () => {
@@ -1590,17 +1589,6 @@ import { imageCandidates } from "./image-sources.js";
         writeFilterUrl("pushState", true);
         apply();
       });
-      new IntersectionObserver(
-        (entries) => {
-          if (!entries[0].isIntersecting || activeSection !== "kanji" || !learningStatus.hidden || !detail.overlay.hidden) return;
-          // An entry queued while the grid was empty can arrive after its first
-          // batch. Check the current position before loading another batch.
-          const rect = els.sentinel.getBoundingClientRect();
-          if (rect.top <= window.innerHeight + 700 && rect.bottom >= -700) appendBatch();
-        },
-        { rootMargin: "700px 0px" },
-      ).observe(els.sentinel);
-
       const scrollTopButton = document.getElementById("scrollTop");
       const updateScrollTopButton = () =>
         scrollTopButton.classList.toggle("visible", window.scrollY > 480);
