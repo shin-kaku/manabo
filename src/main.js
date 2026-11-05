@@ -1,4 +1,5 @@
 import { studySeo } from "./seo.js";
+import { createRubyResolver } from "./example-ruby.js";
 
       let DATA = [];
       const els = {
@@ -70,6 +71,7 @@ import { studySeo } from "./seo.js";
       let KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
       let KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
       let RELATED_KANJI = new Map();
+      let resolveExampleRuby = createRubyResolver(DATA);
       function mnemonicComponents(raw) {
         const components = new Set();
         for (const match of text(raw).matchAll(/[（(]([^()（）]+)[）)]/g)) {
@@ -80,6 +82,7 @@ import { studySeo } from "./seo.js";
         return [...components];
       }
       function rebuildDataIndexes() {
+        resolveExampleRuby = createRubyResolver(DATA);
         KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
         KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
         RELATED_KANJI = new Map();
@@ -661,11 +664,35 @@ import { studySeo } from "./seo.js";
         }
         container.append(document.createTextNode(source.slice(last)));
       }
-      function appendExampleText(container, raw, currentChar) {
+      function appendExampleText(container, raw, currentChar, useRuby = false) {
         const lines = text(raw).split("\n");
         lines.forEach((line, i) => {
           if (i) container.append(document.createTextNode("\n"));
-          appendLinkedCharacters(container, line, currentChar);
+          const example = useRuby && line.match(/^([^()（）]+)[(（]([ぁ-ゖァ-ヶー]+)[)）](.*)$/u);
+          if (!example) {
+            appendLinkedCharacters(container, line, currentChar);
+            return;
+          }
+          const word = document.createElement("span");
+          word.className = "example-word";
+          word.lang = "ja";
+          for (const part of resolveExampleRuby(example[1], example[2])) {
+            if (!part.reading) {
+              word.append(document.createTextNode(part.text));
+              continue;
+            }
+            const ruby = document.createElement("ruby");
+            appendLinkedCharacters(ruby, part.text, currentChar);
+            const before = document.createElement("rp");
+            before.textContent = "(";
+            const rt = document.createElement("rt");
+            rt.textContent = part.reading;
+            const after = document.createElement("rp");
+            after.textContent = ")";
+            ruby.append(before, rt, after);
+            word.append(ruby);
+          }
+          container.append(word, document.createTextNode(example[3]));
         });
       }
       function findRenderedCard(ch) {
@@ -1427,7 +1454,7 @@ import { studySeo } from "./seo.js";
             heading.append(type);
             const list = document.createElement("div");
             list.className = "example-list";
-            appendExampleText(list, g.items.join("\n"), text(d["한자"]));
+            appendExampleText(list, g.items.join("\n"), text(d["한자"]), isDetail);
             group.append(heading, list);
             wrap.append(group);
           });

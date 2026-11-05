@@ -627,6 +627,23 @@
         white-space: pre-line;
         word-break: keep-all;
       }
+      .detail-card .example-list {
+        line-height: 2.4;
+      }
+      .example-word {
+        white-space: nowrap;
+        line-height: 1.45;
+      }
+      .example-word ruby {
+        ruby-position: over;
+        ruby-align: center;
+      }
+      .example-word rt {
+        color: var(--accent);
+        font-size: 0.58em;
+        font-weight: 500;
+        line-height: 1;
+      }
       .kanji-link {
         appearance: none;
         -webkit-appearance: none;

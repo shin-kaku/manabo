@@ -73,6 +73,7 @@ npm run sync-data -- --allow-story-removal=story-ID
 | `scripts/study-pages.mjs` | `/kanji/`, `/reading/`, `/quiz/` HTML 생성 |
 | `src/materials.html`, `scripts/material-pages.mjs` | 학습 자료 모음과 학년별 한자·독해 본문 HTML 생성 |
 | `src/main.js`, `src/styles.css` | 학습 로직과 스타일 |
+| `src/example-ruby.js` | 상세 예시 단어의 한자별 루비 대응 및 단어 전체 표시 대체 처리 |
 | `src/seo.js` | 학습 페이지별 제목·설명·canonical |
 | `public/data/*.json` | Sheets에서 동기화한 공개 학습 데이터 |
 | `scripts/sync-sheets.mjs` | 운영자용 데이터 검증·저장 |
@@ -91,6 +92,12 @@ npm run sync-data -- --allow-story-removal=story-ID
 개발 중에는 자료 틀과 JSON 변경을 감지해 재생성하며, 정식 빌드는 항상 최신 JSON으로 생성합니다.
 정적 독해 본문에서 `/reading/?story=story-ID`로 해당 대화형 독해를 열 수 있습니다.
 도감의 canonical은 `/kanji/`입니다.
+
+상세보기의 예시 단어는 기존 `단어(읽기) 뜻` 데이터를 루비로 표시합니다.
+`src/example-ruby.js`는 한자의 `발음`과 단어 전체 읽기를 대조하고, 오쿠리가나와 복합어의
+일부 음변화를 처리해 대응 후보가 하나일 때 한자별로 나눕니다. 후보가 없거나 여러 개면
+단어 전체에 읽기를 붙입니다. 이는 자동 대응이며 모든 단어의 언어적 정확성을 보증하는
+검수는 아닙니다. 원본 데이터 형식은 유지하며, 루비 색은 `--accent`를 따릅니다.
 
 ## 원본 데이터 후속 작업
 
