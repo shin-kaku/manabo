@@ -30,7 +30,7 @@ const gridState = page => page.locator("#grid").evaluate(grid => ({
 }));
 
 for (const width of [390, 768, 1280, 1600]) {
-  test(`long rapid scrolling stays bounded and sends no image requests at ${width}px`, async ({ page }) => {
+  test(`long rapid scrolling stays bounded and sends no image requests at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 844 });
     const { requests, errors } = await prepare(page);
     const measurements = [];
@@ -51,7 +51,7 @@ for (const width of [390, 768, 1280, 1600]) {
     expect(errors).toEqual([]);
     await expect(page.locator('#grid .card[data-index="0"]')).toBeAttached();
     console.log(JSON.stringify({ width, measurements, imageRequests: requests.images.length, dataRequests: requests.data }));
-    if ([390, 1280].includes(width)) await page.screenshot({ path: `/private/tmp/manabo-virtual-grid-${width}.png` });
+    if ([390, 1280].includes(width)) await page.screenshot({ path: testInfo.outputPath(`virtual-grid-${width}.png`) });
   });
 }
 

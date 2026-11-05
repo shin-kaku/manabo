@@ -5,7 +5,7 @@ const rows = JSON.parse(await readFile(new URL("../../public/data/kanji.json", i
 const pixel = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j8ZkAAAAASUVORK5CYII=", "base64");
 
 for (const width of [1280, 390]) {
-  test(`detail examples show accent ruby and retain kanji navigation at ${width}px`, async ({ page }) => {
+  test(`detail examples show accent ruby and retain kanji navigation at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });
     await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
     await page.route("**/*", route => {
@@ -31,7 +31,7 @@ for (const width of [1280, 390]) {
     });
     expect(geometry.rtBottom).toBeLessThanOrEqual(geometry.baseTop + 3);
     expect(geometry.right).toBeLessThanOrEqual(width);
-    await page.locator("#detailOverlay .examples-info").screenshot({ path: `/private/tmp/manabo-example-ruby-${width}.png` });
+    await page.locator("#detailOverlay .examples-info").screenshot({ path: testInfo.outputPath(`example-ruby-${width}.png`) });
     await words.first().getByRole("button", { name: "化 간단 정보 보기" }).click();
     await expect(page.locator("#kanjiPopover")).toBeVisible();
     await expect(page.locator("#popoverGlyph")).toHaveText("化");

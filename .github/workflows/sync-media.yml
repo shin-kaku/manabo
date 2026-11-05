@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   sync:
-    if: vars.MEDIA_SYNC_ENABLED == 'true'
+    if: vars.MEDIA_SYNC_ENABLED == 'true' && github.event.repository.private == false
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
@@ -48,6 +48,12 @@ jobs:
           restore-keys: media-v1-
       - run: npm run sync-data
       - run: npm run sync-media
+      - name: Verify and cache generated media before browser checks
+        run: node scripts/check-media.mjs public
+      - uses: actions/cache/save@v4
+        with:
+          path: public/media
+          key: media-v1-${{ hashFiles('public/data/media.json') }}
       - name: Detect content changes
         id: content
         env:
@@ -83,10 +89,3 @@ jobs:
             git commit -m 'data: sync Google content and optimized media'
             git push origin HEAD:master
           fi
-      - if: success() && steps.content.outputs.changed == 'true'
-        run: node scripts/check-media.mjs public
-      - uses: actions/cache/save@v4
-        if: success() && steps.content.outputs.changed == 'true'
-        with:
-          path: public/media
-          key: media-v1-${{ hashFiles('public/data/media.json') }}
