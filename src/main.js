@@ -1,5 +1,6 @@
 import { studySeo } from "./seo.js";
 import { createRubyResolver } from "./example-ruby.js";
+import { imageCandidates } from "./image-sources.js";
 
       let DATA = [];
       const els = {
@@ -106,11 +107,17 @@ import { createRubyResolver } from "./example-ruby.js";
       const learningMessage = document.getElementById("learningMessage");
       const learningRetry = document.getElementById("learningRetry");
       async function fetchSavedRows(name) {
-        const response = await fetch(`/data/${name}.json`);
-        if (!response.ok) throw new Error(`${name} HTTP ${response.status}`);
-        const rows = await response.json();
-        if (!Array.isArray(rows) || !rows.length) throw new Error(`${name} 데이터 형식 오류`);
-        return rows;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        try {
+          const response = await fetch(`/data/${name}.json`, { signal: controller.signal });
+          if (!response.ok) throw new Error(`${name} HTTP ${response.status}`);
+          const rows = await response.json();
+          if (!Array.isArray(rows) || !rows.length) throw new Error(`${name} 데이터 형식 오류`);
+          return rows;
+        } finally {
+          clearTimeout(timeout);
+        }
       }
       function ensureKanji() {
         if (kanjiReady) return Promise.resolve();
@@ -147,7 +154,12 @@ import { createRubyResolver } from "./example-ruby.js";
           document.documentElement.dataset.dataSource = "saved";
           els.gameStart.disabled = false;
           if (section === "kanji") { readFilterUrl(); apply(); }
-          if (section === "story") renderStory();
+          if (section === "story") {
+            const requestedStory = new URLSearchParams(location.search).get("story");
+            activeStoryId = STORIES.find((story) => story.id === requestedStory)?.id ||
+              STORIES.find((story) => story.category === "학년별")?.id || STORIES[0].id;
+            renderStory();
+          }
           return true;
         } catch (error) {
           if (version !== activation) return false;
@@ -277,38 +289,6 @@ import { createRubyResolver } from "./example-ruby.js";
         const n = numberOrInf(v);
         return Number.isFinite(n) ? String(n).padStart(4, "0") : "—";
       };
-      function driveFileId(url) {
-        const u = text(url);
-        if (!u) return "";
-        const patterns = [
-          /\/file\/d\/([^/?#]+)/i,
-          /\/d\/([^/?#]+)/i,
-          /[?&]id=([^&#]+)/i,
-        ];
-        for (const p of patterns) {
-          const m = u.match(p);
-          if (m) return decodeURIComponent(m[1]);
-        }
-        return "";
-      }
-      function imageCandidates(...sources) {
-        const urls = [];
-        sources.forEach((source) => {
-          const u = text(source);
-          if (!u) return;
-          const id = driveFileId(u);
-          if (id) {
-            const e = encodeURIComponent(id);
-            // Use image-serving URLs directly. The uc endpoint can return 403
-            // for embedded images, repeating the failure in cards and detail views.
-            urls.push(`https://drive.google.com/thumbnail?id=${e}&sz=w1200`);
-            urls.push(`https://lh3.googleusercontent.com/d/${e}=w1200`);
-          } else {
-            urls.push(u);
-          }
-        });
-        return [...new Set(urls)];
-      }
       function sortGrade(a, b) {
         const rank = (s) => {
           const elementary = s.match(/초등(?:학교)?\s*(\d+)학년/);
@@ -411,6 +391,7 @@ import { createRubyResolver } from "./example-ruby.js";
       };
       let popoverKanji = "",
         popoverAnchor = null,
+        popoverAnchorRect = null,
         popoverHoverTimer = null;
       let detailReturnFocus = null,
         imageReturnFocus = null,
@@ -461,6 +442,7 @@ import { createRubyResolver } from "./example-ruby.js";
           box = popover.root.getBoundingClientRect(),
           gap = 0,
           pad = 14;
+        popoverAnchorRect = rect;
         let top = rect.top - box.height - gap;
         if (top < pad) top = rect.bottom + gap;
         top = Math.max(
@@ -485,6 +467,7 @@ import { createRubyResolver } from "./example-ruby.js";
           popoverAnchor.setAttribute("aria-expanded", "false");
         popoverKanji = ch;
         popoverAnchor = anchor;
+        popoverAnchorRect = anchor.getBoundingClientRect();
         popover.glyph.textContent = ch;
         popover.meaning.textContent = text(d["훈, 음"]);
         popover.meta.replaceChildren();
@@ -512,6 +495,7 @@ import { createRubyResolver } from "./example-ruby.js";
         popover.root.hidden = true;
         popoverKanji = "";
         popoverAnchor = null;
+        popoverAnchorRect = null;
         syncModalState();
       }
       function closePopoverOnLeave(event) {
@@ -724,6 +708,15 @@ import { createRubyResolver } from "./example-ruby.js";
         handledLocation = location.href;
       }
       function setSection(section, updateUrl = true) {
+        if (section === "story" && !document.getElementById("storyFont")) {
+          const font = document.createElement("link");
+          font.id = "storyFont";
+          font.rel = "stylesheet";
+          font.href = "https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap";
+          font.media = "print";
+          font.addEventListener("load", () => { font.media = "all"; });
+          document.head.append(font);
+        }
         hideKanjiPopover();
         closeKanjiDetail();
         closeImageViewer();
@@ -816,12 +809,14 @@ import { createRubyResolver } from "./example-ruby.js";
       }
       function selectStory(id, scroll = true) {
         if (!STORIES.some((s) => s.id === id)) return;
+        const restoreLevelFocus = els.gradeStoryLevels.contains(document.activeElement) || els.jlptStoryLevels.contains(document.activeElement);
         activeStoryId = id;
         const url = new URL(location.href);
         url.searchParams.set("story", id);
         history.replaceState(null, "", url);
         handledLocation = location.href;
         renderStory();
+        if (restoreLevelFocus) els.storyView.querySelector('.story-level[aria-current="true"]')?.focus({ preventScroll: true });
         if (scroll)
           requestAnimationFrame(() =>
             document
@@ -974,6 +969,7 @@ import { createRubyResolver } from "./example-ruby.js";
           });
           els.gameChoices.append(button);
         });
+        els.gameChoices.firstElementChild?.focus();
       }
       function showGameResult() {
         gameState.finished = true;
@@ -1031,6 +1027,7 @@ import { createRubyResolver } from "./example-ruby.js";
           count = Math.min(Number(els.gameCount.value) || 10, pool.length);
         if (pool.length < 4 || new Set(pool.map((row) => text(row["훈, 음"]))).size < 4) {
           document.getElementById("gameSetupError").hidden = false;
+          els.gameGrade.focus();
           return;
         }
         gameState.pool = pool;
@@ -1042,7 +1039,10 @@ import { createRubyResolver } from "./example-ruby.js";
         els.gamePlay.hidden = false;
         renderGameQuestion();
       }
-      function returnToGameSettings() { resetGame(); }
+      function returnToGameSettings() {
+        resetGame();
+        els.gameStart.focus();
+      }
       window.addEventListener("popstate", () => { bootstrap(); });
       window.addEventListener("hashchange", (event) => { if (event.newURL === location.href) bootstrap(); });
       for (const [section, link] of [["kanji", els.navKanji], ["story", els.navStory], ["game", els.navGame]]) {
@@ -1130,9 +1130,13 @@ import { createRubyResolver } from "./example-ruby.js";
       window.addEventListener(
         "scroll",
         () => {
-          if (!popover.root.hidden) hideKanjiPopover();
+          if (popover.root.hidden || !popoverAnchor || !popoverAnchorRect) return;
+          const rect = popoverAnchor.getBoundingClientRect();
+          // Focus can queue a scroll event before opening the popover. Only
+          // dismiss it if its anchor actually moved since it was positioned.
+          if (rect.top !== popoverAnchorRect.top || rect.left !== popoverAnchorRect.left) hideKanjiPopover();
         },
-        { passive: true },
+        { passive: true, capture: true },
       );
       window.addEventListener("resize", () => {
         if (!popover.root.hidden && popoverAnchor)
@@ -1225,6 +1229,13 @@ import { createRubyResolver } from "./example-ruby.js";
         card.classList.toggle("flipped", flipped);
         card.querySelector(".front").inert = flipped;
         card.querySelector(".back").inert = !flipped;
+        if (flipped) {
+          const image = card.querySelector(".visual img[data-src]");
+          if (image) {
+            image.src = image.dataset.src;
+            delete image.dataset.src;
+          }
+        }
         if (hadFocus) {
           card.querySelector(flipped ? ".back-flip-button" : ".front")?.focus({ preventScroll: true });
         }
@@ -1280,7 +1291,8 @@ import { createRubyResolver } from "./example-ruby.js";
               img.remove();
             }
           });
-          img.src = urls[0];
+          if (isDetail) img.src = urls[0];
+          else img.dataset.src = urls[0];
           visual.append(img);
         }
         const backFlipButton = isDetail ? null : document.createElement("button");
@@ -1414,7 +1426,7 @@ import { createRubyResolver } from "./example-ruby.js";
           l.append(p);
           body.append(l);
         }
-        const readingRows = parseReadings(d["발음"]);
+        const readingRows = isDetail ? parseReadings(d["발음"]) : [];
         if (readingRows.length) {
           const l = document.createElement("div");
           l.className = "info-section reading-info";
@@ -1436,7 +1448,7 @@ import { createRubyResolver } from "./example-ruby.js";
           l.append(groups);
           body.append(l);
         }
-        const exGroups = parseExamples(d["예시단어"]);
+        const exGroups = isDetail ? parseExamples(d["예시단어"]) : [];
         if (exGroups.length) {
           const l = document.createElement("div");
           l.className = "info-section examples-info";
@@ -1580,7 +1592,11 @@ import { createRubyResolver } from "./example-ruby.js";
       });
       new IntersectionObserver(
         (entries) => {
-          if (entries[0].isIntersecting) appendBatch();
+          if (!entries[0].isIntersecting || activeSection !== "kanji" || !learningStatus.hidden || !detail.overlay.hidden) return;
+          // An entry queued while the grid was empty can arrive after its first
+          // batch. Check the current position before loading another batch.
+          const rect = els.sentinel.getBoundingClientRect();
+          if (rect.top <= window.innerHeight + 700 && rect.bottom >= -700) appendBatch();
         },
         { rootMargin: "700px 0px" },
       ).observe(els.sentinel);
@@ -1603,10 +1619,6 @@ import { createRubyResolver } from "./example-ruby.js";
         handledLocation = requestedLocation;
         const loaded = await setSection(sectionFromPath(), false);
         if (!loaded) return;
-        if (activeSection === "story") {
-          const requestedStory = new URLSearchParams(location.search).get("story");
-          if (STORIES.some((story) => story.id === requestedStory)) selectStory(requestedStory, false);
-        }
         let requestedKanji = "";
         if (location.hash.startsWith("#kanji=")) {
           try { requestedKanji = decodeURIComponent(location.hash.slice(7)); }
@@ -1617,9 +1629,9 @@ import { createRubyResolver } from "./example-ruby.js";
           }
         }
         if (requestedKanji && KANJI_SET.has(requestedKanji)) {
-          if (await navigateToKanji(requestedKanji, true)) {
-            openKanjiDetail(requestedKanji, findRenderedCard(requestedKanji)?.querySelector(".card-detail-button"));
-          }
+          // Deep links open one detail without rendering every preceding card.
+          if (activeSection !== "kanji" && !await setSection("kanji")) return;
+          openKanjiDetail(requestedKanji, findRenderedCard(requestedKanji)?.querySelector(".front") || els.search);
         }
         handledLocation = location.href;
       }
