@@ -1,4 +1,4 @@
-function driveFileId(source) {
+export function driveFileId(source) {
   let url;
   try {
     url = new URL(source);

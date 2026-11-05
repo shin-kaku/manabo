@@ -34,3 +34,9 @@ dist-ssr
 # Browser regression artifacts
 /test-results/
 /playwright-report/
+
+# Original images and local compression comparisons (not public or deployed).
+/.local-assets/
+
+# Generated content-addressed assets; restored from the published release in CI.
+/public/media/

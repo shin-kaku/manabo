@@ -9,8 +9,9 @@ async function prepare(page) {
   await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
   await page.route("**/*", route => {
     const request = route.request();
-    if (new URL(request.url()).hostname === "127.0.0.1") return route.continue();
+    if (new URL(request.url()).pathname === "/favicon.svg") return route.continue();
     if (request.resourceType() === "image") requests.images.push(request.url());
+    if (request.resourceType() !== "image" && new URL(request.url()).hostname === "127.0.0.1") return route.continue();
     return route.fulfill({ contentType: request.resourceType() === "image" ? "image/png" : "text/plain", body: request.resourceType() === "image" ? pixel : "" });
   });
   await page.goto("/kanji/");
@@ -96,7 +97,7 @@ test("a recycled flipped card does not start a request while scrolling", async (
   await page.setViewportSize({ width: 390, height: 844 });
   const { requests } = await prepare(page);
   let heldRoute;
-  await page.route("https://drive.google.com/**", route => { requests.images.push(route.request().url()); heldRoute = route; });
+  await page.route("**/media/**", route => { requests.images.push(route.request().url()); heldRoute = route; });
   const first = page.locator('#grid .card[data-index="0"]');
   await first.locator(".front").click();
   await expect.poll(() => requests.images.length).toBe(1);
@@ -147,7 +148,7 @@ test("visible flipped images use at most two concurrent requests", async ({ page
   await prepare(page);
   const held = [];
   let inFlight = 0, peak = 0;
-  await page.route("https://drive.google.com/**", route => {
+  await page.route("**/media/**", route => {
     inFlight++;
     peak = Math.max(peak, inFlight);
     held.push(async () => { inFlight--; await route.fulfill({ contentType: "image/png", body: pixel }); });

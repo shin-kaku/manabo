@@ -10,7 +10,8 @@ test("list cards request their image on first flip and retain full detail conten
   await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
   await page.route("**/*", route => {
     const request = route.request();
-    if (new URL(request.url()).hostname === "127.0.0.1") return route.continue();
+    const url = new URL(request.url());
+    if (url.pathname === "/favicon.svg" || (request.resourceType() !== "image" && url.hostname === "127.0.0.1")) return route.continue();
     if (request.resourceType() === "image") images.push(request.url());
     return route.fulfill({ contentType: request.resourceType() === "image" ? "image/png" : "text/plain", body: request.resourceType() === "image" ? pixel : "" });
   });

@@ -1,0 +1,92 @@
+name: Sync Google media and publish
+
+on:
+  push:
+    branches: [master]
+  schedule:
+    - cron: '17,47 * * * *'
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: Deploy even when Google content is unchanged
+        type: boolean
+        default: false
+
+concurrency:
+  group: manabo-media-production
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: vars.MEDIA_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      MANABO_SHEETS_API_URL: ${{ secrets.MANABO_SHEETS_API_URL }}
+      GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Verify required connections (never print credentials)
+        run: node -e 'for (const name of ["MANABO_SHEETS_API_URL", "GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]) if (!process.env[name]) throw Error(`Missing secret ${name}`)'
+      - run: npm ci
+      - uses: actions/cache/restore@v4
+        id: media-cache
+        with:
+          path: public/media
+          key: media-v1-${{ hashFiles('public/data/media.json') }}
+          restore-keys: media-v1-
+      - run: npm run sync-data
+      - run: npm run sync-media
+      - name: Detect content changes
+        id: content
+        env:
+          FORCE_DEPLOY: ${{ inputs.force_deploy }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != 'push' ] && [ "$FORCE_DEPLOY" != 'true' ] && git diff --quiet -- public/data/kanji.json public/data/stories.json public/data/media.json; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.content.outputs.changed == 'true'
+        run: npm run test:unit
+      - if: steps.content.outputs.changed == 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.content.outputs.changed == 'true'
+        run: npm run test:browser
+      - if: steps.content.outputs.changed == 'true'
+        run: npm run build
+      - name: Refuse stale release if source code changed during the job
+        if: steps.content.outputs.changed == 'true'
+        run: |
+          git fetch origin master
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/master)"
+      - if: steps.content.outputs.changed == 'true'
+        run: npx wrangler deploy
+      - name: Save published data and asset hashes (binaries stay outside Git)
+        if: steps.content.outputs.changed == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/data/kanji.json public/data/stories.json public/data/media.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'data: sync Google content and optimized media'
+            git push origin HEAD:master
+          fi
+      - if: success() && steps.content.outputs.changed == 'true'
+        run: node scripts/check-media.mjs public
+      - uses: actions/cache/save@v4
+        if: success() && steps.content.outputs.changed == 'true'
+        with:
+          path: public/media
+          key: media-v1-${{ hashFiles('public/data/media.json') }}

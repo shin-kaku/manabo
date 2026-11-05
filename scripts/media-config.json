@@ -1,0 +1,4 @@
+{
+  "enabledKinds": ["image1"],
+  "note": "준비된 종류만 추가: image2는 이미지 2, stroke는 획순 SVG 우선 및 기존 획순 이미지. 추가 후 수동 동기화 실행."
+}

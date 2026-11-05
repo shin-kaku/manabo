@@ -31,6 +31,8 @@ const KANJI_FIELDS = [
   "획",
   "풀이",
   "이미지 1",
+  "이미지 2",
+  "획순 SVG",
   "획순 이미지",
   "발음",
   "예시단어",
@@ -140,8 +142,14 @@ export function prepareKanji(rows, previousCount = 0) {
       throw new Error(`${label}의 문부성 순서가 올바르지 않습니다.`);
     }
     requireImageUrl(row["이미지 1"], `${label}의 이미지 1`);
-    requireStringField(row, "획순 이미지", label);
-    requireImageUrl(row["획순 이미지"], `${label}의 획순 이미지`);
+    for (const field of ["이미지 2", "획순 SVG"]) {
+      if (Object.hasOwn(row, field)) {
+        requireStringField(row, field, label, true);
+        if (row[field].trim()) requireImageUrl(row[field], `${label}의 ${field}`);
+      }
+    }
+    if (!row["획순 SVG"]?.trim()) requireStringField(row, "획순 이미지", label);
+    if (row["획순 이미지"]) requireImageUrl(row["획순 이미지"], `${label}의 획순 이미지`);
     // Only 壴 currently has an intentionally empty reference reading.
     requireStringField(row, "발음", label, isReference && character === "壴");
     const reading = row["발음"].trim();
@@ -206,6 +214,23 @@ export function protectStoryIds(previous, incoming, allowedRemovals = []) {
   }
   const unconfirmed = removed.filter((id) => !allowed.has(id));
   if (unconfirmed.length) throw new Error(`독해 기존 ID 삭제/감소가 감지되었습니다: ${unconfirmed.join(", ")}`);
+}
+
+export function mergeKanji(previous, incoming, corrections = []) {
+  const next = new Map(incoming.map(row => [row["한자"], { ...row }]));
+  // A correction applies only while the upstream value is the known old value.
+  // New editorial changes in Google are not silently hidden by a permanent override.
+  for (const { kanji, field, sourceValue, value } of corrections) {
+    const row = next.get(kanji);
+    if (row && row[field] === sourceValue) row[field] = value;
+  }
+  const merged = [];
+  for (const row of previous || []) {
+    if (!next.has(row["한자"])) throw new Error(`기존 한자 삭제가 감지되었습니다: ${row["한자"]}`);
+    merged.push(next.get(row["한자"]));
+    next.delete(row["한자"]);
+  }
+  return [...merged, ...next.values()];
 }
 
 async function writeAndVerify(path, data) {
@@ -278,6 +303,7 @@ async function main() {
   const response = await fetch(url, {
     headers: { accept: "application/json" },
     redirect: "follow",
+    signal: AbortSignal.timeout(60000),
   });
   if (!response.ok) {
     throw new Error(`Apps Script 요청 실패: HTTP ${response.status}`);
@@ -289,7 +315,10 @@ async function main() {
     throw new Error("Apps Script 응답이 올바르지 않습니다.");
   }
 
-  const kanji = prepareKanji(payload.kanji, previousCount);
+  let corrections = [];
+  const correctionsPath = resolve(projectRoot, "scripts/data-corrections.json");
+  if (await pathExists(correctionsPath)) corrections = JSON.parse(await readFile(correctionsPath, "utf8"));
+  const kanji = mergeKanji(previous, prepareKanji(payload.kanji, previousCount), corrections);
   const stories = prepareStories(payload.stories);
   protectStoryIds(previousStories, stories, allowedRemovals);
   await replaceDataFiles(kanji, stories);

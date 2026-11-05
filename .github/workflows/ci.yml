@@ -9,6 +9,8 @@ permissions:
 
 jobs:
   test-and-build:
+    # Production sync performs these same checks after restoring Google media.
+    if: github.event_name != 'push' || github.ref != 'refs/heads/master' || vars.MEDIA_SYNC_ENABLED != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,4 +21,9 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm test
+      - uses: actions/cache@v4
+        with:
+          path: public/media
+          key: media-v1-${{ hashFiles('public/data/media.json') }}
+          restore-keys: media-v1-
       - run: npm run build

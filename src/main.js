@@ -1,6 +1,6 @@
 import { studySeo } from "./seo.js";
 import { createRubyResolver } from "./example-ruby.js";
-import { imageCandidates } from "./image-sources.js";
+import { loadMedia, mediaCandidates } from "./media.js";
 import { createVirtualGrid } from "./virtual-grid.js";
 import { createCardImages } from "./card-images.js";
 
@@ -127,7 +127,7 @@ import { createCardImages } from "./card-images.js";
       function ensureKanji() {
         if (kanjiReady) return Promise.resolve();
         if (!kanjiRequest) kanjiRequest = (async () => {
-          DATA = await fetchSavedRows("kanji");
+          [DATA] = await Promise.all([fetchSavedRows("kanji"), loadMedia()]);
           rebuildDataIndexes();
           populateFilters();
           kanjiReady = true;
@@ -569,7 +569,7 @@ import { createCardImages } from "./card-images.js";
       function openImageViewer(d, returnFocus) {
         hideKanjiPopover();
         const ch = text(d["한자"]),
-          urls = imageCandidates(d["이미지 1"]);
+          urls = mediaCandidates(d, "image1", "detail");
         imageReturnFocus = returnFocus;
         imageViewer.fallback.textContent = ch;
         imageViewer.fallback.hidden = false;
@@ -1277,7 +1277,7 @@ import { createCardImages } from "./card-images.js";
         fallback.className = "fallback";
         fallback.textContent = text(d["한자"]);
         visual.append(fallback);
-        const urls = imageCandidates(d["이미지 1"]);
+        const urls = mediaCandidates(d, "image1", isDetail ? "detail" : "card");
         if (urls.length) {
           const img = isDetail ? document.createElement("img") : cardImages.create(
             text(d["한자"]), urls, () => fallback.remove(), () => img.remove(),
@@ -1361,7 +1361,7 @@ import { createCardImages } from "./card-images.js";
             visual.append(chips);
           } else body.append(chips);
         }
-        const strokeOrderUrls = imageCandidates(d["획순 이미지"]);
+        const strokeOrderUrls = mediaCandidates(d, "stroke", "detail");
         const strokeCount = text(d["획"]);
         const koreanReading = text(d["훈, 음"]);
         if (isDetail && (strokeOrderUrls.length || strokeCount || koreanReading)) {
