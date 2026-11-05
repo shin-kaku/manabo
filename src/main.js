@@ -296,9 +296,8 @@ import { studySeo } from "./seo.js";
           const id = driveFileId(u);
           if (id) {
             const e = encodeURIComponent(id);
-            // Drive's public-image endpoints occasionally behave differently per file/browser.
-            // Keep three forms, then move to the next sheet image if one fails.
-            urls.push(`https://drive.google.com/uc?export=view&id=${e}`);
+            // Use image-serving URLs directly. The uc endpoint can return 403
+            // for embedded images, repeating the failure in cards and detail views.
             urls.push(`https://drive.google.com/thumbnail?id=${e}&sz=w1200`);
             urls.push(`https://lh3.googleusercontent.com/d/${e}=w1200`);
           } else {

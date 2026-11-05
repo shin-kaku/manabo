@@ -26,6 +26,57 @@ async function openDetail(page, ch = "文") {
 }
 const activeIn = (page, selector) => page.evaluate((selector) => document.querySelector(selector).contains(document.activeElement), selector);
 
+for (const failThumbnail of [false, true]) {
+  test(`Drive images load in cards, details and zoom without uc requests (thumbnail fails: ${failThumbnail})`, async ({ page }) => {
+    await mockData(page, { kanji: [kanji.find((row) => row["한자"] === "文")] });
+    const requests = [];
+    await page.route(/https:\/\/(drive\.google\.com|lh3\.googleusercontent\.com)\//, (route) => {
+      const url = new URL(route.request().url());
+      requests.push(url);
+      const rejected = url.pathname === "/uc" || (failThumbnail && url.pathname === "/thumbnail");
+      return route.fulfill({ status: rejected ? 403 : 200, contentType: rejected ? "text/plain" : "image/png", body: rejected ? "Forbidden" : pixel });
+    });
+    await page.goto("/kanji/");
+    await ready(page);
+    await page.locator("#grid button.front").click();
+    const loaded = async (selector) => {
+      await expect(page.locator(selector)).toBeVisible();
+      await expect.poll(() => page.locator(selector).evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
+    };
+    await loaded("#grid .visual img");
+    await page.locator("#grid .card-detail-button").click();
+    await loaded("#detailOverlay .visual img");
+    await loaded("#detailOverlay .stroke-order-image");
+    await page.locator(".detail-image-zoom").click();
+    await loaded("#imageOverlay img");
+    expect(requests.length).toBeGreaterThan(0);
+    expect(requests.some((url) => url.pathname === "/uc")).toBe(false);
+    expect(requests.some((url) => url.hostname === "lh3.googleusercontent.com")).toBe(failThumbnail);
+  });
+}
+
+test("unavailable Drive images stop retrying and keep the kanji fallback", async ({ page }) => {
+  await mockData(page, { kanji: [kanji.find((row) => row["한자"] === "文")] });
+  const attempts = new Map();
+  await page.route(/https:\/\/(drive\.google\.com|lh3\.googleusercontent\.com)\//, (route) => {
+    const url = route.request().url();
+    attempts.set(url, (attempts.get(url) || 0) + 1);
+    return route.fulfill({ status: 403, body: "Forbidden" });
+  });
+  await openDetail(page);
+  await expect(page.locator("#detailOverlay .visual img")).toHaveCount(0);
+  await expect(page.locator("#detailOverlay .stroke-order-frame")).toHaveCount(0);
+  await expect(page.locator("#detailOverlay .visual .fallback")).toHaveText("文");
+  const beforeZoom = [...attempts.values()].reduce((sum, count) => sum + count, 0);
+  await page.locator(".detail-image-zoom").click();
+  await expect.poll(() => [...attempts.values()].reduce((sum, count) => sum + count, 0)).toBeGreaterThanOrEqual(beforeZoom + 2);
+  await expect(page.locator("#imageOverlay img")).toBeHidden();
+  await expect(page.locator("#imageFallback")).toBeVisible();
+  // Each image element tries each candidate once, including the enlarged image.
+  expect([...attempts.keys()].some((url) => new URL(url).pathname === "/uc")).toBe(false);
+  expect(Math.max(...attempts.values())).toBeLessThanOrEqual(3);
+});
+
 for (const path of ["/kanji/", "/quiz/"]) {
   test(`${path} works while stories is unavailable and never requests it`, async ({ page }) => {
     const state = await mockData(page, { storiesStatus: 503 });

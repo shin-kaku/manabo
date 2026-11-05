@@ -1568,6 +1568,9 @@
         -webkit-user-drag: none;
         pointer-events: none;
       }
+      .image-stage img[hidden] {
+        display: none;
+      }
       .image-fallback {
         font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
         font-size: min(34vw, 260px);
