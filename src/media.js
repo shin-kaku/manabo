@@ -27,10 +27,10 @@ function strokeSource(row) {
   return row["획순 SVG"] || row["획순 이미지"];
 }
 
-export function usesEmbeddedStrokeTheme(row, url, media = catalog) {
-  if (url.startsWith("/strokes/")) return true;
+export function strokeThemeMode(row, url, media = catalog) {
+  if (url.startsWith("/strokes/")) return "explicit";
   const entry = media?.items?.stroke?.[driveFileId(strokeSource(row))];
-  return entry?.strokeTheme === "auto" && entry.detail?.url === url;
+  return entry?.detail?.url === url ? entry.strokeTheme : undefined;
 }
 
 export function mediaCandidates(row, kind = "image1", usage = "card", media = catalog) {

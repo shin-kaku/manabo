@@ -6,7 +6,7 @@ import { join } from "node:path";
 import sharp from "sharp";
 import { collectSources, hash, optimize, validateSvg, assetPath, emptyCatalog } from "./media-core.mjs";
 import { syncMedia } from "./sync-media.mjs";
-import { mediaCandidates, usesEmbeddedStrokeTheme } from "../src/media.js";
+import { mediaCandidates, strokeThemeMode } from "../src/media.js";
 import { mergeKanji, prepareKanji } from "./sync-sheets.mjs";
 
 const sourceUrl = id => `https://drive.google.com/file/d/${id}/view`;
@@ -109,12 +109,13 @@ test("Drive sync preserves the embedded color scheme only for opted-in stroke SV
   const directory = await mkdtemp(join(tmpdir(), "manabo-stroke-theme-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const optedIn = Buffer.from(svg.toString().replace("<svg ", '<svg data-stroke-theme="auto" '));
-  for (const [bytes, expected] of [[optedIn, true], [svg, false]]) {
+  const explicit = Buffer.from(optedIn.toString().replace("<svg ", '<svg data-stroke-views="explicit" '));
+  for (const [bytes, expected] of [[explicit, "explicit"], [optedIn, "auto"], [svg, undefined]]) {
     const metadata = new Map([["svg", { md5Checksum: hash(bytes, "md5"), size: bytes.length }]]);
     const { catalog } = await syncMedia({ rows: [row], enabledKinds: ["stroke"], directory, metadata, readSource: async () => bytes });
     const url = mediaCandidates(row, "stroke", "detail", catalog)[0];
-    assert.equal(usesEmbeddedStrokeTheme(row, url, catalog), expected);
-    assert.equal(usesEmbeddedStrokeTheme(row, "https://example.com/fallback.png", catalog), false);
+    assert.equal(strokeThemeMode(row, url, catalog), expected);
+    assert.equal(strokeThemeMode(row, "https://example.com/fallback.png", catalog), undefined);
     assert.deepEqual(await readFile(assetPath(directory, url)), bytes);
   }
 });
@@ -124,7 +125,10 @@ test("all five SVG trials retain numbered strokes, native themes and reduced mot
     const file = await readFile(new URL(`../public/strokes/${kanji}.svg`, import.meta.url));
     const xml = validateSvg(file).toString("utf8");
     assert.equal((xml.match(/<animate\b/g) || []).length, count, kanji);
-    assert.equal(usesEmbeddedStrokeTheme({ 한자: kanji }, `/strokes/${kanji}.svg`), true);
+    assert.equal(strokeThemeMode({ 한자: kanji }, `/strokes/${kanji}.svg`), "explicit");
+    for (const view of ["light", "dark", "light-still", "dark-still", "still"]) {
+      assert.ok(xml.includes(`id="${view}"`));
+    }
     assert.deepEqual([...xml.matchAll(/<text\b[^>]*>(\d+)<\/text>/g)].map(match => Number(match[1])),
       Array.from({ length: count }, (_, i) => i + 1));
     assert.match(xml, /data-stroke-theme="auto"/);

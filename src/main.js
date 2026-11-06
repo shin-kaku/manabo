@@ -1,6 +1,7 @@
 import { studySeo } from "./seo.js";
 import { createRubyResolver } from "./example-ruby.js";
-import { loadMedia, mediaCandidates, usesEmbeddedStrokeTheme } from "./media.js";
+import { loadMedia, mediaCandidates, strokeThemeMode } from "./media.js";
+import { applyStrokeTheme } from "./theme.js";
 import { createVirtualGrid } from "./virtual-grid.js";
 import { createCardImages } from "./card-images.js";
 
@@ -1382,11 +1383,17 @@ import { createCardImages } from "./card-images.js";
             picture.append(still, img);
             let attempt = 0;
             const showStroke = (url) => {
-              const themed = usesEmbeddedStrokeTheme(d, url);
-              img.classList.toggle("themed-stroke", themed);
-              if (themed) still.srcset = url + "#still";
-              else still.removeAttribute("srcset");
-              img.src = url;
+              const mode = strokeThemeMode(d, url);
+              img.classList.toggle("themed-stroke", mode === "explicit" || mode === "auto");
+              if (mode === "explicit") {
+                picture.dataset.strokeUrl = url;
+                applyStrokeTheme(picture);
+              } else {
+                delete picture.dataset.strokeUrl;
+                if (mode === "auto") still.srcset = url + "#still";
+                else still.removeAttribute("srcset");
+                img.src = url;
+              }
             };
             img.addEventListener("error", () => {
               attempt++;

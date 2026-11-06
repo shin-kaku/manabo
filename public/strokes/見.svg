@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg data-stroke-theme="auto" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 708.66 708.66" width="709" height="709" role="img" aria-labelledby="name desc">
+<svg data-stroke-theme="auto" data-stroke-views="explicit" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 708.66 708.66" width="709" height="709" role="img" aria-labelledby="name desc">
 <title id="name">見 · 먹 획순 애니메이션</title>
 <desc id="desc">빨간 번호 1부터 7까지 각 획의 시작 위치를 표시하고 번호순으로 획을 그립니다. 애니메이션이 끝나면 잠시 쉬고 다시 시작합니다.</desc>
 <style>
@@ -12,13 +12,19 @@
 .stroke-labels rect{fill:white;stroke:#bc002d;stroke-width:1.8}
 .stroke-labels circle{fill:#bc002d;stroke:white;stroke-width:1.5}
 .stroke-labels text{fill:#bc002d}
-#still:target~.motion{display:none}
-#still:target~.still,#still:target~.directions{display:inline}
+.still-view:target~.motion{display:none}
+.still-view:target~.still,.still-view:target~.directions{display:inline}
 @media(prefers-color-scheme:dark){
   .directions{color:#202526}
   .guide{fill:#3d4141}
   .motion,.still{fill:#e6e8e8}
 }
+.light-view:target~.guide{fill:#e5e8e7}
+.light-view:target~.motion,.light-view:target~.still{fill:#242a2b}
+.light-view:target~.directions{color:#fff}
+.dark-view:target~.guide{fill:#3d4141}
+.dark-view:target~.motion,.dark-view:target~.still{fill:#e6e8e8}
+.dark-view:target~.directions{color:#202526}
 @media(prefers-reduced-motion:reduce){.motion{display:none}.still,.directions{display:inline}}
 </style>
 <defs>
@@ -30,7 +36,11 @@
 <mask id="reveal_6" maskUnits="userSpaceOnUse" x="0" y="0" width="708.66" height="708.66"><path d="M336.3814 364.5543L325.82 394.74L320.04 411.26C295.32 483.37 253.49 527.53 181.53 542.32L172.27 544.04L164.4 545.5L132.9565 551.3332" fill="none" stroke="white" stroke-width="48.3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="301.83 603.66" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" values="301.83;301.83;0;0" keyTimes="0;0.5989121;0.6954825;1" dur="6.8327s" repeatCount="indefinite"/></path></mask>
 <mask id="reveal_7" maskUnits="userSpaceOnUse" x="0" y="0" width="708.66" height="708.66"><path d="M373.0737 356.564L373.61 392.32L373.97 416.32L375.26 502.13C375.47 515.75 386.65 526.63 400.27 526.45L493.37 525.28C509.12 525.08 522.35 513.37 524.45 497.76L531.2 447.7L532.46 438.37L534 426.97L538.7873 391.5319" fill="none" stroke="white" stroke-width="54.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="431.85 863.7" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" values="431.85;431.85;0;0" keyTimes="0;0.7137770;0.8414479;1" dur="6.8327s" repeatCount="indefinite"/></path></mask>
 </defs>
-<g id="still"/>
+<g id="still" class="still-view"/>
+<g id="light" class="light-view"/>
+<g id="dark" class="dark-view"/>
+<g id="light-still" class="light-view still-view"/>
+<g id="dark-still" class="dark-view still-view"/>
 <path class="guide" fill="#e5e8e7" d="M538.6,478.27q-.84,13.64-2.07,25.62-1.24,10.33-4.34,17.56t-12.19,11.15-27.68,5.78-50.81,1.86q-11.16,0-22.93-.41-11.78-.42-24.17-1.24-34.3-2.48-34.29-40.9v-2.48l2.06-91.3-28.5,1.24q-9.51,44.62-31.2,73.33-21.69,28.72-52.46,45.24-30.79,16.52-68.79,25.61c-1.38.27-2.69.48-3.93.62-1.24.14-2.41.21-3.51.21q-7.44,0-7.44-3.72,0-4.55,11.16-8.68,32.22-13.22,57.84-29.74,25.61-16.52,43.79-40.9,18.18-24.37,26.86-60.73l-26.03,1.23v6.2q0,8.27-7.44,8.26-2.48,0-7.23-1.85-4.75-1.86-8.47-5.17-3.72-3.3-3.72-7.44,0-2.47.42-4.13,1.24-6.19,1.24-14.46,0-2.06-.21-4.33c-.14-1.52-.21-2.83-.21-3.93l-5.37-151.62q-.41-12.4-5.37-23.14-1.65-3.3-1.65-6.2c0-2.2,1.51-3.3,4.54-3.3q6.61,0,29.34,9.5l154.93-9.5h2.89q6.6,0,12.6,3.72,5.98,3.72,5.99,9.91c0,1.65-.35,3.1-1.03,4.34q-1.04,1.86-1.45,3.93l-9.09,159.06q6.6,6.61,9.3,10.74,2.68,4.13,2.68,6.61,0,2.89-3.72,3.92-3.71,1.04-8.67,1.45l-50.41,2.48-2.06,86.76v2.06q0,10.75,4.13,15.5,4.13,4.75,15.91,5.78,11.77,1.03,33.67,1.03,13.63,0,26.64-.82,13.02-.84,25.41-2.48,8.68-1.24,12.6-3.72,3.93-2.48,5.99-8.68,3.72-10.74,7.44-26.03,3.72-15.27,5.37-25.61,3.3-17.35,8.27-17.35,5.36,0,6.19,17.76v6.61Q539.42,464.64,538.6,478.27ZM274.18,228.73l1.24,36.77,145.02-7.85,1.65-37.59L274.18,228.73ZM275.84,287.4l1.24,35.94,140.88-7.43,1.65-35.95L275.84,287.4ZM277.9,345.65l1.24,39.66,136.34-6.61,1.65-40.07L277.9,345.65Z"/>
 <g class="motion" fill="#242a2b">
 <path id="stroke_01" mask="url(#reveal_1)" d="M247.3056 196.5436L247.577 196.5677L248.2294 196.6393L248.5587 196.6835L249.3253 196.8082L249.6135 196.8579L250.7101 197.0827L251.2053 197.1979L251.9149 197.3681L252.6067 197.5456L253.151 197.6918C253.4371 197.7676 253.7376 197.8517 254.045 197.94L254.0451 197.94C259.2855 199.4369 266.5538 202.1288 275.84 206.01L276.1255 205.9925L275.47 207.18L275.14 227.48L276.1827 228.6126L274.18 228.73L275.42 265.5L276.1525 265.4603L276.5296 287.3643L275.84 287.4L277.08 323.34L277.5952 323.3128L278.3528 345.6272L277.9 345.65L279.14 385.31L279.3948 385.2976L280.3445 407.6023L279.97 407.62L279.97 413.82C279.97 419.3333 277.49 422.0867 272.53 422.08C270.8767 422.08 268.4667 421.4633 265.3 420.23C262.1333 418.99 259.31 417.2667 256.83 415.06C254.35 412.86 253.11 410.38 253.11 407.62C253.11 405.9733 253.25 404.5967 253.53 403.49C254.3567 399.3633 254.77 394.5433 254.77 389.03C254.77 387.6567 254.7 386.2133 254.56 384.7C254.42 383.18 254.35 381.87 254.35 380.77L248.98 229.15C248.7067 220.8833 246.9167 213.17 243.61 206.01C242.51 203.81 241.96 201.7433 241.96 199.81C241.96 199.2224 242.0677 198.7133 242.2868 198.2852L251.066 198.0275L242.2869 198.2852L242.2885 198.2822C242.3511 198.1562 242.4231 198.037 242.5063 197.9259L242.5569 197.8555L242.666 197.7262L242.7576 197.6289L242.8666 197.5222L243.0652 197.3585C243.0981 197.3331 243.1323 197.3086 243.1696 197.2864L243.3453 197.1736L243.4575 197.1106L243.663 197.0084L243.7592 196.9637L244.0805 196.8413L244.1757 196.812L244.4506 196.7338L244.5709 196.7043L244.902 196.637L244.9704 196.6241L245.3965 196.5667L245.5178 196.5553L245.8696 196.5289L246.0068 196.5216L246.5 196.51Z"/>

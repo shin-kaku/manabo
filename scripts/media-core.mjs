@@ -62,7 +62,10 @@ export async function optimize(buffer, kind) {
     if (kind !== "stroke") throw new Error("SVG는 획순 자료에만 사용할 수 있습니다.");
     const bytes = validateSvg(buffer);
     const variant = { label: "card", bytes, extension: "svg" };
-    if (svgRoot.parse(bytes).svg?.["@_data-stroke-theme"] === "auto") variant.strokeTheme = "auto";
+    const attrs = svgRoot.parse(bytes).svg;
+    if (attrs?.["@_data-stroke-theme"] === "auto") {
+      variant.strokeTheme = attrs["@_data-stroke-views"] === "explicit" ? "explicit" : "auto";
+    }
     return [variant];
   }
   const metadata = await sharp(buffer, { limitInputPixels: 40_000_000 }).metadata();
