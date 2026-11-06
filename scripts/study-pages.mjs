@@ -1,6 +1,7 @@
-import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { readFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { studySeo } from "../src/seo.js";
+import { writeGeneratedFile } from "./generated-file.mjs";
 
 const root = new URL("../", import.meta.url);
 export const studyPages = [
@@ -28,7 +29,7 @@ export function writeStudyPages() {
     }
     const directory = new URL(`${page.path}/`, root);
     mkdirSync(directory, { recursive: true });
-    writeFileSync(new URL("index.html", directory), html);
+    writeGeneratedFile(new URL("index.html", directory), html);
   }
 }
 

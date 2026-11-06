@@ -44,9 +44,16 @@ export async function verifiedAsset(directory, url) {
 export function validateSvg(buffer) {
   if (buffer.length > 5 * 1024 * 1024) throw new Error("SVG가 5 MiB를 초과했습니다.");
   const svg = buffer.toString("utf8");
+  // Match complete local references before rejecting the remaining URLs. An
+  // optional quote in a negative lookahead can backtrack and reject url("#id").
+  const cssEscape = String.raw`\\(?:[0-9a-f]{1,6}\s?|[^\r\n\f0-9a-f])`;
+  const localCssUrl = new RegExp(String.raw`\burl\(\s*(?:"#(?:[^"\s()\\]|${cssEscape})+"|'#(?:[^'\s()\\]|${cssEscape})+'|#(?:[^\s"'()\\]|${cssEscape})+)\s*\)`, "gi");
+  const nonLocalReferences = svg
+    .replace(/\bhref\s*=\s*(?:"\s*#[^"\s]+"|'\s*#[^'\s]+')/gi, "")
+    .replace(localCssUrl, "");
   if (XMLValidator.validate(svg) !== true || !/<svg[\s>]/i.test(svg) ||
       /<!DOCTYPE|<!ENTITY|<\s*(?:[\w-]+:)?(?:script|foreignObject|iframe|object|embed|image)\b|\bon\w+\s*=|@import|javascript\s*:|data\s*:/i.test(svg) ||
-      /(?:href\s*=\s*["']\s*(?!#)|url\(\s*["']?\s*(?!#)[^\s])/i.test(svg)) {
+      /\bhref\s*=|\burl\s*\(/i.test(nonLocalReferences)) {
     throw new Error("독립 SVG만 허용합니다. 스크립트·외부 리소스·엔티티를 제거하세요.");
   }
   // Keep bytes unchanged: SMIL/CSS animations, IDs, viewBox and timing survive.

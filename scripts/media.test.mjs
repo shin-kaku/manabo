@@ -23,6 +23,19 @@ test("SVG animation bytes survive; scripts, external resources and malformed XML
   assert.throws(() => assetPath("/tmp", "/media/../../escape"));
 });
 
+test("SVG local quoted references survive while external references stay rejected", () => {
+  for (const url of ['url(#clip)', 'url("#clip")', "url('#clip')", 'url(  "#clip"  )', String.raw`url(#grad\:a)`, String.raw`url("#grad\:a")`, String.raw`url(#grad\20 a)`]) {
+    const input = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="clip"><path d="M0 0L1 1"/></clipPath></defs><style>path{clip-path:${url}}</style><use href=" #clip"/></svg>`);
+    assert.deepEqual(validateSvg(input), input);
+  }
+  for (const url of ['url(https://example.com/a)', 'url("https://example.com/a")', "url('https://example.com/a')", 'url(  //example.com/a )', 'url(other.svg#clip)', 'url("#clip)', 'url()']) {
+    assert.throws(() => validateSvg(Buffer.from(`<svg><style>path{fill:${url}}</style></svg>`)));
+  }
+  for (const href of ['https://example.com/a', '//example.com/a', 'other.svg#clip', '  https://example.com/a']) {
+    assert.throws(() => validateSvg(Buffer.from(`<svg><use href="${href}"/></svg>`)));
+  }
+});
+
 test("raster variants retain aspect ratio, cap decode size, and keep image2 lossless after resize", async () => {
   const original = await sharp({ create: { width: 1200, height: 1500, channels: 3, background: "white" } }).png().toBuffer();
   for (const kind of ["image1", "image2"]) {

@@ -1291,6 +1291,8 @@ import { createCardImages } from "./card-images.js";
             let attempt = 0;
             img.addEventListener("load", () => fallback.remove());
             img.addEventListener("error", () => {
+              // A failed request can finish after this detail was closed or replaced.
+              if (!img.isConnected) return;
               attempt++;
               if (attempt < urls.length) img.src = urls[attempt];
               else img.remove();
@@ -1404,6 +1406,7 @@ import { createCardImages } from "./card-images.js";
               }
             };
             img.addEventListener("error", () => {
+              if (!img.isConnected) return;
               attempt++;
               if (attempt < strokeOrderUrls.length) {
                 showStroke(strokeOrderUrls[attempt]);

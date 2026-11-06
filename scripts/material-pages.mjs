@@ -1,5 +1,6 @@
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { writeGeneratedFile } from "./generated-file.mjs";
 
 const root = new URL("../", import.meta.url);
 const origin = "https://kanjimanabo.com";
@@ -106,7 +107,7 @@ export function writeMaterialPages() {
     const html = template.replace(/\{\{(TITLE|DESCRIPTION|URL|BODY|BACK)\}\}/g, (_, key) => values[key]);
     const directory = new URL(`${page.path}/`, root);
     mkdirSync(directory, { recursive: true });
-    writeFileSync(new URL("index.html", directory), html);
+    writeGeneratedFile(new URL("index.html", directory), html);
   }
   return pages;
 }

@@ -147,7 +147,8 @@
   font-size: 13px;
   line-height: 1.6;
 }
-.analytics-banner[hidden] { display: none; }
+.analytics-banner[hidden],
+.analytics-banner[inert] { display: none; }
 .analytics-banner-copy { flex: 1; min-width: 0; }
 .analytics-banner p { margin: 4px 0 0; }
 .analytics-banner a { color: var(--accent); text-underline-offset: 3px; }
