@@ -1308,11 +1308,12 @@ import { createCardImages } from "./card-images.js";
         body.className = "back-body";
         const chips = document.createElement("div");
         chips.className = "chips";
-        [
-          { value: text(d["학년"]), filter: "grade" },
-          { value: text(d["등급"]), filter: "jlpt" },
-          { value: !isDetail && text(d["획"]) ? `${text(d["획"])}획` : "" },
-        ]
+        const gradeChip = { value: text(d["학년"]), filter: "grade" };
+        const jlptChip = { value: text(d["등급"]), filter: "jlpt" };
+        const chipItems = isDetail
+          ? [jlptChip, gradeChip]
+          : [gradeChip, jlptChip, { value: text(d["획"]) ? `${text(d["획"])}획` : "" }];
+        chipItems
           .filter(({ value }) => Boolean(value))
           .forEach(({ value, filter }) => {
             const clickable = isDetail && filter &&

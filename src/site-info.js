@@ -18,6 +18,15 @@ document.querySelectorAll("[data-copyright-year]").forEach((element) => {
 });
 
 document.querySelectorAll(".site-info-menu").forEach((menu) => {
+  const themeToggle = menu.querySelector("[data-theme-toggle]");
+  const materialsLink = menu.querySelector('.header-info-links a[href="/materials/"]');
+  if (themeToggle && materialsLink) {
+    const actions = document.createElement("div");
+    actions.className = "site-info-actions";
+    themeToggle.before(actions);
+    materialsLink.classList.add("materials-menu-link");
+    actions.append(themeToggle, materialsLink);
+  }
   document.addEventListener("click", (event) => {
     if (!menu.contains(event.target)) menu.open = false;
   });

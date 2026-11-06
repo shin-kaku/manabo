@@ -141,7 +141,7 @@ test("same-document navigation loads dependencies, retains successful data, and 
   await page.locator("#popoverGo").click();
   await expect(page.locator("#detailOverlay")).toBeVisible();
   await page.locator("#detailOverlay .detail-image-meta button").first().click();
-  await expect(page).toHaveURL(/\/kanji\/\?grade=/);
+  await expect(page).toHaveURL(/\/kanji\/\?jlpt=/);
   await ready(page);
   await expect(page.locator("#detailOverlay")).toBeHidden();
   await expect(page.locator("#grid .card").first()).toBeVisible();

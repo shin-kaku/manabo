@@ -37,6 +37,31 @@
         --scroll-thumb: #666;
         scrollbar-color: var(--scroll-thumb) var(--paper);
       }
+      @supports not (scrollbar-color: auto) {
+        :root[data-theme="dark"]::-webkit-scrollbar,
+        :root[data-theme="dark"] :is(body, .detail-card .back, .detail-learning-panel)::-webkit-scrollbar {
+          width: 12px;
+          height: 12px;
+        }
+        :root[data-theme="dark"]::-webkit-scrollbar-track,
+        :root[data-theme="dark"]::-webkit-scrollbar-corner,
+        :root[data-theme="dark"] :is(body, .detail-card .back, .detail-learning-panel)::-webkit-scrollbar-track,
+        :root[data-theme="dark"] :is(body, .detail-card .back, .detail-learning-panel)::-webkit-scrollbar-corner {
+          background: var(--paper);
+        }
+        :root[data-theme="dark"]::-webkit-scrollbar-thumb,
+        :root[data-theme="dark"] :is(body, .detail-card .back, .detail-learning-panel)::-webkit-scrollbar-thumb {
+          background: var(--scroll-thumb);
+          border: 3px solid var(--paper);
+          border-radius: 999px;
+        }
+        :root[data-theme="dark"]::-webkit-scrollbar-thumb:hover,
+        :root[data-theme="dark"]::-webkit-scrollbar-thumb:active,
+        :root[data-theme="dark"] :is(body, .detail-card .back, .detail-learning-panel)::-webkit-scrollbar-thumb:hover,
+        :root[data-theme="dark"] :is(body, .detail-card .back, .detail-learning-panel)::-webkit-scrollbar-thumb:active {
+          background: #888;
+        }
+      }
       * {
         box-sizing: border-box;
       }
