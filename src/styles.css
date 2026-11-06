@@ -509,6 +509,7 @@
         display: none;
       }
       .stroke-order-info {
+        --stroke-size: clamp(168px, 52vw, 202px);
         display: flex;
         align-items: center;
         justify-content: flex-start;
@@ -534,9 +535,9 @@
       }
       .stroke-order-frame {
         position: relative;
-        width: 168px;
-        height: 168px;
-        flex: 0 0 168px;
+        width: var(--stroke-size);
+        height: var(--stroke-size);
+        flex: 0 0 var(--stroke-size);
         display: grid;
         place-items: center;
         background: transparent;
@@ -562,8 +563,8 @@
       }
       .stroke-order-image {
         display: block;
-        width: 168px;
-        height: 168px;
+        width: var(--stroke-size);
+        height: var(--stroke-size);
         object-fit: contain;
         background: #fff;
       }
