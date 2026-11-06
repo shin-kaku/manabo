@@ -73,6 +73,8 @@ npm run sync-data -- --allow-story-removal=story-ID
 ## 파일과 공개 경로
 
 이미지1은 480/960px WebP를 Cloudflare 정적 파일로 제공하도록 구성했습니다.
+Q열의 획순 SVG도 같은 정적 파일 환경에서 제공하며, 상세 화면에서 누르면 확대할 수 있습니다.
+2,324개 원본 연결과 실제 화면 확인 결과는 [획순 SVG 검증 기록](reports/stroke-svg-2026-11-06.md)에 있습니다.
 Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 자동화와
 이미지2·애니메이션 획순 SVG 확장 방법은 [이미지 자동화 안내](docs/media-automation.md)를 참고하세요.
 2026-11-06 운영 배포와 인증 연결을 완료하고 예약 자동화를 활성화했습니다.
