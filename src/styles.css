@@ -509,7 +509,7 @@
         display: none;
       }
       .stroke-order-info {
-        --stroke-size: clamp(168px, 52vw, 202px);
+        --stroke-size: clamp(168px, 62.4vw, 242px);
         display: flex;
         align-items: center;
         justify-content: flex-start;
@@ -535,6 +535,7 @@
       }
       .stroke-order-frame {
         position: relative;
+        transform: translate(-1.5em, -6px);
         width: var(--stroke-size);
         height: var(--stroke-size);
         flex: 0 0 var(--stroke-size);
