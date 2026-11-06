@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { studyPages, studyTemplatePath, writeStudyPages } from "./scripts/study-pages.mjs";
 import { writeMaterialPages, materialTemplatePath, writeSitemap } from "./scripts/material-pages.mjs";
 
@@ -8,6 +9,16 @@ let materials = writeMaterialPages();
 
 export default defineConfig({
   plugins: [{
+    name: "saved-theme-before-paint",
+    transformIndexHtml: {
+      order: "pre",
+      handler: () => [{
+        tag: "script",
+        children: readFileSync(new URL("./src/theme-init.js", import.meta.url), "utf8"),
+        injectTo: "head-prepend",
+      }],
+    },
+  }, {
     name: "study-pages",
     configureServer(server) {
       server.watcher.on("change", (path) => {

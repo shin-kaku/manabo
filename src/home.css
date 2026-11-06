@@ -1,7 +1,7 @@
 .home-wrap { max-width: 1120px; }
 .home-main { margin-top: 36px; }
-.home-start { display: inline-flex; align-items: center; justify-content: center; gap: 24px; min-height: 52px; padding: 14px 24px; border-radius: 8px; color: var(--paper); background: var(--accent); font-size: 16px; font-weight: 700; text-decoration: none; }
-.home-start:hover { background: #980024; }
+.home-start { display: inline-flex; align-items: center; justify-content: center; gap: 24px; min-height: 52px; padding: 14px 24px; border-radius: 8px; color: var(--on-accent, #fff); background: var(--accent); font-size: 16px; font-weight: 700; text-decoration: none; }
+.home-start:hover { background: var(--accent-hover, #980024); }
 .home-guide { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "header actions" "steps steps"; gap: 24px; }
 .home-guide-header { grid-area: header; text-align: left; }
 .home-guide-actions { grid-area: actions; display: flex; justify-content: center; }
