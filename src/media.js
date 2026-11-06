@@ -1,6 +1,14 @@
 import { driveFileId, imageCandidates } from "./image-sources.js";
 
-const animatedStrokeKanji = new Set(["車", "犬", "見", "空", "校"]);
+// These trials apply only to the specific numbered diagrams they preview.
+// A new Drive file or a new revision takes precedence on the next media sync.
+const strokeTrials = new Map([
+  ["車", { fileId: "1eIu0c52kva7VvEE1eEECu2nVc2Gw34jv", md5: "f7bbe6f1f8ce1d52dd0b8bf3d28a1832" }],
+  ["犬", { fileId: "1FVraQ9n6CYdOjLjYZDj-z6pPr9Q3Mj6d", md5: "3480f9c678dd2e315e6f84c01d04d967" }],
+  ["見", { fileId: "16RhIR-lwRqgDbXoDXy5YM17jdyNgQpl0", md5: "159037d684d8ad6c52281ca57f14d93e" }],
+  ["空", { fileId: "1KS4Hj1-huH5Jl6NVvyFJHmg21dcQw-N2", md5: "cf65aa8ff66a4d28cca627de562a901d" }],
+  ["校", { fileId: "16Fu7Hoq8zuK8r4qcLkzFkZddh3Enb-_D", md5: "ba6162512d0696e2193f37e44eba7368" }],
+]);
 
 let catalog;
 let request;
@@ -18,7 +26,8 @@ export function loadMedia() {
 export function mediaCandidates(row, kind = "image1", usage = "card", media = catalog) {
   const field = { image1: "이미지 1", image2: "이미지 2", stroke: row["획순 SVG"] ? "획순 SVG" : "획순 이미지" }[kind];
   const source = row[field];
-  const entry = media?.items?.[kind]?.[driveFileId(source)];
+  const fileId = driveFileId(source);
+  const entry = media?.items?.[kind]?.[fileId];
   const variant = entry?.[usage];
   const url = variant?.url;
   const local = typeof url === "string" && /^\/media\/(image1|image2|stroke)\/[a-f0-9]{64}\.(webp|svg)$/.test(url) ? [url] : [];
@@ -26,7 +35,8 @@ export function mediaCandidates(row, kind = "image1", usage = "card", media = ca
   const isSvg = kind === "stroke" && (row["획순 SVG"] || url?.endsWith(".svg"));
   const fallback = isSvg ? [] : imageCandidates(source);
   const candidates = [...new Set([...local, ...fallback])];
-  if (kind === "stroke" && animatedStrokeKanji.has(row["한자"])) {
+  const trial = kind === "stroke" && strokeTrials.get(row["한자"]);
+  if (trial && trial.fileId === fileId && trial.md5 === entry?.sourceMd5) {
     const animation = `/strokes/${row["한자"]}.svg`;
     // Keep the numbered stroke diagram available to learners who reduce motion.
     return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches

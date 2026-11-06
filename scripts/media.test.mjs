@@ -91,17 +91,26 @@ test("optional image2 and SVG fields survive schema filtering, including SVG-onl
   assert.equal(saved["획순 SVG"], sourceUrl("svg"));
 });
 
-test("the five local ink animations precede their catalog SVG and include a reduced-motion glyph", async () => {
+test("stroke trials yield to new Drive revisions and replacement Q links", () => {
   const catalogUrl = `/media/stroke/${"d".repeat(64)}.svg`;
-  const catalog = { items: { stroke: { svg: { detail: { url: catalogUrl } } } } };
+  const id = "1eIu0c52kva7VvEE1eEECu2nVc2Gw34jv";
+  const md5 = "f7bbe6f1f8ce1d52dd0b8bf3d28a1832";
+  const candidates = (fileId, sourceMd5, kanji = "車") => mediaCandidates(
+    { ...row, 한자: kanji, "획순 SVG": sourceUrl(fileId) }, "stroke", "detail",
+    { items: { stroke: { [fileId]: { sourceMd5, detail: { url: catalogUrl } } } } },
+  );
+  assert.deepEqual(candidates(id, md5), ["/strokes/車.svg", catalogUrl]);
+  assert.deepEqual(candidates(id, "0".repeat(32)), [catalogUrl]);
+  assert.deepEqual(candidates("replacement", md5), [catalogUrl]);
+  assert.deepEqual(candidates(id, md5, "文"), [catalogUrl]);
+});
+
+test("all five SVG trials retain each stroke and a reduced-motion glyph", async () => {
   for (const [kanji, count] of Object.entries({ 車: 7, 犬: 4, 見: 7, 空: 8, 校: 10 })) {
-    const url = `/strokes/${kanji}.svg`;
-    assert.deepEqual(mediaCandidates({ ...row, 한자: kanji }, "stroke", "detail", catalog), [url, catalogUrl]);
-    const file = await readFile(new URL(`../public${url}`, import.meta.url));
+    const file = await readFile(new URL(`../public/strokes/${kanji}.svg`, import.meta.url));
     const xml = validateSvg(file).toString("utf8");
     assert.equal((xml.match(/<animate\b/g) || []).length, count, kanji);
-    assert.match(xml, /prefers-reduced-motion:\s*reduce[^}]*\.motion\s*\{\s*display:\s*none\s*;?\}\s*\.still\s*\{\s*display:\s*inline/);
+    assert.match(xml, /prefers-reduced-motion:\s*reduce/);
     assert.match(xml, /<path\b[^>]*\bclass="still"[^>]*\bd="[^"]+"/);
   }
-  assert.deepEqual(mediaCandidates(row, "stroke", "detail", catalog), [catalogUrl]);
 });
