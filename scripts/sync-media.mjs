@@ -10,7 +10,7 @@ export async function syncMedia({ rows, previous = emptyCatalog(), directory, me
   const sources = collectSources(rows, enabledKinds);
   const next = emptyCatalog();
   let changed = 0, reused = 0, skipped = 0, completed = 0;
-  const entries = await mapLimit(sources, 3, async source => {
+  const processSource = async source => {
     const meta = metadata.get(source.id);
     const old = previous.items?.[source.kind]?.[source.id];
     if (!meta && local && source.kind !== "image1") { skipped++; return null; }
@@ -39,7 +39,14 @@ export async function syncMedia({ rows, previous = emptyCatalog(), directory, me
     }
     onProgress(++completed, sources.length, changed, reused);
     return { ...source, entry };
-  });
+  };
+  // Small vectors do not allocate raster decode buffers. Keep raster work
+  // bounded separately while avoiding a long first import of SVG files.
+  const isSvg = source => metadata.get(source.id)?.mimeType === "image/svg+xml";
+  const entries = [
+    ...await mapLimit(sources.filter(source => !isSvg(source)), 3, processSource),
+    ...await mapLimit(sources.filter(isSvg), 8, processSource),
+  ];
   for (const result of entries) if (result) next.items[result.kind][result.id] = result.entry;
   return { catalog: next, changed, reused, skipped };
 }
@@ -50,7 +57,7 @@ async function main() {
   const directory = resolve("public");
   const path = resolve(directory, "data/media.json");
   const rows = JSON.parse(await readFile(resolve(directory, "data/kanji.json"), "utf8"));
-  const { enabledKinds } = JSON.parse(await readFile(new URL("./media-config.json", import.meta.url), "utf8"));
+  const { enabledKinds, sourceFolderIds = [] } = JSON.parse(await readFile(new URL("./media-config.json", import.meta.url), "utf8"));
   let previous = emptyCatalog();
   try { previous = JSON.parse(await readFile(path, "utf8")); } catch (error) { if (error.code !== "ENOENT") throw error; }
   const local = args[0]?.slice("--local=".length);
@@ -61,7 +68,7 @@ async function main() {
     readSource = id => readFile(resolve(manifest.originalsDirectory, metadata.get(id).file.sourceFilename));
   } else {
     const client = await driveClient();
-    metadata = await client.list();
+    metadata = await client.list(sourceFolderIds);
     readSource = id => client.download(id);
   }
   const result = await syncMedia({ rows, previous, directory, metadata, readSource, enabledKinds, local: Boolean(local),

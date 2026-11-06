@@ -42,3 +42,21 @@ test("incomplete metadata and denied original download stop publication; invalid
   await assert.rejects(client.download("one"), /HTTP 403/);
   await assert.rejects(driveClient("sensitive-not-json"), error => !error.message.includes("sensitive-not-json"));
 });
+
+test("explicit link-shared folders are paginated separately and duplicate IDs are read once", async () => {
+  const pages = [];
+  const client = await driveClient(credentials, async input => {
+    const url = new URL(input);
+    if (url.hostname === "oauth2.googleapis.com") return Response.json({ access_token: "fixture" });
+    const folder = url.searchParams.get("q").includes("'public-strokes' in parents");
+    const page = url.searchParams.get("pageToken");
+    pages.push([folder, page]);
+    if (!folder) return Response.json({ files: [{ id: "photo", md5Checksum: "a".repeat(32) }] });
+    return Response.json(page ? { files: [{ id: "stroke2", md5Checksum: "c".repeat(32) }] }
+      : { nextPageToken: "stroke-next", files: [{ id: "stroke1", md5Checksum: "b".repeat(32) }] });
+  });
+  assert.deepEqual([...(await client.list(["public-strokes", "public-strokes"])).keys()], ["photo", "stroke1", "stroke2"]);
+  assert.deepEqual(pages, [[false, null], [true, null], [true, "stroke-next"]]);
+  await assert.rejects(client.list(["bad'query"]), /폴더 ID/);
+  assert.equal(pages.length, 3);
+});

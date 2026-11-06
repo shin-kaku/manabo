@@ -533,6 +533,7 @@
         transform: translateX(-1.5em);
       }
       .stroke-order-frame {
+        position: relative;
         width: 168px;
         height: 168px;
         flex: 0 0 168px;
@@ -540,6 +541,24 @@
         place-items: center;
         background: transparent;
         overflow: hidden;
+        border: 0;
+        padding: 0;
+        cursor: zoom-in;
+      }
+      .stroke-order-frame::after {
+        content: "확대";
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        background: var(--floating-surface, rgba(251, 250, 246, 0.95));
+        color: var(--ink);
+        font-size: 11px;
+      }
+      .stroke-order-frame:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
       }
       .stroke-order-image {
         display: block;
@@ -1620,6 +1639,10 @@
       }
       .image-stage img[hidden] {
         display: none;
+      }
+      .image-overlay[data-kind="stroke"] .image-stage img {
+        width: min(88vw, calc(100dvh - 80px));
+        background: #fff;
       }
       .image-fallback {
         font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;

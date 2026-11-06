@@ -35,20 +35,25 @@ export async function driveClient(credentials = process.env.GOOGLE_DRIVE_SERVICE
     }
   }
   return {
-    async list() {
+    async list(folderIds = []) {
+      if (!Array.isArray(folderIds) || folderIds.some(id => typeof id !== "string" || !/^[\w-]+$/.test(id))) throw new Error("잘못된 Drive 원본 폴더 ID");
       const files = new Map();
-      let pageToken;
-      do {
-        const response = await get("files", {
-          q: "trashed = false and mimeType != 'application/vnd.google-apps.folder'",
-          spaces: "drive", pageSize: "1000", fields: "nextPageToken,incompleteSearch,files(id,mimeType,md5Checksum,size)",
-          ...(pageToken ? { pageToken } : {}),
-        });
-        const body = await response.json();
-        if (body.incompleteSearch || !Array.isArray(body.files)) throw new Error("Drive 파일 목록이 불완전합니다.");
-        for (const file of body.files) files.set(file.id, file);
-        pageToken = body.nextPageToken;
-      } while (pageToken);
+      // Link-shared public folders can be read but are absent from the service
+      // account's default listing. Query only explicitly configured folders.
+      for (const folderId of [null, ...new Set(folderIds)]) {
+        let pageToken;
+        do {
+          const response = await get("files", {
+            q: "trashed = false and mimeType != 'application/vnd.google-apps.folder'" + (folderId ? ` and '${folderId}' in parents` : ""),
+            spaces: "drive", pageSize: "1000", fields: "nextPageToken,incompleteSearch,files(id,mimeType,md5Checksum,size)",
+            ...(pageToken ? { pageToken } : {}),
+          });
+          const body = await response.json();
+          if (body.incompleteSearch || !Array.isArray(body.files)) throw new Error("Drive 파일 목록이 불완전합니다.");
+          for (const file of body.files) files.set(file.id, file);
+          pageToken = body.nextPageToken;
+        } while (pageToken);
+      }
       return files;
     },
     async download(id) {

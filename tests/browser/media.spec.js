@@ -54,8 +54,16 @@ for (const width of [390, 1280]) test(`card uses 480px, detail/zoom use 960px, S
   const clip = { x: Math.max(0, box.x), y: Math.max(0, box.y), width: 100, height: 100 };
   const first = await page.screenshot({ clip });
   await expect.poll(async () => (await page.screenshot({ clip })).equals(first), { intervals: [250, 400, 650], timeout: 5000 }).toBe(false);
+  const strokeButton = page.getByRole("button", { name: "文 획순 크게 보기" });
+  await strokeButton.click();
+  await expect(page.locator("#imageOverlay img")).toHaveAttribute("src", stroke);
+  await expect(page.locator("#imageOverlay img")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(page.locator("#imageClose")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(strokeButton).toBeFocused();
   await page.locator(".detail-image-zoom").click();
   await expect(page.locator("#imageOverlay img")).toHaveAttribute("src", large);
+  await expect(page.locator("#imageOverlay img")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   expect(requests.every(url => url.hostname === "127.0.0.1")).toBe(true);
 });
 

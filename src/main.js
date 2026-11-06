@@ -566,15 +566,16 @@ import { createCardImages } from "./card-images.js";
         detailReturnFocus = null;
         kanjiGrid.refresh();
       }
-      function openImageViewer(d, returnFocus) {
+      function openImageViewer(d, returnFocus, kind = "image1") {
         hideKanjiPopover();
         const ch = text(d["한자"]),
-          urls = mediaCandidates(d, "image1", "detail");
+          urls = mediaCandidates(d, kind, "detail");
+        imageViewer.overlay.dataset.kind = kind;
         imageReturnFocus = returnFocus;
         imageViewer.fallback.textContent = ch;
         imageViewer.fallback.hidden = false;
         imageViewer.image.hidden = true;
-        imageViewer.image.alt = `${ch} 암기 이미지 크게 보기`;
+        imageViewer.image.alt = `${ch} ${kind === "stroke" ? "획순" : "암기 이미지"} 크게 보기`;
         let attempt = 0;
         imageViewer.image.onload = () => {
           imageViewer.image.hidden = false;
@@ -1368,8 +1369,12 @@ import { createCardImages } from "./card-images.js";
           const section = document.createElement("div");
           section.className = "info-section stroke-order-info";
           if (strokeOrderUrls.length) {
-            const frame = document.createElement("div");
+            const frame = document.createElement("button");
+            frame.type = "button";
             frame.className = "stroke-order-frame";
+            frame.setAttribute("aria-label", `${text(d["한자"])} 획순 크게 보기`);
+            frame.title = "획순 크게 보기";
+            frame.addEventListener("click", () => openImageViewer(d, frame, "stroke"));
             const img = document.createElement("img");
             img.className = "stroke-order-image";
             img.alt = `${text(d["한자"])} 획순`;
