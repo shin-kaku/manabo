@@ -1,6 +1,6 @@
 import { studySeo } from "./seo.js";
 import { createRubyResolver } from "./example-ruby.js";
-import { loadMedia, mediaCandidates } from "./media.js";
+import { loadMedia, mediaCandidates, usesEmbeddedStrokeTheme } from "./media.js";
 import { createVirtualGrid } from "./virtual-grid.js";
 import { createCardImages } from "./card-images.js";
 
@@ -1376,18 +1376,29 @@ import { createCardImages } from "./card-images.js";
             img.loading = "lazy";
             img.decoding = "async";
             img.draggable = false;
+            const picture = document.createElement("picture");
+            const still = document.createElement("source");
+            still.media = "(prefers-reduced-motion: reduce)";
+            picture.append(still, img);
             let attempt = 0;
+            const showStroke = (url) => {
+              const themed = usesEmbeddedStrokeTheme(d, url);
+              img.classList.toggle("themed-stroke", themed);
+              if (themed) still.srcset = url + "#still";
+              else still.removeAttribute("srcset");
+              img.src = url;
+            };
             img.addEventListener("error", () => {
               attempt++;
               if (attempt < strokeOrderUrls.length) {
-                img.src = strokeOrderUrls[attempt];
+                showStroke(strokeOrderUrls[attempt]);
               } else {
                 frame.remove();
                 if (!strokeCount && !koreanReading) section.remove();
               }
             });
-            img.src = strokeOrderUrls[0];
-            frame.append(img);
+            showStroke(strokeOrderUrls[0]);
+            frame.append(picture);
             section.append(frame);
           }
           const metadata = document.createElement("div");

@@ -23,9 +23,19 @@ export function loadMedia() {
   })();
 }
 
+function strokeSource(row) {
+  return row["획순 SVG"] || row["획순 이미지"];
+}
+
+export function usesEmbeddedStrokeTheme(row, url, media = catalog) {
+  if (url.startsWith("/strokes/")) return true;
+  const entry = media?.items?.stroke?.[driveFileId(strokeSource(row))];
+  return entry?.strokeTheme === "auto" && entry.detail?.url === url;
+}
+
 export function mediaCandidates(row, kind = "image1", usage = "card", media = catalog) {
-  const field = { image1: "이미지 1", image2: "이미지 2", stroke: row["획순 SVG"] ? "획순 SVG" : "획순 이미지" }[kind];
-  const source = row[field];
+  const field = { image1: "이미지 1", image2: "이미지 2" }[kind];
+  const source = kind === "stroke" ? strokeSource(row) : row[field];
   const fileId = driveFileId(source);
   const entry = media?.items?.[kind]?.[fileId];
   const variant = entry?.[usage];
@@ -37,11 +47,7 @@ export function mediaCandidates(row, kind = "image1", usage = "card", media = ca
   const candidates = [...new Set([...local, ...fallback])];
   const trial = kind === "stroke" && strokeTrials.get(row["한자"]);
   if (trial && trial.fileId === fileId && trial.md5 === entry?.sourceMd5) {
-    const animation = `/strokes/${row["한자"]}.svg`;
-    // Keep the numbered stroke diagram available to learners who reduce motion.
-    return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-      ? [...candidates, animation]
-      : [animation, ...candidates];
+    return [`/strokes/${row["한자"]}.svg`, ...candidates];
   }
   return candidates;
 }

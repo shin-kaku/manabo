@@ -558,6 +558,7 @@
         border: 0;
         padding: 0;
       }
+      .stroke-order-frame picture { display: contents; }
       .stroke-order-image {
         display: block;
         width: 100%;
@@ -1638,7 +1639,10 @@
       .image-stage img[hidden] {
         display: none;
       }
-      :root[data-theme="dark"] .stroke-order-image {
+      .stroke-order-image.themed-stroke {
+        background: var(--paper);
+      }
+      :root[data-theme="dark"] .stroke-order-image:not(.themed-stroke) {
         /* Map the white canvas to #141414 and keep stroke numbers legible. */
         filter: grayscale(1) invert(1) contrast(0.84);
       }

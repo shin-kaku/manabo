@@ -6,7 +6,7 @@ import { join } from "node:path";
 import sharp from "sharp";
 import { collectSources, hash, optimize, validateSvg, assetPath, emptyCatalog } from "./media-core.mjs";
 import { syncMedia } from "./sync-media.mjs";
-import { mediaCandidates } from "../src/media.js";
+import { mediaCandidates, usesEmbeddedStrokeTheme } from "../src/media.js";
 import { mergeKanji, prepareKanji } from "./sync-sheets.mjs";
 
 const sourceUrl = id => `https://drive.google.com/file/d/${id}/view`;
@@ -105,11 +105,30 @@ test("stroke trials yield to new Drive revisions and replacement Q links", () =>
   assert.deepEqual(candidates(id, md5, "文"), [catalogUrl]);
 });
 
-test("all five SVG trials retain each stroke and a reduced-motion glyph", async () => {
+test("Drive sync preserves the embedded color scheme only for opted-in stroke SVGs", async t => {
+  const directory = await mkdtemp(join(tmpdir(), "manabo-stroke-theme-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const optedIn = Buffer.from(svg.toString().replace("<svg ", '<svg data-stroke-theme="auto" '));
+  for (const [bytes, expected] of [[optedIn, true], [svg, false]]) {
+    const metadata = new Map([["svg", { md5Checksum: hash(bytes, "md5"), size: bytes.length }]]);
+    const { catalog } = await syncMedia({ rows: [row], enabledKinds: ["stroke"], directory, metadata, readSource: async () => bytes });
+    const url = mediaCandidates(row, "stroke", "detail", catalog)[0];
+    assert.equal(usesEmbeddedStrokeTheme(row, url, catalog), expected);
+    assert.equal(usesEmbeddedStrokeTheme(row, "https://example.com/fallback.png", catalog), false);
+    assert.deepEqual(await readFile(assetPath(directory, url)), bytes);
+  }
+});
+
+test("all five SVG trials retain numbered strokes, native themes and reduced motion", async () => {
   for (const [kanji, count] of Object.entries({ 車: 7, 犬: 4, 見: 7, 空: 8, 校: 10 })) {
     const file = await readFile(new URL(`../public/strokes/${kanji}.svg`, import.meta.url));
     const xml = validateSvg(file).toString("utf8");
     assert.equal((xml.match(/<animate\b/g) || []).length, count, kanji);
+    assert.equal(usesEmbeddedStrokeTheme({ 한자: kanji }, `/strokes/${kanji}.svg`), true);
+    assert.deepEqual([...xml.matchAll(/<text\b[^>]*>(\d+)<\/text>/g)].map(match => Number(match[1])),
+      Array.from({ length: count }, (_, i) => i + 1));
+    assert.match(xml, /data-stroke-theme="auto"/);
+    assert.match(xml, /#bc002d/i);
     assert.match(xml, /prefers-reduced-motion:\s*reduce/);
     assert.match(xml, /<path\b[^>]*\bclass="still"[^>]*\bd="[^"]+"/);
   }

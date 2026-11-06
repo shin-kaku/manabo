@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import sharp from "sharp";
-import { XMLValidator } from "fast-xml-parser";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { driveFileId } from "../src/image-sources.js";
 
 sharp.concurrency(1);
@@ -53,12 +53,17 @@ export function validateSvg(buffer) {
   return buffer;
 }
 
+const svgRoot = new XMLParser({ ignoreAttributes: false, stopNodes: ["svg"], processEntities: false });
+
 export async function optimize(buffer, kind) {
   if (!Object.hasOwn(KINDS, kind)) throw new Error("지원하지 않는 미디어 종류");
   if (buffer.length > 30 * 1024 * 1024) throw new Error("원본 파일은 30 MiB 이하여야 합니다.");
   if (/^\s*(?:<\?xml[^>]*>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg[\s>]/i.test(buffer.toString("utf8", 0, 4096))) {
     if (kind !== "stroke") throw new Error("SVG는 획순 자료에만 사용할 수 있습니다.");
-    return [{ label: "card", bytes: validateSvg(buffer), extension: "svg" }];
+    const bytes = validateSvg(buffer);
+    const variant = { label: "card", bytes, extension: "svg" };
+    if (svgRoot.parse(bytes).svg?.["@_data-stroke-theme"] === "auto") variant.strokeTheme = "auto";
+    return [variant];
   }
   const metadata = await sharp(buffer, { limitInputPixels: 40_000_000 }).metadata();
   if (!["png", "jpeg", "webp"].includes(metadata.format) || (metadata.pages || 1) > 1) throw new Error("정지 PNG/JPEG/WebP 또는 애니메이션 획순 SVG가 필요합니다.");
@@ -80,6 +85,7 @@ export async function saveVariants(directory, kind, variants) {
     const path = assetPath(directory, url);
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, variant.bytes);
+    if (variant.strokeTheme) entry.strokeTheme = variant.strokeTheme;
     entry[variant.label] = { url, bytes: variant.bytes.length, ...(variant.width ? { width: variant.width, height: variant.height } : {}) };
   }
   entry.detail ||= entry.card;
