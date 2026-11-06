@@ -95,7 +95,7 @@ Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 �
 | `index.html`, `src/home.js`, `src/home.css` | 별도 홈 `/` |
 | `src/study.html` | 학습 HTML 원본 |
 | `scripts/study-pages.mjs` | `/kanji/`, `/reading/`, `/quiz/` HTML 생성 |
-| `src/materials.html`, `scripts/material-pages.mjs` | 학습 자료 모음과 학년별 한자·독해 본문 HTML 생성 |
+| `src/materials.html`, `scripts/material-pages.mjs` | 학습 자료 모음과 학년·JLPT별 한자 카드 목록 및 독해 본문 HTML 생성 |
 | `src/main.js`, `src/styles.css` | 학습 로직과 스타일 |
 | `src/virtual-grid.js` | CSS 열 수에 맞춘 가상 목록·화면 회전 시 위치 유지·키보드 이동 |
 | `src/card-images.js` | 카드 이미지 요청 지연·동시 요청 제한·최근 이미지 재사용 |
@@ -111,8 +111,9 @@ Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 �
 생성된 `kanji/index.html`, `reading/index.html`, `quiz/index.html`을 직접 고치지 마세요.
 기본 사이트맵은 `/`, `/kanji/`, `/reading/`, `/quiz/`, `/about/`,
 `/privacy-policy/`, `/copyright/`, `/contact/`의 8개 경로입니다.
-빌드 시 `public/data`의 기존 자료로 `/materials/`, 학년별 한자 11개,
-독해 본문 19개를 생성하고 `dist/sitemap.xml`에 포함합니다. 현재 총 39개 경로입니다.
+빌드 시 `public/data`의 기존 자료로 `/materials/`, 학년·참고 목록 11개, JLPT 목록 5개,
+독해 본문 19개를 생성하고 `dist/sitemap.xml`에 포함합니다. 현재 총 44개 경로입니다.
+목록의 한자 카드는 해당 학년 또는 JLPT 필터가 적용된 도감 상세 화면을 엽니다.
 `materials/`의 생성 HTML을 직접 편집하지 마세요. 공통 틀은 `src/materials.html`,
 본문·목록 생성은 `scripts/material-pages.mjs`, 학습 내용은 기존 JSON이 원본입니다.
 개발 중에는 자료 틀과 JSON 변경을 감지해 재생성하며, 정식 빌드는 항상 최신 JSON으로 생성합니다.

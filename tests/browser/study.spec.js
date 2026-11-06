@@ -112,9 +112,9 @@ for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], 
     await page.locator("#learningRetry").click();
     await ready(page);
     expect(state[`${failed}Calls`]).toBe(3);
-    const grades = new Set(kanji.map((row) => row["학년"]).filter((value) => value && value !== "참고"));
+    const grades = new Set(kanji.map((row) => row["학년"]).filter(Boolean));
     await expect(page.locator("#grade option")).toHaveCount(grades.size + 1);
-    await expect(page.locator("#gameGrade option")).toHaveCount(grades.size + 1);
+    await expect(page.locator("#gameGrade option")).toHaveCount([...grades].filter(value => value !== "참고").length + 1);
     if (path === "/reading/") {
       await expect(page.locator("#grid .card")).toHaveCount(0);
       await expect(page.locator("#storyCopy .kanji-link").first()).toBeVisible();
@@ -162,6 +162,26 @@ test("N5 reset survives reload and preserves unrelated URL state", async ({ page
   await expect(page.locator("#sort")).toHaveValue("ministry");
   await expect(page.locator("#resultCount")).toHaveText(kanji.filter((row) => row["문부성"] !== "").length.toLocaleString("ko-KR"));
 });
+
+for (const [filter, field, value] of [
+  ["grade", "학년", "중학 1"], ["jlpt", "등급", "JLPT N3"], ["grade", "학년", "참고"],
+]) {
+  test(`material card opens the right detail and closes to its ${value} catalog`, async ({ page }) => {
+    await mockData(page);
+    const matching = kanji.filter(row => row[field] === value);
+    const ch = matching.at(-1)["한자"];
+    await page.goto(`/kanji/?${filter}=${encodeURIComponent(value)}#kanji=${encodeURIComponent(ch)}`);
+    await expect(page.locator(`#detailContent .card[data-kanji="${ch}"]`)).toBeVisible();
+    await page.locator("#detailClose").click();
+    expect(new URL(page.url()).hash).toBe("");
+    expect(new URL(page.url()).searchParams.get(filter)).toBe(value);
+    await page.reload();
+    await ready(page);
+    await expect(page.locator("#detailOverlay")).toBeHidden();
+    await expect(page.locator(`#${filter}`)).toHaveValue(value);
+    await expect(page.locator("#resultCount")).toHaveText(matching.length.toLocaleString("ko-KR"));
+  });
+}
 
 test("direct filters, detail JLPT links and back/forward keep URL and UI synchronized", async ({ page }) => {
   await mockData(page);

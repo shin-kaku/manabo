@@ -317,7 +317,7 @@ import { createCardImages } from "./card-images.js";
         }
         const grades = [
           ...new Set(
-            DATA.map((d) => text(d["학년"])).filter((v) => v && v !== "참고"),
+            DATA.map((d) => text(d["학년"])).filter(Boolean),
           ),
         ].sort(sortGrade);
         grades.forEach((v) =>
@@ -331,7 +331,7 @@ import { createCardImages } from "./card-images.js";
           return nb - na || a.localeCompare(b); // N5 -> N1
         });
         jlpts.forEach((v) => els.jlpt.add(new Option(displayLabel(v), v)));
-        grades.forEach((v) =>
+        grades.filter((v) => v !== "참고").forEach((v) =>
           els.gameGrade.add(new Option(storyDisplayLabel(v), v)),
         );
         jlpts.forEach((v) => els.gameJlpt.add(new Option(displayLabel(v), v)));
@@ -528,6 +528,13 @@ import { createCardImages } from "./card-images.js";
         restoreFocus(detailReturnFocus);
         detailReturnFocus = null;
         kanjiGrid.refresh();
+      }
+      function dismissKanjiDetail() {
+        closeKanjiDetail();
+        if (location.hash.startsWith("#kanji=")) {
+          history.replaceState(history.state, "", location.pathname + location.search);
+          handledLocation = location.href;
+        }
       }
       function openImageViewer(d, returnFocus) {
         hideKanjiPopover();
@@ -1047,10 +1054,10 @@ import { createCardImages } from "./card-images.js";
         )
           hideKanjiPopover();
       });
-      detail.close.addEventListener("click", closeKanjiDetail);
+      detail.close.addEventListener("click", dismissKanjiDetail);
       detail.back.addEventListener("click", goBackKanjiDetail);
       detail.overlay.addEventListener("click", (e) => {
-        if (e.target === detail.overlay) closeKanjiDetail();
+        if (e.target === detail.overlay) dismissKanjiDetail();
       });
       imageViewer.close.addEventListener("click", closeImageViewer);
       imageViewer.overlay.addEventListener("click", (e) => {
@@ -1086,7 +1093,7 @@ import { createCardImages } from "./card-images.js";
           hideKanjiPopover();
           restoreFocus(anchor);
         } else if (!imageViewer.overlay.hidden) closeImageViewer();
-        else if (!detail.overlay.hidden) closeKanjiDetail();
+        else if (!detail.overlay.hidden) dismissKanjiDetail();
         else return;
         e.preventDefault();
         e.stopPropagation();
@@ -1124,6 +1131,10 @@ import { createCardImages } from "./card-images.js";
         const q = els.search.value.trim().toLowerCase();
         const g = els.grade.value;
         const j = els.jlpt.value;
+        // Reference entries have no ministry number to sort by.
+        const ministryOption = els.sort.querySelector('option[value="ministry"]');
+        ministryOption.disabled = g === "참고";
+        if (ministryOption.disabled && els.sort.value === "ministry") els.sort.value = "memory";
         const sortMode = els.sort.value;
         const isMinistry = sortMode === "ministry";
         const base = isMinistry
