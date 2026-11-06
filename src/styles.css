@@ -509,63 +509,59 @@
         display: none;
       }
       .stroke-order-info {
-        --stroke-size: clamp(168px, 62.4vw, 242px);
+        --stroke-size: 220px;
         display: flex;
+        flex-wrap: wrap;
+        flex: 0 0 auto;
+        min-width: 0;
         align-items: center;
         justify-content: flex-start;
-        gap: 16px;
+        gap: 12px 28px;
         padding: 0;
       }
       .stroke-order-meta {
+        flex: 0 0 auto;
+        width: max-content;
+        max-width: 100%;
         display: flex;
         flex-direction: column;
         gap: 16px;
         min-width: 0;
+        writing-mode: horizontal-tb;
+        word-break: keep-all;
+        overflow-wrap: normal;
       }
       .stroke-order-meta .section-label {
         margin-bottom: 6px;
+        white-space: nowrap;
       }
       .stroke-count-info {
         min-width: 0;
       }
+      .stroke-count-info .desc { white-space: nowrap; }
       .stroke-order-frame,
       .stroke-order-meta {
         font-size: 17.5px;
-        transform: translateX(-1.5em);
       }
       .stroke-order-frame {
         position: relative;
-        transform: translate(-1.5em, -6px);
+        flex: 0 0 var(--stroke-size);
+        margin-left: calc(-1.5em - 16px);
+        transform: translateY(-6px);
         width: var(--stroke-size);
         height: var(--stroke-size);
-        flex: 0 0 var(--stroke-size);
+        aspect-ratio: 1;
         display: grid;
         place-items: center;
         background: transparent;
         overflow: hidden;
         border: 0;
         padding: 0;
-        cursor: zoom-in;
-      }
-      .stroke-order-frame::after {
-        content: "확대";
-        position: absolute;
-        right: 6px;
-        bottom: 6px;
-        padding: 3px 6px;
-        border-radius: 4px;
-        background: var(--floating-surface, rgba(251, 250, 246, 0.95));
-        color: var(--ink);
-        font-size: 11px;
-      }
-      .stroke-order-frame:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 3px;
       }
       .stroke-order-image {
         display: block;
-        width: var(--stroke-size);
-        height: var(--stroke-size);
+        width: 100%;
+        height: 100%;
         object-fit: contain;
         background: #fff;
       }
@@ -1642,12 +1638,7 @@
       .image-stage img[hidden] {
         display: none;
       }
-      .image-overlay[data-kind="stroke"] .image-stage img {
-        width: min(88vw, calc(100dvh - 80px));
-        background: #fff;
-      }
-      :root[data-theme="dark"] .stroke-order-image,
-      :root[data-theme="dark"] .image-overlay[data-kind="stroke"] .image-stage img {
+      :root[data-theme="dark"] .stroke-order-image {
         /* Map the white canvas to #141414 and keep stroke numbers legible. */
         filter: grayscale(1) invert(1) contrast(0.84);
       }

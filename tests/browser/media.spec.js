@@ -54,13 +54,9 @@ for (const width of [390, 1280]) test(`card uses 480px, detail/zoom use 960px, S
   const clip = { x: Math.max(0, box.x), y: Math.max(0, box.y), width: 100, height: 100 };
   const first = await page.screenshot({ clip });
   await expect.poll(async () => (await page.screenshot({ clip })).equals(first), { intervals: [250, 400, 650], timeout: 5000 }).toBe(false);
-  const strokeButton = page.getByRole("button", { name: "文 획순 크게 보기" });
-  await strokeButton.click();
-  await expect(page.locator("#imageOverlay img")).toHaveAttribute("src", stroke);
-  await expect(page.locator("#imageOverlay img")).toHaveCSS("background-color", "rgb(255, 255, 255)");
-  await expect(page.locator("#imageClose")).toBeFocused();
-  await page.keyboard.press("Escape");
-  await expect(strokeButton).toBeFocused();
+  await expect(page.getByRole("button", { name: "文 획순 크게 보기" })).toHaveCount(0);
+  await image.click();
+  await expect(page.locator("#imageOverlay")).toBeHidden();
   await page.locator(".detail-image-zoom").click();
   await expect(page.locator("#imageOverlay img")).toHaveAttribute("src", large);
   await expect(page.locator("#imageOverlay img")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
@@ -80,4 +76,31 @@ test("unavailable media catalog does not prevent legacy images loading", async (
   await page.locator("#grid .front").click();
   await expect.poll(() => page.locator("#grid .visual img").evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
   expect(requests.some(url => url.hostname === "drive.google.com")).toBe(true);
+});
+
+for (const width of [320, 640, 768, 844, 1024]) test(`stroke size and horizontal metadata stay fixed at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 390 });
+  await prepare(page);
+  await page.locator("#grid .front").click();
+  await page.locator("#grid .card-detail-button").click();
+  const section = page.locator(".stroke-order-info");
+  await expect(section).toBeVisible();
+  for (const label of await section.locator(".section-label, .stroke-count-info .desc").all()) {
+    expect(await label.evaluate(el => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return range.getClientRects().length;
+    })).toBe(1);
+  }
+  const frame = await page.locator(".stroke-order-frame").boundingBox();
+  const metadata = await page.locator(".stroke-order-meta").boundingBox();
+  const beside = metadata.x >= frame.x + frame.width;
+  const below = metadata.y >= frame.y + frame.height;
+  expect(beside || below).toBe(true);
+  if (width === 640) expect(below).toBe(true);
+  const body = await page.locator(".detail-card .back-body").boundingBox();
+  expect(metadata.x + metadata.width).toBeLessThanOrEqual(body.x + body.width);
+  expect(frame.width).toBe(220);
+  expect(frame.height).toBe(220);
+  expect(await page.locator(".detail-card .back-body").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
 });
