@@ -44,6 +44,7 @@
 }
 .site-info-menu[open] summary::after { transform: scaleY(-1); }
 .site-info-menu summary:hover, .site-info-menu[open] summary { border-color: var(--accent); color: var(--accent); }
+.site-info-menu summary:hover::after, .site-info-menu[open] summary::after { background: currentColor; }
 .site-info-menu summary:focus-visible, .header-info-links a:focus-visible, .theme-toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
