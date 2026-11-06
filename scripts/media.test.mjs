@@ -90,3 +90,18 @@ test("optional image2 and SVG fields survive schema filtering, including SVG-onl
   assert.equal(saved["이미지 2"], sourceUrl("two"));
   assert.equal(saved["획순 SVG"], sourceUrl("svg"));
 });
+
+test("the five local ink animations precede their catalog SVG and include a reduced-motion glyph", async () => {
+  const catalogUrl = `/media/stroke/${"d".repeat(64)}.svg`;
+  const catalog = { items: { stroke: { svg: { detail: { url: catalogUrl } } } } };
+  for (const [kanji, count] of Object.entries({ 車: 7, 犬: 4, 見: 7, 空: 8, 校: 10 })) {
+    const url = `/strokes/${kanji}.svg`;
+    assert.deepEqual(mediaCandidates({ ...row, 한자: kanji }, "stroke", "detail", catalog), [url, catalogUrl]);
+    const file = await readFile(new URL(`../public${url}`, import.meta.url));
+    const xml = validateSvg(file).toString("utf8");
+    assert.equal((xml.match(/<animate\b/g) || []).length, count, kanji);
+    assert.match(xml, /prefers-reduced-motion:\s*reduce[^}]*\.motion\s*\{\s*display:\s*none\s*;?\}\s*\.still\s*\{\s*display:\s*inline/);
+    assert.match(xml, /<path\b[^>]*\bclass="still"[^>]*\bd="[^"]+"/);
+  }
+  assert.deepEqual(mediaCandidates(row, "stroke", "detail", catalog), [catalogUrl]);
+});

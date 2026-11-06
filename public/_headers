@@ -3,5 +3,10 @@
   X-Content-Type-Options: nosniff
   Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox
 
+/strokes/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox
+
 /data/*
   Cache-Control: public, max-age=0, must-revalidate

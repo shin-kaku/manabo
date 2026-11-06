@@ -1,5 +1,7 @@
 import { driveFileId, imageCandidates } from "./image-sources.js";
 
+const animatedStrokeKanji = new Set(["車", "犬", "見", "空", "校"]);
+
 let catalog;
 let request;
 export function loadMedia() {
@@ -23,5 +25,13 @@ export function mediaCandidates(row, kind = "image1", usage = "card", media = ca
   // SVG must never be sent through Drive's raster thumbnail endpoint.
   const isSvg = kind === "stroke" && (row["획순 SVG"] || url?.endsWith(".svg"));
   const fallback = isSvg ? [] : imageCandidates(source);
-  return [...new Set([...local, ...fallback])];
+  const candidates = [...new Set([...local, ...fallback])];
+  if (kind === "stroke" && animatedStrokeKanji.has(row["한자"])) {
+    const animation = `/strokes/${row["한자"]}.svg`;
+    // Keep the numbered stroke diagram available to learners who reduce motion.
+    return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+      ? [...candidates, animation]
+      : [animation, ...candidates];
+  }
+  return candidates;
 }
