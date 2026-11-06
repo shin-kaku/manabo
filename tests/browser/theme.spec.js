@@ -17,7 +17,7 @@ for (const width of [390, 1280]) test(`theme menu persists across learning pages
   await page.keyboard.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.getByRole("button", { name: "화이트모드로 전환" })).toBeFocused();
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(21, 23, 27)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(0, 0, 0)");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath(`theme-home-dark-${width}.png`) });
   await page.keyboard.press("Escape");
@@ -25,12 +25,12 @@ for (const width of [390, 1280]) test(`theme menu persists across learning pages
   for (const path of ["/kanji/", "/reading/", "/quiz/", "/materials/", "/about/"]) {
     await page.goto(path);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    await expect(page.locator("body")).toHaveCSS("color", "rgb(236, 238, 242)");
+    await expect(page.locator("body")).toHaveCSS("color", "rgb(245, 245, 245)");
     await page.locator(".site-info-menu summary").click();
     await expect(page.getByRole("button", { name: "화이트모드로 전환" })).toBeVisible();
     if (path === "/kanji/") {
       await expect(page.locator("#grid .card").first()).toBeVisible();
-      await expect(page.locator("#grid .face").first()).toHaveCSS("background-color", "rgb(32, 35, 41)");
+      await expect(page.locator("#grid .face").first()).toHaveCSS("background-color", "rgb(20, 20, 20)");
       await page.screenshot({ path: testInfo.outputPath(`theme-kanji-dark-${width}.png`) });
     }
   }
@@ -46,7 +46,7 @@ test("saved dark theme applies even before the menu module loads", async ({ page
   await page.route("**/src/site-info.js", route => route.abort());
   await page.goto("/contact/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(21, 23, 27)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(0, 0, 0)");
 });
 
 test("blocked storage still permits theme switching", async ({ page }) => {

@@ -12,28 +12,29 @@
       }
       :root[data-theme="dark"] {
         color-scheme: dark;
-        --bg: #15171b;
-        --paper: #202329;
-        --ink: #eceef2;
-        --muted: #a9b0bc;
-        --line: #383e48;
-        --line-dark: #515967;
-        --accent: #ff8da4;
-        --accent-soft: #38232c;
-        --on-accent: #281119;
-        --accent-hover: #ffa9ba;
-        --secondary-ink: #bdc3ce;
-        --faint-ink: #a9b0bc;
-        --reading-ink: #e1e5ec;
-        --detail-line: #555e6b;
-        --chip-surface: #2a2e36;
-        --floating-surface: rgba(37, 41, 49, 0.96);
+        --bg: #000;
+        --paper: #141414;
+        --ink: #f5f5f5;
+        --muted: #b3b3b3;
+        --line: #333;
+        --line-dark: #555;
+        --accent: #ff3944;
+        --accent-fill: #e50914;
+        --accent-soft: #2d1012;
+        --on-accent: #fff;
+        --accent-hover: #c11119;
+        --secondary-ink: #ccc;
+        --faint-ink: #b3b3b3;
+        --reading-ink: #e5e5e5;
+        --detail-line: #555;
+        --chip-surface: #262626;
+        --floating-surface: rgba(26, 26, 26, 0.96);
         --inset-line: rgba(255, 255, 255, 0.07);
-        --track: #383e48;
-        --wrong-bg: #30363f;
-        --fallback-start: #2b3038;
-        --fallback-end: #24282f;
-        --scroll-thumb: #626c7a;
+        --track: #333;
+        --wrong-bg: #2a2a2a;
+        --fallback-start: #242424;
+        --fallback-end: #181818;
+        --scroll-thumb: #666;
       }
       * {
         box-sizing: border-box;
@@ -165,7 +166,7 @@
         height: 44px;
         border: 0;
         border-radius: 999px;
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         padding: 0 19px;
         font-size: 12px;
@@ -571,7 +572,7 @@
       .detail-image-meta button.chip:hover,
       .detail-image-meta button.chip:focus-visible {
         border-color: var(--accent);
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         box-shadow: 0 5px 16px rgba(188, 0, 45, 0.24);
         outline: none;
@@ -778,7 +779,7 @@
       }
       .scroll-top:hover,
       .scroll-top:focus-visible {
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         outline: none;
       }
@@ -869,7 +870,7 @@
         right: 0;
         bottom: 0;
         height: 3px;
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
       }
       .site-tab.active:focus-visible {
         outline: 2px solid var(--accent);
@@ -936,7 +937,7 @@
         outline: none;
       }
       .story-level.active {
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         font-weight: 700;
         cursor: default;
@@ -1069,7 +1070,7 @@
         margin-top: 6px;
         border: 0;
         border-radius: 999px;
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         font-weight: 800;
       }
@@ -1105,7 +1106,7 @@
       .game-progress-bar {
         width: 0;
         height: 100%;
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         transition: width 0.22s ease;
       }
       .game-question {
@@ -1195,7 +1196,7 @@
       }
       .game-choice.correct {
         border-color: var(--accent);
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
       }
       .game-choice.wrong {
@@ -1257,7 +1258,7 @@
       }
       .game-next {
         border: 0;
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
       }
       .game-settings-button {
@@ -1328,7 +1329,7 @@
         height: 40px;
         border: 0;
         border-radius: 999px;
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         font-size: 13px;
         font-weight: 700;
@@ -1388,7 +1389,7 @@
       .detail-back:hover,
       .detail-back:focus-visible {
         border-color: var(--accent);
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         outline: none;
       }
@@ -1413,7 +1414,7 @@
       }
       .detail-close:hover,
       .detail-close:focus-visible {
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         outline: none;
       }
@@ -1541,7 +1542,7 @@
       }
       .visual-zoom-hint:hover,
       .visual-zoom-hint:focus-visible {
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         outline: none;
       }
@@ -1571,7 +1572,7 @@
       }
       .back-flip:hover,
       .back-flip:focus-visible {
-        background: var(--accent);
+        background: var(--accent-fill, var(--accent));
         color: var(--on-accent, #fff);
         outline: none;
       }
