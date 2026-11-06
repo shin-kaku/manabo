@@ -85,6 +85,12 @@ for (const width of [320, 640, 768, 844, 1024]) test(`stroke size and horizontal
   await page.locator("#grid .card-detail-button").click();
   const section = page.locator(".stroke-order-info");
   await expect(section).toBeVisible();
+  if (width === 640) {
+    // Short readings now fit beside the closer diagram; longer ones must wrap below.
+    await section.locator(".korean-reading-info .desc").evaluate(el => {
+      el.textContent = "목구멍 인, 삼킬 연, 울음소리 열";
+    });
+  }
   for (const label of await section.locator(".section-label, .stroke-count-info .desc").all()) {
     expect(await label.evaluate(el => {
       const range = document.createRange();
@@ -94,7 +100,8 @@ for (const width of [320, 640, 768, 844, 1024]) test(`stroke size and horizontal
   }
   const frame = await page.locator(".stroke-order-frame").boundingBox();
   const metadata = await page.locator(".stroke-order-meta").boundingBox();
-  const beside = metadata.x >= frame.x + frame.width;
+  // Labels may use the SVG canvas's trailing whitespace without shrinking it.
+  const beside = metadata.x >= frame.x + frame.width - 24;
   const below = metadata.y >= frame.y + frame.height;
   expect(beside || below).toBe(true);
   if (width === 640) expect(below).toBe(true);
@@ -103,4 +110,10 @@ for (const width of [320, 640, 768, 844, 1024]) test(`stroke size and horizontal
   expect(frame.width).toBe(220);
   expect(frame.height).toBe(220);
   expect(await page.locator(".detail-card .back-body").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+  const firstLabel = section.locator(".section-label").first();
+  await firstLabel.scrollIntoViewIfNeeded();
+  expect(await firstLabel.evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    return el.contains(document.elementFromPoint(rect.left + 2, rect.top + rect.height / 2));
+  })).toBe(true);
 });

@@ -520,6 +520,8 @@
         padding: 0;
       }
       .stroke-order-meta {
+        position: relative;
+        z-index: 1;
         flex: 0 0 auto;
         width: max-content;
         max-width: 100%;
@@ -547,6 +549,7 @@
         position: relative;
         flex: 0 0 var(--stroke-size);
         margin-left: calc(-1.5em - 16px);
+        margin-right: -24px;
         transform: translateY(-6px);
         width: var(--stroke-size);
         height: var(--stroke-size);
