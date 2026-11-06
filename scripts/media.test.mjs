@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import sharp from "sharp";
 import { collectSources, hash, optimize, validateSvg, assetPath, emptyCatalog } from "./media-core.mjs";
 import { syncMedia } from "./sync-media.mjs";
@@ -34,6 +35,19 @@ test("SVG local quoted references survive while external references stay rejecte
   for (const href of ['https://example.com/a', '//example.com/a', 'other.svg#clip', '  https://example.com/a']) {
     assert.throws(() => validateSvg(Buffer.from(`<svg><use href="${href}"/></svg>`)));
   }
+});
+
+test("malformed SVG URLs with repeated hexadecimal escapes are rejected promptly", () => {
+  const input = `<svg><style>path{fill:url("#${String.raw`\abcdef`.repeat(1000)}"invalid)}</style></svg>`;
+  // Isolate the validator so a regex regression fails within the timeout instead
+  // of blocking the test runner (and a production Google sync) indefinitely.
+  const result = spawnSync(process.execPath, ["--input-type=module", "-e", `
+    import assert from 'node:assert/strict';
+    import { validateSvg } from ${JSON.stringify(new URL("./media-core.mjs", import.meta.url).href)};
+    assert.throws(() => validateSvg(Buffer.from(${JSON.stringify(input)})));
+  `], { encoding: "utf8", timeout: 5000 });
+  assert.equal(result.error, undefined, result.error?.message);
+  assert.equal(result.status, 0, result.stderr);
 });
 
 test("raster variants retain aspect ratio, cap decode size, and keep image2 lossless after resize", async () => {

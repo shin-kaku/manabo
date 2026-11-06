@@ -46,7 +46,9 @@ export function validateSvg(buffer) {
   const svg = buffer.toString("utf8");
   // Match complete local references before rejecting the remaining URLs. An
   // optional quote in a negative lookahead can backtrack and reject url("#id").
-  const cssEscape = String.raw`\\(?:[0-9a-f]{1,6}\s?|[^\r\n\f0-9a-f])`;
+  // Keep hexadecimal escapes unambiguous so malformed long URLs cannot cause
+  // repeated backtracking across different escape lengths.
+  const cssEscape = String.raw`\\(?:[0-9a-f]{6}\s?|[0-9a-f]{1,5}(?![0-9a-f])\s?|[^\r\n\f0-9a-f])`;
   const localCssUrl = new RegExp(String.raw`\burl\(\s*(?:"#(?:[^"\s()\\]|${cssEscape})+"|'#(?:[^'\s()\\]|${cssEscape})+'|#(?:[^\s"'()\\]|${cssEscape})+)\s*\)`, "gi");
   const nonLocalReferences = svg
     .replace(/\bhref\s*=\s*(?:"\s*#[^"\s]+"|'\s*#[^'\s]+')/gi, "")
