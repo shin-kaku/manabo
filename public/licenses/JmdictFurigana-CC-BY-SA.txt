@@ -1,0 +1,26 @@
+JmdictFurigana ruby alignment data
+
+Source: Doublevil and contributors, JmdictFurigana
+https://github.com/Doublevil/JmdictFurigana
+Release: 2.3.1+2026-10-25
+https://github.com/Doublevil/JmdictFurigana/releases/tag/2.3.1%2B2026-10-25
+Retrieved: 2026-11-06
+
+This resource is distributed under the same licence as JMdict:
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).
+https://creativecommons.org/licenses/by-sa/4.0/
+https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+JMdict copyright: James William Breen and the Electronic Dictionary Research
+and Development Group (EDRDG); used in accordance with its General Dictionary
+Licence.
+https://www.edrdg.org/edrdg/licence.html
+
+Manabo changes: selected the word-specific boundaries needed by its examples,
+normalized lookup readings to hiragana, retained original display kana, and
+reviewed/corrected special readings and added missing boundaries. The adapted
+data in src/example-ruby-data.js is distributed under CC BY-SA 4.0. This notice
+applies to that data; it does not relicense unrelated site code or content.
+
+The dictionary data is provided without warranty of accuracy or suitability.
+Neither the source authors nor EDRDG endorse this application.
