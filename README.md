@@ -38,6 +38,15 @@ npm test
 실제 Chromium에서 Tab·Shift+Tab·Escape, 브라우저 탐색, 로딩 실패와 복구를 검증합니다.
 실패 시 `test-results/`에 스크린샷과 trace를 남깁니다.
 
+GitHub Actions에서 최신 코드만 다시 검증하려면 **Validate Manabo → Run workflow → master**를 실행합니다.
+이 수동 검증은 Google 원본 갱신이나 운영 배포를 하지 않습니다.
+공개 저장소에서 자동 배포가 켜져 있으면 master push 검증은 **Sync Google media and publish**가 담당하고,
+같은 push의 **Validate Manabo**는 중복 실행을 피하기 위해 회색 `skipped`로 표시됩니다.
+브라우저 테스트가 실패하면 오류 위치를 Actions에 표시하고, 해당 실행의 **Artifacts**에
+HTML 보고서·스크린샷·trace를 3일간 보관합니다. 성공한 실행은 보고서를 업로드하지 않습니다.
+과거 실패 표시는 당시 코드의 기록이므로 최신 성공과 별개로 남습니다.
+루비·버츄얼 스크롤의 과거 실패 원인은 [Actions 검토 기록](reports/actions-review-2026-11-06.md)을 참고하세요.
+
 ## 데이터 동기화
 
 브라우저는 `public/data/kanji.json`, `public/data/stories.json`과 최적화 이미지 카탈로그 `media.json`을 읽습니다.

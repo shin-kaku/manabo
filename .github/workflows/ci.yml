@@ -3,6 +3,7 @@ name: Validate Manabo
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,8 +11,9 @@ permissions:
 jobs:
   test-and-build:
     # Production sync performs these same checks after restoring Google media.
-    if: github.event_name != 'push' || github.ref != 'refs/heads/master' || vars.MEDIA_SYNC_ENABLED != 'true'
+    if: github.event_name != 'push' || github.ref != 'refs/heads/master' || vars.MEDIA_SYNC_ENABLED != 'true' || github.event.repository.private
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,7 +22,21 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm test
+      - name: Unit tests
+        run: npm run test:unit
+      - name: Browser tests
+        id: browser-tests
+        run: npm run test:browser
+      - name: Save browser failure evidence
+        if: failure() && steps.browser-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v5
+        with:
+          name: browser-failure-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 3
+          if-no-files-found: warn
       - uses: actions/cache@v4
         with:
           path: public/media

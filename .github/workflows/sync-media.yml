@@ -74,8 +74,20 @@ jobs:
         run: npm run test:unit
       - if: steps.content.outputs.changed == 'true'
         run: npx playwright install --with-deps chromium
-      - if: steps.content.outputs.changed == 'true'
+      - name: Browser tests
+        id: browser-tests
+        if: steps.content.outputs.changed == 'true'
         run: npm run test:browser
+      - name: Save browser failure evidence
+        if: failure() && steps.browser-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v5
+        with:
+          name: browser-failure-publish-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 3
+          if-no-files-found: warn
       - if: steps.content.outputs.changed == 'true'
         run: npm run build
       - name: Refuse stale release if source code changed during the job
