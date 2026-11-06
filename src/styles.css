@@ -35,6 +35,7 @@
         --fallback-start: #242424;
         --fallback-end: #181818;
         --scroll-thumb: #666;
+        scrollbar-color: var(--scroll-thumb) var(--paper);
       }
       * {
         box-sizing: border-box;
