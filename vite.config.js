@@ -9,6 +9,13 @@ let materials = writeMaterialPages();
 
 export default defineConfig({
   plugins: [{
+    name: "adsense-site-verification",
+    transformIndexHtml: () => [{
+      tag: "meta",
+      attrs: { name: "google-adsense-account", content: "ca-pub-6751763449937427" },
+      injectTo: "head",
+    }],
+  }, {
     name: "saved-theme-before-paint",
     transformIndexHtml: {
       order: "pre",

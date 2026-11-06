@@ -13,7 +13,11 @@ test("materials and complete reading text are usable without JavaScript or data 
   await expect(page.locator(".material-entry")).toHaveCount(80);
   await page.getByRole("link", { name: "車", exact: true }).click();
   await expect(page.locator('[id="char-車"]')).toBeInViewport();
-  await expect(page.locator('[id="char-車"]')).toContainText("自動車(じどうしゃ) 자동차");
+  const car = page.locator('[id="char-車"]');
+  await expect(car.getByText("음독 예시", { exact: true })).toBeVisible();
+  const example = car.getByRole("listitem").filter({ hasText: "자동차" });
+  expect((await example.locator("rt").allTextContents()).join("")).toBe("じどうしゃ");
+  await expect(example).toContainText("자동차");
   await page.goto("/materials/reading/story-10/");
   const source = stories.find((story) => story.id === "story-10");
   expect((await page.locator(".material-story").innerText()).replace(/\s+/g, " ").trim()).toBe(source.versions[0].body.replace(/\s+/g, " ").trim());

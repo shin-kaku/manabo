@@ -17,9 +17,25 @@ test("every source kanji and its full explanation and words survive publication 
     const page = published.find((page) => page.title === `${row["학년"]} 한자 풀이와 단어`);
     const article = page.body.split(`<section class="material-entry" id="char-${row["한자"]}">`)[1]?.split("</section>")[0];
     assert.ok(article, row["한자"]);
-    for (const key of ["훈, 음", "발음", "풀이", "예시단어"]) {
-      assert.ok(plain(article).includes(String(row[key] || "").replace(/\s+/g, " ").trim()), `${row["한자"]}: ${key}`);
+    for (const key of ["훈, 음", "풀이"]) {
+      assert.ok(plain(article).includes(row[key].replace(/\s+/g, " ").trim()), `${row["한자"]}: ${key}`);
     }
+    assert.doesNotMatch(article, /[㉧㉭㉫]|>無し</);
+    for (const reading of row["발음"].split(/\s*\|\s*/)) {
+      const value = reading.replace(/^[㉧㉭㉫]\s*/, "").trim();
+      if (value && value !== "無し") assert.ok(plain(article).includes(value), row["한자"]);
+    }
+    const examples = Array.from(article.matchAll(/<li>([^]*?)<\/li>/g), ([, item]) => {
+      const word = item.match(/^<span lang="ja">([^]*?)<\/span> ([^]*)$/);
+      if (!word) return plain(item);
+      const [, annotated, gloss] = word;
+      const ruby = /<ruby>([^<]+)<rp>\(<\/rp><rt>([^<]+)<\/rt><rp>\)<\/rp><\/ruby>/g;
+      return `${annotated.replace(ruby, "$1")}(${annotated.replace(ruby, "$2")}) ${plain(gloss)}`;
+    });
+    const sourceExamples = row["예시단어"].split("\n").map((line) => line.trim())
+      .filter((line) => line && !["-", "㉧", "㉭", "㉫"].includes(line))
+      .map((line) => line.replace(/^([^()（）]+)[(（]([ぁ-ゖァ-ヶー]+)[)）]\s*/u, "$1($2) ").replace(/\s+/g, " "));
+    assert.deepEqual(examples, sourceExamples, row["한자"]);
   }
 });
 

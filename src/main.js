@@ -1,3 +1,4 @@
+import { parseExamples, parseReadings, examplePattern } from "./reading-groups.js";
 import { studySeo } from "./seo.js";
 import { createRubyResolver } from "./example-ruby.js";
 import { loadMedia, mediaCandidates, strokeMediaEntry } from "./media.js";
@@ -336,45 +337,6 @@ import { createCardImages } from "./card-images.js";
         jlpts.forEach((v) => els.gameJlpt.add(new Option(displayLabel(v), v)));
       }
 
-      const READING_LABELS = { "㉧": "음독", "㉭": "훈독", "㉫": "특수 읽기" };
-      function parseExamples(raw) {
-        const groups = [];
-        let current = { marker: "", label: "예시", items: [] };
-        const flush = () => {
-          if (current.items.length) groups.push(current);
-        };
-        text(raw)
-          .split("\n")
-          .map((v) => v.trim())
-          .forEach((line) => {
-            if (!line || line === "-") return;
-            if (READING_LABELS[line]) {
-              flush();
-              current = {
-                marker: line,
-                label: READING_LABELS[line],
-                items: [],
-              };
-            } else {
-              current.items.push(line);
-            }
-          });
-        flush();
-        return groups;
-      }
-      function parseReadings(raw) {
-        const value = text(raw);
-        if (!value || value === "無し") return [];
-        return value
-          .split(/\s*\|\s*/)
-          .map((part) => {
-            const m = part.trim().match(/^(㉧|㉭|㉫)\s*(.*)$/);
-            return m
-              ? { marker: m[1], label: READING_LABELS[m[1]], value: m[2] }
-              : { marker: "", label: "읽기", value: part.trim() };
-          })
-          .filter((v) => v.value && v.value !== "無し");
-      }
       const popover = {
         root: document.getElementById("kanjiPopover"),
         glyph: document.getElementById("popoverGlyph"),
@@ -660,7 +622,7 @@ import { createCardImages } from "./card-images.js";
         const lines = text(raw).split("\n");
         lines.forEach((line, i) => {
           if (i) container.append(document.createTextNode("\n"));
-          const example = useRuby && line.match(/^([^()（）]+)[(（]([ぁ-ゖァ-ヶー]+)[)）](.*)$/u);
+          const example = useRuby && line.match(examplePattern);
           if (!example) {
             appendLinkedCharacters(container, line, currentChar);
             return;
