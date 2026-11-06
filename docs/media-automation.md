@@ -35,7 +35,9 @@ Cloudflare 토큰은 기존 계정의 Workers Scripts 편집 + Account Settings 
 기존 Cloudflare Git 자동 빌드는 끄고 GitHub 워크플로를 배포 경로로 사용합니다.
 `MEDIA_SYNC_ENABLED=true`로 활성화했습니다. 최초 원격 배포는 master push로 실행합니다.
 운영 이미지가 없는 첫 실행은 Google 원본에서 생성하며, 이후 캐시와 운영 파일을 재사용합니다.
-최초 원격 실행과 운영 검증 결과는 `reports/media-connection-2026-11-06.md`에 기록합니다.
+2026-11-06 최초 원격 배포 및 모바일·PC 공개 페이지 검증을 완료했습니다.
+후속 실행에서 2,324개 재사용·원본 다운로드 0건·재배포 생략을 확인했습니다.
+상세 결과는 [연결 완료 기록](../reports/media-connection-2026-11-06.md)에 있습니다.
 
 일반 CI는 자동화가 켜진 master push에서 중복 실행하지 않습니다. 이때 sync 작업이 단위·브라우저
 테스트와 빌드를 모두 수행합니다. PR 및 다른 브랜치는 일반 CI로 검증합니다.
@@ -94,8 +96,8 @@ Cloudflare Images, R2, Worker 요청별 변환은 사용하지 않습니다.
 PRIVATE 전환 시 일반 CI를 포함한 실행 시간 과금 조건을 다시 검토해야 합니다.
 [GitHub Actions 요금](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
 
-현재 이미지1은 고유 이미지 파일 4,640개, 전체 배포 4,697개입니다.
-이미지2 2종 크기와 획순 SVG 1종을 2,324자 전체에 추가해도 대략 11,669파일로,
+현재 이미지1은 고유 이미지 파일 4,640개, 전체 운영 배포 4,696개입니다.
+이미지2 2종 크기와 획순 SVG 1종을 2,324자 전체에 추가해도 대략 11,668파일로,
 현재 규모에서는 Free 한도 안입니다. 실제 파일 수는 매번 검사합니다.
 
 Google Drive API도 현재 무료 기준 안에서 사용합니다. 현행 공식 한도는 프로젝트별 일일
