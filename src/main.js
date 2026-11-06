@@ -1,6 +1,6 @@
 import { studySeo } from "./seo.js";
 import { createRubyResolver } from "./example-ruby.js";
-import { loadMedia, mediaCandidates, strokeThemeMode } from "./media.js";
+import { loadMedia, mediaCandidates, strokeMediaEntry } from "./media.js";
 import { applyStrokeTheme } from "./theme.js";
 import { createVirtualGrid } from "./virtual-grid.js";
 import { createCardImages } from "./card-images.js";
@@ -1368,6 +1368,9 @@ import { createCardImages } from "./card-images.js";
         if (isDetail && (strokeOrderUrls.length || strokeCount || koreanReading)) {
           const section = document.createElement("div");
           section.className = "info-section stroke-order-info";
+          const countValue = document.createElement("div");
+          countValue.className = "desc";
+          countValue.textContent = `${strokeCount}획`;
           if (strokeOrderUrls.length) {
             const frame = document.createElement("div");
             frame.className = "stroke-order-frame";
@@ -1383,7 +1386,12 @@ import { createCardImages } from "./card-images.js";
             picture.append(still, img);
             let attempt = 0;
             const showStroke = (url) => {
-              const mode = strokeThemeMode(d, url);
+              const entry = strokeMediaEntry(d, url);
+              const mode = entry?.strokeTheme;
+              countValue.textContent = `${strokeCount}획`;
+              if (entry?.strokeCount && strokeCount && entry.strokeCount !== Number(strokeCount)) {
+                countValue.append(document.createElement("br"), `획순도 ${entry.strokeCount}획`);
+              }
               img.classList.toggle("themed-stroke", mode === "explicit" || mode === "auto");
               if (mode === "explicit") {
                 picture.dataset.strokeUrl = url;
@@ -1401,6 +1409,7 @@ import { createCardImages } from "./card-images.js";
                 showStroke(strokeOrderUrls[attempt]);
               } else {
                 frame.remove();
+                countValue.textContent = `${strokeCount}획`;
                 if (!strokeCount && !koreanReading) section.remove();
               }
             });
@@ -1428,10 +1437,7 @@ import { createCardImages } from "./card-images.js";
             const label = document.createElement("div");
             label.className = "section-label";
             label.textContent = "총획수";
-            const value = document.createElement("div");
-            value.className = "desc";
-            value.textContent = `${strokeCount}획`;
-            count.append(label, value);
+            count.append(label, countValue);
             metadata.append(count);
           }
           if (metadata.childElementCount) section.append(metadata);

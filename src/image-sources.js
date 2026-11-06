@@ -39,3 +39,12 @@ export function imageCandidates(...sources) {
   }
   return [...new Set(urls)];
 }
+
+// R contains the animation. Keep the previous Q diagram available if it cannot be loaded.
+export function strokeSources(row) {
+  const animation = row["움직이는 획순"]?.trim();
+  const svg = row["획순 SVG"]?.trim();
+  const diagram = row["획순 이미지"]?.trim();
+  const sources = animation ? [animation, svg, diagram] : [svg || diagram];
+  return [...new Set(sources.filter(Boolean))];
+}

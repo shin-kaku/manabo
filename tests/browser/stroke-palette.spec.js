@@ -4,7 +4,8 @@ import sharp from "sharp";
 
 const rows = JSON.parse(await readFile(new URL("../../public/data/kanji.json", import.meta.url)));
 const car = rows.find(row => row.한자 === "車");
-const originalId = "1eIu0c52kva7VvEE1eEECu2nVc2Gw34jv";
+const carSvg = await readFile(new URL("../../public/strokes/車.svg", import.meta.url));
+const animatedId = "test-car-animation";
 const catalogUrl = `/media/stroke/${"a".repeat(64)}.svg`;
 
 async function colors(image) {
@@ -26,11 +27,15 @@ test("車 keeps the page's ink and guide colors when an embedded SVG prefers the
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "no-preference" });
   await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
   await page.route("**/data/kanji.json", route => route.fulfill({ json: [{
-    ...car, "획순 SVG": `https://drive.google.com/file/d/${originalId}/view`,
+    ...car, "움직이는 획순": `https://drive.google.com/file/d/${animatedId}/view`,
   }] }));
-  // Pin the trial source revision so a later Google edit cannot change this regression fixture.
+  // Serve the R animation through its normal catalog path, independent of future Google edits.
+  await page.route("**" + catalogUrl, route => route.fulfill({
+    contentType: "image/svg+xml",
+    body: carSvg,
+  }));
   await page.route("**/data/media.json", route => route.fulfill({ json: { schema: 1, items: { stroke: {
-    [originalId]: { sourceMd5: "f7bbe6f1f8ce1d52dd0b8bf3d28a1832", detail: { url: catalogUrl } },
+    [animatedId]: { strokeTheme: "explicit", strokeCount: 7, detail: { url: catalogUrl } },
   } } } }));
   await page.goto("/kanji/#kanji=車");
   const image = page.locator("#detailOverlay .stroke-order-image");

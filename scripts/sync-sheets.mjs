@@ -32,6 +32,7 @@ const KANJI_FIELDS = [
   "풀이",
   "이미지 1",
   "이미지 2",
+  "움직이는 획순",
   "획순 SVG",
   "획순 이미지",
   "발음",
@@ -142,7 +143,7 @@ export function prepareKanji(rows, previousCount = 0) {
       throw new Error(`${label}의 문부성 순서가 올바르지 않습니다.`);
     }
     requireImageUrl(row["이미지 1"], `${label}의 이미지 1`);
-    for (const field of ["이미지 2", "획순 SVG"]) {
+    for (const field of ["이미지 2", "움직이는 획순", "획순 SVG"]) {
       if (Object.hasOwn(row, field)) {
         requireStringField(row, field, label, true);
         if (row[field].trim()) requireImageUrl(row[field], `${label}의 ${field}`);
@@ -227,7 +228,11 @@ export function mergeKanji(previous, incoming, corrections = []) {
   const merged = [];
   for (const row of previous || []) {
     if (!next.has(row["한자"])) throw new Error(`기존 한자 삭제가 감지되었습니다: ${row["한자"]}`);
-    merged.push(next.get(row["한자"]));
+    const fresh = next.get(row["한자"]);
+    if (row["움직이는 획순"]?.trim() && !Object.hasOwn(fresh, "움직이는 획순")) {
+      throw new Error(`${row["한자"]}의 움직이는 획순 필드가 누락되었습니다.`);
+    }
+    merged.push(fresh);
     next.delete(row["한자"]);
   }
   return [...merged, ...next.values()];

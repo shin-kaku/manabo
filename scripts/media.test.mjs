@@ -6,7 +6,7 @@ import { join } from "node:path";
 import sharp from "sharp";
 import { collectSources, hash, optimize, validateSvg, assetPath, emptyCatalog } from "./media-core.mjs";
 import { syncMedia } from "./sync-media.mjs";
-import { mediaCandidates, strokeThemeMode } from "../src/media.js";
+import { mediaCandidates, strokeMediaEntry } from "../src/media.js";
 import { mergeKanji, prepareKanji } from "./sync-sheets.mjs";
 
 const sourceUrl = id => `https://drive.google.com/file/d/${id}/view`;
@@ -84,25 +84,38 @@ test("sync preserves local order and only applies corrections to the known outda
 
 test("optional image2 and SVG fields survive schema filtering, including SVG-only stroke rows", async () => {
   const rows = JSON.parse(await readFile(new URL("../public/data/kanji.json", import.meta.url)));
-  rows[0] = { ...rows[0], "이미지 2": sourceUrl("two"), "획순 SVG": sourceUrl("svg") };
+  rows[0] = { ...rows[0], "이미지 2": sourceUrl("two"), "움직이는 획순": sourceUrl("animation"), "획순 SVG": sourceUrl("svg") };
   delete rows[0]["획순 이미지"];
   const [saved] = prepareKanji(rows);
   assert.equal(saved["이미지 2"], sourceUrl("two"));
   assert.equal(saved["획순 SVG"], sourceUrl("svg"));
+  assert.equal(saved["움직이는 획순"], sourceUrl("animation"));
+  rows[0]["움직이는 획순"] = "not a URL";
+  assert.throws(() => prepareKanji(rows), /움직이는 획순/);
 });
 
-test("stroke trials yield to new Drive revisions and replacement Q links", () => {
-  const catalogUrl = `/media/stroke/${"d".repeat(64)}.svg`;
-  const id = "1eIu0c52kva7VvEE1eEECu2nVc2Gw34jv";
-  const md5 = "f7bbe6f1f8ce1d52dd0b8bf3d28a1832";
-  const candidates = (fileId, sourceMd5, kanji = "車") => mediaCandidates(
-    { ...row, 한자: kanji, "획순 SVG": sourceUrl(fileId) }, "stroke", "detail",
-    { items: { stroke: { [fileId]: { sourceMd5, detail: { url: catalogUrl } } } } },
-  );
-  assert.deepEqual(candidates(id, md5), ["/strokes/車.svg", catalogUrl]);
-  assert.deepEqual(candidates(id, "0".repeat(32)), [catalogUrl]);
-  assert.deepEqual(candidates("replacement", md5), [catalogUrl]);
-  assert.deepEqual(candidates(id, md5, "文"), [catalogUrl]);
+test("a missing exported R field cannot discard a published animation; a blank R clears it", () => {
+  const previous = [{ 한자: "車", "움직이는 획순": sourceUrl("r") }];
+  assert.throws(() => mergeKanji(previous, [{ 한자: "車" }]), /움직이는 획순 필드가 누락/);
+  const cleared = { 한자: "車", "움직이는 획순": "" };
+  assert.deepEqual(mergeKanji(previous, [cleared]), [cleared]);
+  assert.deepEqual(mergeKanji([{ 한자: "車" }], [{ 한자: "車" }]), [{ 한자: "車" }]);
+});
+
+test("R animation and Q diagram both sync; the detail card prefers R and retains Q", async t => {
+  const directory = await mkdtemp(join(tmpdir(), "manabo-r-q-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const kanji = { 한자: "車", "움직이는 획순": sourceUrl("animation"), "획순 이미지": sourceUrl("q") };
+  const animated = await readFile(new URL("../public/strokes/車.svg", import.meta.url));
+  const sources = new Map([["animation", animated], ["q", svg]]);
+  const metadata = new Map([...sources].map(([id, bytes]) => [id, { md5Checksum: hash(bytes, "md5"), size: bytes.length }]));
+  const { catalog } = await syncMedia({ rows: [kanji], enabledKinds: ["stroke"], directory, metadata, readSource: async id => sources.get(id) });
+  const r = catalog.items.stroke.animation.detail.url, q = catalog.items.stroke.q.detail.url;
+  assert.deepEqual(mediaCandidates(kanji, "stroke", "detail", catalog), [r, q]);
+  assert.equal(strokeMediaEntry(kanji, r, catalog).strokeCount, 7);
+  assert.equal(strokeMediaEntry(kanji, q, catalog).strokeTheme, undefined);
+  delete catalog.items.stroke.animation;
+  assert.deepEqual(mediaCandidates(kanji, "stroke", "detail", catalog), [q]);
 });
 
 test("Drive sync preserves the embedded color scheme only for opted-in stroke SVGs", async t => {
@@ -114,8 +127,8 @@ test("Drive sync preserves the embedded color scheme only for opted-in stroke SV
     const metadata = new Map([["svg", { md5Checksum: hash(bytes, "md5"), size: bytes.length }]]);
     const { catalog } = await syncMedia({ rows: [row], enabledKinds: ["stroke"], directory, metadata, readSource: async () => bytes });
     const url = mediaCandidates(row, "stroke", "detail", catalog)[0];
-    assert.equal(strokeThemeMode(row, url, catalog), expected);
-    assert.equal(strokeThemeMode(row, "https://example.com/fallback.png", catalog), undefined);
+    assert.equal(strokeMediaEntry(row, url, catalog)?.strokeTheme, expected);
+    assert.equal(strokeMediaEntry(row, "https://example.com/fallback.png", catalog), undefined);
     assert.deepEqual(await readFile(assetPath(directory, url)), bytes);
   }
 });
@@ -125,7 +138,7 @@ test("all five SVG trials retain numbered strokes, native themes and reduced mot
     const file = await readFile(new URL(`../public/strokes/${kanji}.svg`, import.meta.url));
     const xml = validateSvg(file).toString("utf8");
     assert.equal((xml.match(/<animate\b/g) || []).length, count, kanji);
-    assert.equal(strokeThemeMode({ 한자: kanji }, `/strokes/${kanji}.svg`), "explicit");
+    assert.equal((await optimize(file, "stroke"))[0].strokeCount, count);
     for (const view of ["light", "dark", "light-still", "dark-still", "still"]) {
       assert.ok(xml.includes(`id="${view}"`));
     }

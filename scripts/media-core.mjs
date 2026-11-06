@@ -3,12 +3,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import sharp from "sharp";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
-import { driveFileId } from "../src/image-sources.js";
+import { driveFileId, strokeSources } from "../src/image-sources.js";
 
 sharp.concurrency(1);
 sharp.cache(false);
 export const RECIPE = `webp-480-960-q85-lossless-lines-v1-sharp${sharp.versions.sharp}-vips${sharp.versions.vips}`;
-export const KINDS = { image1: ["이미지 1"], image2: ["이미지 2"], stroke: ["획순 SVG", "획순 이미지"] };
+export const KINDS = { image1: ["이미지 1"], image2: ["이미지 2"], stroke: ["움직이는 획순", "획순 SVG", "획순 이미지"] };
 export const hash = (buffer, algorithm = "sha256") => createHash(algorithm).update(buffer).digest("hex");
 export const emptyCatalog = () => ({ schema: 1, items: { image1: {}, image2: {}, stroke: {} } });
 
@@ -16,11 +16,12 @@ export function collectSources(rows, enabledKinds = Object.keys(KINDS)) {
   const sources = new Map();
   for (const row of rows) for (const [kind, fields] of Object.entries(KINDS)) {
     if (!enabledKinds.includes(kind)) continue;
-    const source = fields.map(field => row[field]?.trim()).find(Boolean);
-    if (!source) continue;
-    const id = driveFileId(source);
-    if (!id) throw new Error(`${row["한자"]} ${kind}: 자동 동기화에는 Drive 파일 URL이 필요합니다.`);
-    sources.set(`${kind}:${id}`, { kind, id });
+    const urls = kind === "stroke" ? strokeSources(row) : fields.map(field => row[field]?.trim()).filter(Boolean);
+    for (const url of urls) {
+      const id = driveFileId(url);
+      if (!id) throw new Error(`${row["한자"]} ${kind}: 자동 동기화에는 Drive 파일 URL이 필요합니다.`);
+      sources.set(`${kind}:${id}`, { kind, id });
+    }
   }
   return [...sources.values()].sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`, "en"));
 }
@@ -65,6 +66,9 @@ export async function optimize(buffer, kind) {
     const attrs = svgRoot.parse(bytes).svg;
     if (attrs?.["@_data-stroke-theme"] === "auto") {
       variant.strokeTheme = attrs["@_data-stroke-views"] === "explicit" ? "explicit" : "auto";
+      // The authoring tool emits exactly one numbered group per finished stroke.
+      const numbers = [...bytes.toString("utf8").matchAll(/<g\b[^>]*?\sid=(["'])number_(\d+)\1/g)].map(match => Number(match[2]));
+      if (numbers.length && numbers.every((n, i) => n === i + 1)) variant.strokeCount = numbers.length;
     }
     return [variant];
   }
@@ -89,6 +93,7 @@ export async function saveVariants(directory, kind, variants) {
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, variant.bytes);
     if (variant.strokeTheme) entry.strokeTheme = variant.strokeTheme;
+    if (variant.strokeCount) entry.strokeCount = variant.strokeCount;
     entry[variant.label] = { url, bytes: variant.bytes.length, ...(variant.width ? { width: variant.width, height: variant.height } : {}) };
   }
   entry.detail ||= entry.card;

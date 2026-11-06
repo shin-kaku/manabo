@@ -1,5 +1,11 @@
 {
-  "enabledKinds": ["image1", "stroke"],
-  "sourceFolderIds": ["1zLcv-ZaPqxzdR9vvrICiPIiFBwjgI2k5"],
-  "note": "준비된 종류만 추가: image2는 이미지 2, stroke는 획순 SVG 우선 및 기존 획순 이미지. 추가 후 수동 동기화 실행."
+  "enabledKinds": [
+    "image1",
+    "stroke"
+  ],
+  "sourceFolderIds": [
+    "1zLcv-ZaPqxzdR9vvrICiPIiFBwjgI2k5",
+    "1Vwup_kZJlO9HzDBnFFAIc0sfE3NKSXpk"
+  ],
+  "note": "stroke는 R 움직이는 획순과 Q 기존 획순도를 함께 동기화합니다. image2는 준비 후 활성화합니다."
 }
