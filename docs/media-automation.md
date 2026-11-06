@@ -33,8 +33,9 @@ GitHub `shin-kaku/manabo`는 PUBLIC이며 다음 4개 Secrets 등록을 확인�
 
 Cloudflare 토큰은 기존 계정의 Workers Scripts 편집 + Account Settings 읽기에 한정했습니다.
 기존 Cloudflare Git 자동 빌드는 끄고 GitHub 워크플로를 배포 경로로 사용합니다.
-`MEDIA_SYNC_ENABLED=true`로 활성화했습니다. 최초 원격 배포는 master push로 실행합니다.
-운영 이미지가 없는 첫 실행은 Google 원본에서 생성하며, 이후 캐시와 운영 파일을 재사용합니다.
+`MEDIA_SYNC_ENABLED=true`로 활성화했습니다.
+새 환경에서 최초 이미지가 없는 경우 수동 실행(`force_deploy=true`)으로 Google 원본에서 생성합니다.
+이후 캐시와 운영 파일을 재사용합니다.
 2026-11-06 최초 원격 배포 및 모바일·PC 공개 페이지 검증을 완료했습니다.
 후속 실행에서 2,324개 재사용·원본 다운로드 0건·재배포 생략을 확인했습니다.
 상세 결과는 [연결 완료 기록](../reports/media-connection-2026-11-06.md)에 있습니다.
@@ -54,8 +55,10 @@ Google 서비스 계정 키는 이 1년 만료 설정과 별개이며 현재 자
 
 ## 이후 자동 동작
 
-`.github/workflows/sync-media.yml`은 활성화된 경우 master push, 수동 실행,
-매시 17분/47분에 실행됩니다. 중복 실행을 직렬화합니다.
+`.github/workflows/sync-media.yml`은 Google 변경분을 매일 오전 **8시 17분(일본 시간)**에
+한 번 확인합니다. UTC cron은 `17 23 * * *`이며, 중복 실행을 직렬화합니다.
+master push는 Google을 조회하지 않고 게시된 카탈로그·이미지로 코드만 배포합니다.
+필요할 때는 수동 실행으로 추가 동기화할 수 있습니다. 아래 Google 동기화 단계는 예약·수동 실행에 적용됩니다.
 
 1. Google JSON을 검증하고 한자 ID로 병합합니다. 기존 학습 순서는 유지합니다.
    霧·六·勘의 예시 교정과 食의 삭제된 이미지 링크 교정은 `scripts/data-corrections.json`의 알려진 구버전 값과 일치할 때만 적용합니다.

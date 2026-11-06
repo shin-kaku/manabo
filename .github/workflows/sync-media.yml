@@ -4,7 +4,8 @@ on:
   push:
     branches: [master]
   schedule:
-    - cron: '17,47 * * * *'
+    # Daily at 08:17 Asia/Tokyo (UTC+9).
+    - cron: '17 23 * * *'
   workflow_dispatch:
     inputs:
       force_deploy:
@@ -46,8 +47,13 @@ jobs:
           path: public/media
           key: media-v1-${{ hashFiles('public/data/media.json') }}
           restore-keys: media-v1-
-      - run: npm run sync-data
-      - run: npm run sync-media
+      - if: github.event_name != 'push'
+        run: npm run sync-data
+      - if: github.event_name != 'push'
+        run: npm run sync-media
+      - name: Reuse published media for code-only deployments
+        if: github.event_name == 'push'
+        run: npm run media:restore
       - name: Verify and cache generated media before browser checks
         run: node scripts/check-media.mjs public
       - uses: actions/cache/save@v4

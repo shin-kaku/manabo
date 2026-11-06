@@ -31,7 +31,8 @@
   배포 카탈로그와 Git 카탈로그가 일치함을 확인함.
 - [후속 실행 42094663587](https://github.com/shin-kaku/manabo/actions/runs/42094663587): 35초 만에 성공.
   실제 Google 조회 결과 `changed=0, reused=2324, skipped=0`. 원본 다운로드 및 재배포 없음.
-- PUBLIC/master 및 workflow `active` 확인. 매시 17분/47분 예약 설정.
+- PUBLIC/master 및 workflow `active` 확인. 사용자 요청에 따라 매일 08:17 JST(UTC `17 23 * * *`) 한 번으로 변경.
+  코드 push에서는 Google 조회를 생략하고 이미 게시된 이미지를 재사용함.
   이번 실행 검증은 push 및 수동 재실행 기준이며, 예약 실행 시각은 GitHub의 스케줄러 지연 영향을 받음.
 
 ## 공개 사이트 브라우저 확인
