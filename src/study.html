@@ -133,12 +133,12 @@
         <div class="story-layout">
           <aside class="story-sidebar" aria-label="스토리 분류">
             <div class="story-group">
-              <div class="story-group-title">학년별</div>
-              <div id="gradeStoryLevels" class="story-levels"></div>
-            </div>
-            <div class="story-group">
               <div class="story-group-title">JLPT</div>
               <div id="jlptStoryLevels" class="story-levels"></div>
+            </div>
+            <div class="story-group">
+              <div class="story-group-title">학년별</div>
+              <div id="gradeStoryLevels" class="story-levels"></div>
             </div>
           </aside>
           <article class="story-article">
@@ -154,21 +154,21 @@
       <section id="gameView" class="game-view" hidden>
         <div class="game-shell">
           <p class="game-description">
-            <strong class="learning-action">학년·JLPT별로 범위를 정해</strong>, 한자의 뜻과 음을 고르는 문제로 복습해 보세요.
+            <strong class="learning-action">JLPT·학년별로 범위를 정해</strong>, 한자의 뜻과 음을 고르는 문제로 복습해 보세요.
           </p>
           <h2 class="game-title">일본어 한자 문제</h2>
 
           <div id="gameSetup" class="game-settings">
             <div class="game-setting">
-              <label for="gameGrade">학년</label>
-              <select id="gameGrade" class="control">
-                <option value="">학년 전체</option>
-              </select>
-            </div>
-            <div class="game-setting">
               <label for="gameJlpt">JLPT</label>
               <select id="gameJlpt" class="control">
                 <option value="">JLPT 전체</option>
+              </select>
+            </div>
+            <div class="game-setting">
+              <label for="gameGrade">학년</label>
+              <select id="gameGrade" class="control">
+                <option value="">학년 전체</option>
               </select>
             </div>
             <div class="game-setting">

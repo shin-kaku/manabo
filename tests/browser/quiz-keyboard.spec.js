@@ -33,6 +33,6 @@ test("keyboard focus follows quiz questions, results and settings", async ({ pag
   await expect(page.locator("#gameSetupError")).toBeVisible();
   await expect(page.locator("#gameGrade")).toBeFocused();
   await page.keyboard.press("ArrowUp");
-  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
   await expect(page.locator("#gameJlpt")).toBeFocused();
 });
