@@ -1644,6 +1644,11 @@
         width: min(88vw, calc(100dvh - 80px));
         background: #fff;
       }
+      :root[data-theme="dark"] .stroke-order-image,
+      :root[data-theme="dark"] .image-overlay[data-kind="stroke"] .image-stage img {
+        /* Map the white canvas to #141414 and keep stroke numbers legible. */
+        filter: grayscale(1) invert(1) contrast(0.84);
+      }
       .image-fallback {
         font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
         font-size: min(34vw, 260px);
