@@ -4,7 +4,10 @@ import { readFileSync } from "node:fs";
 import { studyPages, studyTemplatePath, writeStudyPages } from "./scripts/study-pages.mjs";
 import { writeMaterialPages, materialTemplatePath, writeSitemap } from "./scripts/material-pages.mjs";
 
+import { writeKanjiListData } from "./scripts/kanji-list-data.mjs";
+
 writeStudyPages();
+writeKanjiListData();
 let materials = writeMaterialPages();
 
 export default defineConfig({
@@ -29,6 +32,7 @@ export default defineConfig({
     name: "study-pages",
     configureServer(server) {
       server.watcher.on("change", (path) => {
+        if (/\/public\/data\/(kanji|media)\.json$/.test(path)) writeKanjiListData();
         if (path === studyTemplatePath) writeStudyPages();
         if (path === materialTemplatePath || /\/public\/data\/(kanji|stories)\.json$/.test(path)) materials = writeMaterialPages();
       });

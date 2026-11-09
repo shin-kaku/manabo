@@ -41,6 +41,8 @@ export function writeStudyPages() {
       const id = candidate.section === "kanji" ? "navKanji" : candidate.section === "story" ? "navStory" : "navGame";
       html = html.replace(new RegExp(`(<a id="${id}" class=")[^"]*(" href="[^"]*")(?: aria-current="page")?`), `$1site-tab${candidate === page ? " active" : ""}$2${candidate === page ? ' aria-current="page"' : ""}`);
     }
+    if (page.section === "kanji")
+      html = html.replace('/data/kanji.json', '/data/kanji-index.json');
     const directory = new URL(`${page.path}/`, root);
     mkdirSync(directory, { recursive: true });
     writeGeneratedFile(new URL("index.html", directory), html);

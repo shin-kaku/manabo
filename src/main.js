@@ -1,7 +1,9 @@
 import { parseExamples, parseReadings, examplePattern } from "./reading-groups.js";
 import { studySeo } from "./seo.js";
 import { createRubyResolver } from "./example-ruby.js";
-import { loadMedia, mediaCandidates, strokeMediaEntry } from "./media.js";
+import { loadMedia, mediaCandidates as catalogCandidates, strokeMediaEntry as catalogStroke } from "./media.js";
+import { mnemonicComponents } from "./kanji-components.js";
+import { loadKanjiIndex } from "./kanji-list-data.js";
 import { applyStrokeTheme } from "./theme.js";
 import { createVirtualGrid } from "./virtual-grid.js";
 import { createCardImages } from "./card-images.js";
@@ -80,19 +82,16 @@ import { createCardImages } from "./card-images.js";
       let KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
       let RELATED_KANJI = new Map();
       let resolveExampleRuby = createRubyResolver(DATA);
-      function mnemonicComponents(raw) {
-        const components = new Set();
-        for (const match of text(raw).matchAll(/[（(]([^()（）]+)[）)]/g)) {
-          for (const ch of match[1]) {
-            if (/\p{Script=Han}/u.test(ch)) components.add(ch);
-          }
-        }
-        return [...components];
-      }
+      const hasKanjiIndex = !!document.querySelector('link[href="/data/kanji-index.json"]');
+      let kanjiIndex;
+      const rowFor = ch => kanjiIndex?.row(ch) || KANJI_MAP.get(ch);
+      const mediaCandidates = (row, kind, usage) => catalogCandidates(row, kind, usage, kanjiIndex?.context(row)?.media);
+      const strokeMediaEntry = (row, url) => catalogStroke(row, url, kanjiIndex?.context(row)?.media);
       function rebuildDataIndexes() {
-        resolveExampleRuby = createRubyResolver(DATA);
         KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
         KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
+        if (kanjiIndex) return;
+        resolveExampleRuby = createRubyResolver(DATA);
         RELATED_KANJI = new Map();
         const ordered = DATA.slice().sort(
           (a, b) => numberOrInf(a["획"]) - numberOrInf(b["획"]) ||
@@ -126,15 +125,31 @@ import { createCardImages } from "./card-images.js";
           clearTimeout(timeout);
         }
       }
-      function ensureKanji() {
-        if (kanjiReady) return Promise.resolve();
-        if (!kanjiRequest) kanjiRequest = (async () => {
-          [DATA] = await Promise.all([fetchSavedRows("kanji"), loadMedia()]);
+      function ensureKanji(section) {
+        if (kanjiReady && (!kanjiIndex || section === "kanji")) return Promise.resolve();
+        if (kanjiRequest) return kanjiRequest.then(() => ensureKanji(section));
+        kanjiRequest = (async () => {
+          if (!kanjiReady && hasKanjiIndex && section === "kanji") {
+            try { kanjiIndex = await loadKanjiIndex(); }
+            catch { /* Use the existing full dataset if the list index is unavailable. */ }
+          }
+          if (kanjiIndex && section === "kanji") DATA = kanjiIndex.rows;
+          else {
+            [DATA] = await Promise.all([fetchSavedRows("kanji"), loadMedia()]);
+            kanjiIndex = undefined;
+          }
           rebuildDataIndexes();
           populateFilters();
           kanjiReady = true;
         })().finally(() => { kanjiRequest = null; });
         return kanjiRequest;
+      }
+      async function ensureKanjiDetail(ch) {
+        if (kanjiIndex) {
+          try { return await kanjiIndex.detail(ch); }
+          catch { await ensureKanji("full"); }
+        }
+        return KANJI_MAP.get(ch);
       }
       function ensureStories() {
         if (storiesReady) return Promise.resolve();
@@ -155,7 +170,7 @@ import { createCardImages } from "./card-images.js";
         const screen = { kanji: els.kanjiView, story: els.storyView, game: els.gameView }[section];
         screen.setAttribute("aria-busy", "true");
         try {
-          await Promise.all([ensureKanji(), ...(section === "story" ? [ensureStories()] : [])]);
+          await Promise.all([ensureKanji(section), ...(section === "story" ? [ensureStories()] : [])]);
           if (version !== activation) return false;
           learningStatus.hidden = true;
           document.documentElement.dataset.dataSource = "saved";
@@ -429,7 +444,7 @@ import { createCardImages } from "./card-images.js";
       }
       function showKanjiPopover(ch, anchor) {
         clearTimeout(popoverHoverTimer);
-        const d = KANJI_MAP.get(ch);
+        const d = rowFor(ch);
         if (!d) return;
         if (popoverAnchor && popoverAnchor !== anchor)
           popoverAnchor.setAttribute("aria-expanded", "false");
@@ -452,6 +467,14 @@ import { createCardImages } from "./card-images.js";
           });
         popover.note.textContent = text(d["풀이"]);
         popover.note.hidden = !text(d["풀이"]);
+        if (kanjiIndex && !kanjiIndex.row(ch)) {
+          ensureKanjiDetail(ch).then(row => {
+            if (popoverAnchor !== anchor || popoverKanji !== ch) return;
+            popover.note.textContent = text(row?.["풀이"]);
+            popover.note.hidden = !popover.note.textContent;
+            positionKanjiPopover(anchor);
+          }).catch(() => {});
+        }
         popover.root.hidden = false;
         anchor.setAttribute("aria-expanded", "true");
         syncModalState();
@@ -473,9 +496,10 @@ import { createCardImages } from "./card-images.js";
           return;
         hideKanjiPopover();
       }
+      let detailIntent = 0;
       function renderKanjiDetail(ch) {
         hideKanjiPopover();
-        const d = KANJI_MAP.get(ch);
+        const d = rowFor(ch);
         if (!d) return;
         const card = createCard(d, true);
         detail.content.replaceChildren(card);
@@ -489,9 +513,22 @@ import { createCardImages } from "./card-images.js";
             : "이전에 본 한자로 돌아가기",
         );
       }
-      function openKanjiDetail(ch, returnFocus = popoverAnchor) {
-        const d = KANJI_MAP.get(ch);
-        if (!d) return;
+      async function openKanjiDetail(ch, returnFocus = popoverAnchor) {
+        const intent = ++detailIntent;
+        if (!KANJI_MAP.has(ch)) return;
+        if (kanjiIndex && !kanjiIndex.row(ch)) {
+          try { await ensureKanjiDetail(ch); }
+          catch {
+            if (intent !== detailIntent) return;
+            learningStatus.hidden = false;
+            learningStatus.setAttribute("role", "alert");
+            learningMessage.textContent = "한자 상세 정보를 불러오지 못했습니다. 다시 시도해 주세요.";
+            learningRetry.hidden = true;
+            return;
+          }
+          if (intent !== detailIntent) return;
+          learningStatus.hidden = true;
+        }
         const alreadyOpen = !detail.overlay.hidden;
         if (alreadyOpen && detailCurrentKanji && detailCurrentKanji !== ch)
           detailHistory.push(detailCurrentKanji);
@@ -510,12 +547,14 @@ import { createCardImages } from "./card-images.js";
       }
       function goBackKanjiDetail() {
         if (!detailHistory.length) return;
+        detailIntent++;
         const previous = detailHistory.pop();
         hideKanjiPopover();
         renderKanjiDetail(previous);
         (detailHistory.length ? detail.back : detail.close).focus();
       }
       function closeKanjiDetail() {
+        detailIntent++;
         if (detail.overlay.hidden) return;
         closeImageViewer();
         hideKanjiPopover();
@@ -625,7 +664,7 @@ import { createCardImages } from "./card-images.js";
         }
         container.append(document.createTextNode(source.slice(last)));
       }
-      function appendExampleText(container, raw, currentChar, useRuby = false) {
+      function appendExampleText(container, raw, currentChar, useRuby = false, ruby) {
         const lines = text(raw).split("\n");
         lines.forEach((line, i) => {
           if (i) container.append(document.createTextNode("\n"));
@@ -637,7 +676,8 @@ import { createCardImages } from "./card-images.js";
           const word = document.createElement("span");
           word.className = "example-word";
           word.lang = "ja";
-          for (const part of resolveExampleRuby(example[1], example[2])) {
+          const key = JSON.stringify([example[1], example[2]]);
+          for (const part of ruby?.[key] || resolveExampleRuby(example[1], example[2])) {
             if (!part.reading) {
               word.append(document.createTextNode(part.text));
               continue;
@@ -1198,6 +1238,12 @@ import { createCardImages } from "./card-images.js";
         }
       }
 
+      const cardBackLoaders = new WeakMap();
+      function activateCardBack(card) {
+        cardBackLoaders.get(card)?.();
+        const image = card.querySelector(".visual img");
+        if (image) cardImages.activate(image);
+      }
       function setCardFlipped(card, flipped, loadImage = true) {
         const hadFocus = card.contains(document.activeElement);
         card.classList.toggle("flipped", flipped);
@@ -1207,8 +1253,7 @@ import { createCardImages } from "./card-images.js";
           if (flipped) flippedCards.add(card.dataset.kanji);
           else flippedCards.delete(card.dataset.kanji);
           if (flipped && loadImage) {
-            const image = card.querySelector(".visual img");
-            if (image) cardImages.activate(image);
+            activateCardBack(card);
             // The card may still be edge-on during the flip transition.
             kanjiGrid.refresh();
           }
@@ -1218,29 +1263,20 @@ import { createCardImages } from "./card-images.js";
         }
       }
 
-      function createCard(d, isDetail = false) {
-        const card = document.createElement("article");
-        card.className = isDetail ? "card detail-card" : "card";
-        card.dataset.kanji = text(d["한자"]);
-        card.setAttribute("role", "group");
-        card.setAttribute("aria-label", `${text(d["한자"])} 학습 카드`);
-        const inner = document.createElement("div");
-        inner.className = "card-inner";
+      function makeBackFlipButton(card, ch) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "back-flip-button";
+        button.setAttribute("aria-label", `${ch} 카드 앞면 보기`);
+        button.addEventListener("click", e => {
+          e.stopPropagation();
+          setCardFlipped(card, false);
+        });
+        return button;
+      }
 
-        const front = document.createElement(isDetail ? "section" : "button");
-        front.className = "face front";
-        if (!isDetail) {
-          front.type = "button";
-          front.setAttribute("aria-label", `${text(d["한자"])} 카드 뒤집기`);
-        }
-        const glyph = document.createElement("div");
-        glyph.className = "glyph";
-        glyph.textContent = text(d["한자"]);
-        const meaning = document.createElement("div");
-        meaning.className = "front-meaning";
-        meaning.textContent = text(d["훈, 음"]);
-        front.append(glyph, meaning);
-
+      function createCardBack(d, isDetail, card) {
+        const context = kanjiIndex?.context(d);
         const back = document.createElement("section");
         back.className = "face back";
         const visual = document.createElement("div");
@@ -1274,7 +1310,6 @@ import { createCardImages } from "./card-images.js";
           }
           visual.append(img);
         }
-        const backFlipButton = isDetail ? null : document.createElement("button");
         if (isDetail) {
           const zoom = document.createElement("button");
           zoom.type = "button";
@@ -1283,12 +1318,7 @@ import { createCardImages } from "./card-images.js";
           zoom.addEventListener("click", () => openImageViewer(d, zoom));
           visual.append(zoom);
         }
-        if (backFlipButton) {
-          backFlipButton.type = "button";
-          backFlipButton.className = "back-flip-button";
-          backFlipButton.setAttribute("aria-label", `${text(d["한자"])} 카드 앞면 보기`);
-          visual.append(backFlipButton);
-        }
+        if (!isDetail) visual.append(makeBackFlipButton(card, text(d["한자"])));
         const detailButton = document.createElement("button");
         detailButton.type = "button";
         detailButton.className = "card-detail-button";
@@ -1470,7 +1500,7 @@ import { createCardImages } from "./card-images.js";
             heading.append(type);
             const list = document.createElement("div");
             list.className = "example-list";
-            appendExampleText(list, g.items.join("\n"), text(d["한자"]), isDetail);
+            appendExampleText(list, g.items.join("\n"), text(d["한자"]), isDetail, context?.ruby);
             group.append(heading, list);
             wrap.append(group);
           });
@@ -1493,7 +1523,7 @@ import { createCardImages } from "./card-images.js";
               label.textContent = component;
               const list = document.createElement("div");
               list.className = "related-kanji-list";
-              const related = new Set([component, ...(RELATED_KANJI.get(component) || [])]);
+              const related = new Set([component, ...(context?.related[component] || RELATED_KANJI.get(component) || [])]);
               for (const ch of related) {
                 if (ch === text(d["한자"])) continue;
                 const item = document.createElement("span");
@@ -1531,18 +1561,82 @@ import { createCardImages } from "./card-images.js";
           }
         }
         back.append(learningPanel || visual, body);
-        inner.append(front, back);
+        return back;
+      }
+
+      function createCard(d, isDetail = false) {
+        const card = document.createElement("article");
+        card.className = isDetail ? "card detail-card" : "card";
+        card.dataset.kanji = text(d["한자"]);
+        card.setAttribute("role", "group");
+        card.setAttribute("aria-label", `${text(d["한자"])} 학습 카드`);
+        const inner = document.createElement("div");
+        inner.className = "card-inner";
+
+        const front = document.createElement(isDetail ? "section" : "button");
+        front.className = "face front";
+        if (!isDetail) {
+          front.type = "button";
+          front.setAttribute("aria-label", `${text(d["한자"])} 카드 뒤집기`);
+        }
+        const glyph = document.createElement("div");
+        glyph.className = "glyph";
+        glyph.textContent = text(d["한자"]);
+        const meaning = document.createElement("div");
+        meaning.className = "front-meaning";
+        meaning.textContent = text(d["훈, 음"]);
+        front.append(glyph, meaning);
+
+        const ch = text(d["한자"]);
+        inner.append(front);
+        if (isDetail || !kanjiIndex || kanjiIndex.row(ch)) {
+          inner.append(createCardBack(rowFor(ch) || d, isDetail, card));
+        } else {
+          const placeholder = document.createElement("section");
+          placeholder.className = "face back card-back-loading";
+          const status = document.createElement("p");
+          status.setAttribute("role", "status");
+          status.textContent = "카드를 불러오는 중입니다.";
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.textContent = "다시 시도";
+          retry.hidden = true;
+          placeholder.append(makeBackFlipButton(card, ch), status, retry);
+          inner.append(placeholder);
+          let request;
+          function hydrate() {
+            if (request || !retry.hidden) return;
+            request = ensureKanjiDetail(ch).then(row => {
+              if (!card.isConnected || !row) return;
+              const focused = placeholder.contains(document.activeElement);
+              const back = createCardBack(row, false, card);
+              back.inert = !card.classList.contains("flipped");
+              placeholder.replaceWith(back);
+              cardBackLoaders.delete(card);
+              if (focused) back.querySelector(".back-flip-button")?.focus({ preventScroll: true });
+              activateCardBack(card);
+            }).catch(() => {
+              status.textContent = "카드를 불러오지 못했습니다.";
+              retry.hidden = false;
+            }).finally(() => { request = undefined; });
+          }
+          cardBackLoaders.set(card, hydrate);
+          retry.addEventListener("click", event => {
+            event.stopPropagation();
+            retry.hidden = true;
+            status.textContent = "카드를 불러오는 중입니다.";
+            hydrate();
+          });
+        }
         card.append(inner);
         const toggle = () => {
           setCardFlipped(card, !card.classList.contains("flipped"));
         };
         if (!isDetail) {
-          for (const button of [front, backFlipButton]) {
-            button.addEventListener("click", (e) => {
-              e.stopPropagation();
-              toggle();
-            });
-          }
+          front.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggle();
+          });
           card.addEventListener("click", (e) => {
             if (e.target.closest("button, a, input, select, textarea, [role='button']")) return;
             toggle();
@@ -1561,7 +1655,7 @@ import { createCardImages } from "./card-images.js";
         isActive: () => kanjiReady && activeSection === "kanji" && detail.overlay.hidden && imageViewer.overlay.hidden,
         onScroll: () => cardImages.pause(),
         onIdle: () => {
-          for (const img of els.grid.querySelectorAll(".card.flipped .visual img")) cardImages.activate(img);
+          for (const card of els.grid.querySelectorAll(".card.flipped")) activateCardBack(card);
         },
       });
 

@@ -7,6 +7,7 @@ const stories = JSON.parse(await readFile(new URL("../../public/data/stories.jso
 async function fixtures(page) {
   await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
   await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.fulfill({ body: "" }));
+  await page.route("**/data/kanji-index.json", route => route.fulfill({ status: 404 }));
   await page.route("**/data/kanji.json", route => route.fulfill({ json: rows }));
   await page.route("**/data/stories.json", route => route.fulfill({ json: stories }));
 }

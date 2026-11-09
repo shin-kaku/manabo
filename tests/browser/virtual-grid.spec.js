@@ -5,7 +5,7 @@ const pixel = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQ
 async function prepare(page) {
   const requests = { images: [], data: 0 }, errors = [];
   page.on("pageerror", error => errors.push(String(error)));
-  page.on("request", request => { if (request.url().includes("/data/kanji.json")) requests.data++; });
+  page.on("request", request => { if (request.url().includes("/data/kanji-index.json")) requests.data++; });
   await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
   await page.route("**/*", route => {
     const request = route.request();

@@ -27,6 +27,7 @@ for (const width of [1280, 390, 320]) {
       if (new URL(route.request().url()).hostname === "127.0.0.1") return route.continue();
       return route.fulfill({ contentType: route.request().resourceType() === "image" ? "image/png" : "text/plain", body: route.request().resourceType() === "image" ? pixel : "" });
     });
+    await page.route("**/data/kanji-index.json", route => route.fulfill({ status: 404 }));
     await page.route("**/data/kanji.json", route => route.fulfill({ json: rows.map(row => row["한자"] === "文" ? { ...row, "예시단어": "㉧\n" + examples.map(([word, reading, meaning]) => `${word}(${reading}) ${meaning}`).join("\n") } : row) }));
     await page.goto("/kanji/#kanji=%E6%96%87");
     const words = page.locator("#detailOverlay .example-word");

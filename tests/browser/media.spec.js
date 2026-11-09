@@ -26,6 +26,7 @@ async function prepare(page, { failedLocal = false, failedCatalog = false } = {}
     if (url.hostname !== "127.0.0.1") return route.fulfill({ body: "" });
     return route.continue();
   });
+  await page.route("**/data/kanji-index.json", route => route.fulfill({ status: 404 }));
   await page.route("**/data/kanji.json", route => route.fulfill({ json: [{ ...row, "획순 SVG": "https://drive.google.com/file/d/animated/view" }] }));
   await page.route("**/data/media.json", route => route.fulfill(failedCatalog ? { status: 503, body: "unavailable" } : { json: {
     schema: 1, items: {

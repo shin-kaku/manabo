@@ -14,6 +14,7 @@ async function mockData(page, options = {}) {
     return route.fulfill({ status: 200, contentType: route.request().resourceType() === "image" ? "image/png" : "text/plain", body: route.request().resourceType() === "image" ? pixel : "" });
   });
   await page.route("**/data/*.json", (route) => {
+    if (new URL(route.request().url()).pathname.endsWith("/kanji-index.json")) return route.fulfill({ status: 404 });
     if (new URL(route.request().url()).pathname.endsWith("/media.json")) return route.fulfill({ json: { schema: 1, items: {} } });
     const resource = new URL(route.request().url()).pathname.includes("kanji") ? "kanji" : "stories";
     state[`${resource}Calls`]++;

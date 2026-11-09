@@ -40,3 +40,7 @@ dist-ssr
 
 # Generated content-addressed assets; restored from the published release in CI.
 /public/media/
+
+# Generated catalog and versioned details. The source JSON remains tracked.
+/public/data/kanji-index.json
+/public/data/kanji-detail/

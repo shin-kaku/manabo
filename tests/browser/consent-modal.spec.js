@@ -8,6 +8,7 @@ for (const entry of ["deep link", "list"]) {
   test(`pending consent waits for the detail modal to close (${entry})`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.fulfill({ body: "" }));
+    await page.route("**/data/kanji-index.json", route => route.fulfill({ status: 404 }));
     await page.route("**/data/kanji.json", route => route.fulfill({ json: rows.filter(row => row["한자"] === "文") }));
     await page.route("**/data/media.json", route => route.fulfill({ json: { schema: 1, items: {} } }));
     await page.goto(entry === "deep link" ? "/kanji/#kanji=%E6%96%87" : "/kanji/");

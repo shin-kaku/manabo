@@ -2108,3 +2108,12 @@
           transition: none;
         }
       }
+
+.card-back-loading {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 12px;
+  text-align: center;
+}
+.card-back-loading > :not(.back-flip-button) { position: relative; }

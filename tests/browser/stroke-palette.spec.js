@@ -26,6 +26,7 @@ async function colors(image) {
 test("車 keeps the page's ink and guide colors when an embedded SVG prefers the opposite scheme", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "no-preference" });
   await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
+  await page.route("**/data/kanji-index.json", route => route.fulfill({ status: 404 }));
   await page.route("**/data/kanji.json", route => route.fulfill({ json: [{
     ...car, "움직이는 획순": `https://drive.google.com/file/d/${animatedId}/view`,
   }] }));
