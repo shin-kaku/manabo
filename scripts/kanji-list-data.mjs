@@ -18,7 +18,9 @@ export function writeKanjiListData(directory = resolve("public/data")) {
   const mediaBytes = readFileSync(resolve(directory, "media.json"));
   const rows = JSON.parse(kanjiBytes);
   const media = JSON.parse(mediaBytes);
-  const version = createHash("sha256").update("kanji-detail-v1\0").update(kanjiBytes).update(mediaBytes).digest("hex");
+  const blockSize = 16;
+  const version = createHash("sha256").update(`kanji-detail-v1:${blockSize}\0`)
+    .update(kanjiBytes).update(mediaBytes).digest("hex");
   const related = new Map();
   for (const row of rows.slice().sort((a, b) => numeric(a["획"]) - numeric(b["획"]) || numeric(a["암기순"]) - numeric(b["암기순"]))) {
     for (const component of mnemonicComponents(row["풀이"])) {
@@ -27,7 +29,6 @@ export function writeKanjiListData(directory = resolve("public/data")) {
     }
   }
   const resolveRuby = createRubyResolver(rows);
-  const blockSize = 64;
   const dir = resolve(directory, "kanji-detail", version);
   mkdirSync(dir, { recursive: true });
   for (let offset = 0; offset < rows.length; offset += blockSize) {
