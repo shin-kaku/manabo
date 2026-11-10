@@ -82,7 +82,7 @@ import { createCardImages } from "./card-images.js";
       let KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
       let RELATED_KANJI = new Map();
       let resolveExampleRuby = createRubyResolver(DATA);
-      const hasKanjiIndex = !!document.querySelector('link[href="/data/kanji-index.json"]');
+      const hasKanjiIndex = !!document.querySelector('script[data-kanji-index], link[href="/data/kanji-index.json"]');
       let kanjiIndex;
       const rowFor = ch => kanjiIndex?.row(ch) || KANJI_MAP.get(ch);
       const mediaCandidates = (row, kind, usage) => catalogCandidates(row, kind, usage, kanjiIndex?.context(row)?.media);

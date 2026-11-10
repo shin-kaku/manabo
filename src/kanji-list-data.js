@@ -1,11 +1,13 @@
-async function fetchJSON(path) {
-  const response = await fetch(path, { signal: AbortSignal.timeout(10000) });
-  if (!response.ok) throw Error(`${path}: HTTP ${response.status}`);
+async function fetchJSON(path, request = fetch(path, { signal: AbortSignal.timeout(10000) })) {
+  const response = await request;
+  if (!response?.ok) throw Error(`${path}: HTTP ${response?.status ?? "unavailable"}`);
   return response.json();
 }
 
 export async function loadKanjiIndex() {
-  const index = await fetchJSON("/data/kanji-index.json");
+  const request = window.kanjiIndexResponse;
+  delete window.kanjiIndexResponse;
+  const index = await fetchJSON("/data/kanji-index.json", request);
   if (index.schema !== 1 || !/^[a-f0-9]{64}$/.test(index.version) ||
       !Array.isArray(index.rows) || !index.rows.length) throw Error("Invalid kanji index");
   const blockIds = new Map(index.rows.map(row => [row["한자"].trim(), row.detailBlock]));
