@@ -1277,6 +1277,9 @@ import { createCardImages } from "./card-images.js";
 
       function createCardBack(d, isDetail, card) {
         const context = kanjiIndex?.context(d);
+        const strokeOrderUrls = isDetail ? mediaCandidates(d, "stroke", "detail") : [];
+        const prioritizeStroke = activeSection === "kanji" && strokeOrderUrls.length > 0;
+        let startIllustration;
         const back = document.createElement("section");
         back.className = "face back";
         const visual = document.createElement("div");
@@ -1306,9 +1309,18 @@ import { createCardImages } from "./card-images.js";
               if (attempt < urls.length) img.src = urls[attempt];
               else img.remove();
             });
-            img.src = urls[0];
+            if (prioritizeStroke) {
+              // Let the SVG go first without blocking the illustration if it stalls.
+              startIllustration = () => {
+                clearTimeout(illustrationTimeout);
+                if (!visual.isConnected || img.hasAttribute("src")) return;
+                visual.prepend(img);
+                img.src = urls[0];
+              };
+              const illustrationTimeout = setTimeout(startIllustration, 350);
+            } else img.src = urls[0];
           }
-          visual.append(img);
+          if (!startIllustration) visual.append(img);
         }
         if (isDetail) {
           const zoom = document.createElement("button");
@@ -1368,7 +1380,6 @@ import { createCardImages } from "./card-images.js";
             visual.append(chips);
           } else body.append(chips);
         }
-        const strokeOrderUrls = mediaCandidates(d, "stroke", "detail");
         const strokeCount = text(d["획"]);
         const koreanReading = text(d["훈, 음"]);
         if (isDetail && (strokeOrderUrls.length || strokeCount || koreanReading)) {
@@ -1383,7 +1394,7 @@ import { createCardImages } from "./card-images.js";
             const img = document.createElement("img");
             img.className = "stroke-order-image";
             img.alt = `${text(d["한자"])} 획순`;
-            img.loading = "lazy";
+            img.loading = prioritizeStroke ? "eager" : "lazy";
             img.decoding = "async";
             img.draggable = false;
             const picture = document.createElement("picture");
@@ -1409,12 +1420,14 @@ import { createCardImages } from "./card-images.js";
                 img.src = url;
               }
             };
+            if (startIllustration) img.addEventListener("load", startIllustration, { once: true });
             img.addEventListener("error", () => {
               if (!img.isConnected) return;
               attempt++;
               if (attempt < strokeOrderUrls.length) {
                 showStroke(strokeOrderUrls[attempt]);
               } else {
+                startIllustration?.();
                 frame.remove();
                 countValue.textContent = `${strokeCount}획`;
                 if (!strokeCount && !koreanReading) section.remove();
