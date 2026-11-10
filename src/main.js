@@ -1275,6 +1275,22 @@ import { createCardImages } from "./card-images.js";
         return button;
       }
 
+      function copyCardIllustration(ch) {
+        const source = findRenderedCard(ch)?.querySelector(".visual img");
+        if (!source?.complete || !source.naturalWidth || !source.naturalHeight) return;
+        const canvas = document.createElement("canvas");
+        const scale = Math.min(1, 480 / Math.max(source.naturalWidth, source.naturalHeight));
+        canvas.width = Math.max(1, Math.round(source.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(source.naturalHeight * scale));
+        const painter = canvas.getContext("2d");
+        if (!painter) return;
+        try { painter.drawImage(source, 0, 0, canvas.width, canvas.height); }
+        catch { return; }
+        canvas.className = "detail-illustration-preview";
+        canvas.setAttribute("aria-hidden", "true");
+        return canvas;
+      }
+
       function createCardBack(d, isDetail, card) {
         const context = kanjiIndex?.context(d);
         const strokeOrderUrls = isDetail ? mediaCandidates(d, "stroke", "detail") : [];
@@ -1300,8 +1316,13 @@ import { createCardImages } from "./card-images.js";
           img.decoding = "async";
           img.draggable = false;
           if (isDetail) {
+            const preview = activeSection === "kanji" ? copyCardIllustration(text(d["한자"])) : undefined;
+            if (preview) visual.append(preview);
             let attempt = 0;
-            img.addEventListener("load", () => fallback.remove());
+            img.addEventListener("load", () => {
+              fallback.remove();
+              preview?.remove();
+            });
             img.addEventListener("error", () => {
               // A failed request can finish after this detail was closed or replaced.
               if (!img.isConnected) return;
