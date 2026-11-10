@@ -7,6 +7,7 @@ import { loadKanjiIndex } from "./kanji-list-data.js";
 import { applyStrokeTheme } from "./theme.js";
 import { createVirtualGrid } from "./virtual-grid.js";
 import { createCardImages } from "./card-images.js";
+import { driveFileId } from "./image-sources.js";
 
       let DATA = [];
       const els = {
@@ -516,6 +517,7 @@ import { createCardImages } from "./card-images.js";
       async function openKanjiDetail(ch, returnFocus = popoverAnchor) {
         const intent = ++detailIntent;
         if (!KANJI_MAP.has(ch)) return;
+        if (!illustrationWarmup?.data) discardIllustrationWarmup();
         if (kanjiIndex && !kanjiIndex.row(ch)) {
           try { await ensureKanjiDetail(ch); }
           catch {
@@ -1250,6 +1252,7 @@ import { createCardImages } from "./card-images.js";
         card.querySelector(".front").inert = flipped;
         card.querySelector(".back").inert = !flipped;
         if (!card.classList.contains("detail-card")) {
+          if (loadImage) discardIllustrationWarmup();
           if (flipped) flippedCards.add(card.dataset.kanji);
           else flippedCards.delete(card.dataset.kanji);
           if (flipped && loadImage) {
@@ -1291,6 +1294,46 @@ import { createCardImages } from "./card-images.js";
         return canvas;
       }
 
+      let illustrationWarmup;
+      let illustrationWarmupUsed = false;
+      const illustrationWarmupLimit = 256 * 1024;
+      function discardIllustrationWarmup() {
+        if (!illustrationWarmup) return;
+        clearTimeout(illustrationWarmup.timer);
+        illustrationWarmup.controller?.abort();
+        illustrationWarmup = undefined;
+      }
+
+      function scheduleIllustrationWarmup(row, card) {
+        if (illustrationWarmupUsed || illustrationWarmup || activeSection !== "kanji" ||
+            !detail.overlay.hidden || navigator.connection?.saveData) return;
+        const id = driveFileId(row["이미지 1"]);
+        const entry = kanjiIndex?.context(row)?.media.items.image1?.[id]?.detail;
+        if (!entry || !/^\/media\/image1\/[a-f0-9]{64}\.webp$/.test(entry.url) ||
+            entry.bytes > illustrationWarmupLimit) return;
+        const job = { card, url: entry.url };
+        illustrationWarmup = job;
+        job.timer = setTimeout(async () => {
+          const rect = card.getBoundingClientRect();
+          if (!card.isConnected || !card.classList.contains("flipped") || kanjiGrid.isScrolling ||
+              rect.bottom <= 0 || rect.top >= innerHeight || !detail.overlay.hidden) {
+            discardIllustrationWarmup();
+            return;
+          }
+          illustrationWarmupUsed = true;
+          job.controller = new AbortController();
+          try {
+            const response = await fetch(job.url, { signal: job.controller.signal, priority: "low" });
+            if (!response.ok || response.headers.get("content-type")?.split(";")[0] !== "image/webp") return;
+            const blob = await response.blob();
+            if (illustrationWarmup !== job || blob.size !== entry.bytes) return;
+            const reader = new FileReader();
+            reader.onload = () => { if (illustrationWarmup === job) job.data = reader.result; };
+            reader.readAsDataURL(blob);
+          } catch { /* A skipped warmup keeps the usual image request. */ }
+        }, 120);
+      }
+
       function createCardBack(d, isDetail, card) {
         const context = kanjiIndex?.context(d);
         const strokeOrderUrls = isDetail ? mediaCandidates(d, "stroke", "detail") : [];
@@ -1309,7 +1352,10 @@ import { createCardImages } from "./card-images.js";
         const urls = mediaCandidates(d, "image1", isDetail ? "detail" : "card");
         if (urls.length) {
           const img = isDetail ? document.createElement("img") : cardImages.create(
-            text(d["한자"]), urls, () => fallback.remove(), () => img.remove(),
+            text(d["한자"]), urls, () => {
+              fallback.remove();
+              scheduleIllustrationWarmup(d, card);
+            }, () => img.remove(),
           );
           img.alt = `${text(d["한자"])} 암기 이미지`;
           img.loading = isDetail ? "lazy" : "eager";
@@ -1318,6 +1364,8 @@ import { createCardImages } from "./card-images.js";
           if (isDetail) {
             const preview = activeSection === "kanji" ? copyCardIllustration(text(d["한자"])) : undefined;
             if (preview) visual.append(preview);
+            const warmed = illustrationWarmup?.url === urls[0] ? illustrationWarmup.data : undefined;
+            discardIllustrationWarmup();
             let attempt = 0;
             img.addEventListener("load", () => {
               fallback.remove();
@@ -1326,6 +1374,10 @@ import { createCardImages } from "./card-images.js";
             img.addEventListener("error", () => {
               // A failed request can finish after this detail was closed or replaced.
               if (!img.isConnected) return;
+              if (warmed && img.getAttribute("src") === warmed) {
+                img.src = urls[0];
+                return;
+              }
               attempt++;
               if (attempt < urls.length) img.src = urls[attempt];
               else img.remove();
@@ -1336,10 +1388,10 @@ import { createCardImages } from "./card-images.js";
                 clearTimeout(illustrationTimeout);
                 if (!visual.isConnected || img.hasAttribute("src")) return;
                 visual.prepend(img);
-                img.src = urls[0];
+                img.src = warmed || urls[0];
               };
               const illustrationTimeout = setTimeout(startIllustration, 350);
-            } else img.src = urls[0];
+            } else img.src = warmed || urls[0];
           }
           if (!startIllustration) visual.append(img);
         }
@@ -1683,11 +1735,15 @@ import { createCardImages } from "./card-images.js";
         element: els.grid,
         createItem: d => createCard(d),
         removeItem: card => {
+          if (illustrationWarmup?.card === card) discardIllustrationWarmup();
           const img = card.querySelector(".visual img");
           if (img) cardImages.release(img);
         },
         isActive: () => kanjiReady && activeSection === "kanji" && detail.overlay.hidden && imageViewer.overlay.hidden,
-        onScroll: () => cardImages.pause(),
+        onScroll: () => {
+          if (illustrationWarmup?.controller && !illustrationWarmup.data) discardIllustrationWarmup();
+          cardImages.pause();
+        },
         onIdle: () => {
           for (const card of els.grid.querySelectorAll(".card.flipped")) activateCardBack(card);
         },
