@@ -14,6 +14,15 @@ const orders = new Map();
 let requested = 0;
 let lastRendered;
 
+function syncSortWithGrade() {
+  const { grade, sort } = form.elements;
+  const ministry = sort.querySelector('option[value="ministry"]');
+  ministry.disabled = grade.value === "참고";
+  if (!ministry.disabled || sort.value !== "ministry") return false;
+  sort.value = "memory";
+  return true;
+}
+
 function readControls() {
   const params = new URLSearchParams();
   for (const name of directoryFields) {
@@ -106,6 +115,7 @@ async function render(limit, append = false) {
 }
 
 function applyFilters(push = false) {
+  syncSortWithGrade();
   remember(readControls(), directoryPageSize, push);
   render(directoryPageSize);
 }
@@ -134,7 +144,8 @@ function restoreDirectory() {
   // The HTML form can receive input before its module has arrived.
   const hasEarlyInput = form.querySelector("[data-early-edit]");
   restoreControls();
-  if (hasEarlyInput) remember(readControls(), directoryPageSize);
+  const sortChanged = syncSortWithGrade();
+  if (hasEarlyInput || sortChanged) remember(readControls(), directoryPageSize);
   render(visibleLimit());
 }
 form.removeAttribute("oninput");

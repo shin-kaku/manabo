@@ -33,7 +33,11 @@ const sorts = new Map([
 ]);
 
 export function directoryRows(rows, mode = defaultDirectorySort) {
-  return rows.slice().sort(sorts.get(mode) || ministryOrder);
+  const sort = sorts.has(mode) ? mode : defaultDirectorySort;
+  const entries = sort === "ministry"
+    ? rows.filter(row => Number.isFinite(numberOrInfinity(row["문부성"])))
+    : rows.slice();
+  return entries.sort(sorts.get(sort));
 }
 
 export function filterDirectory(rows, filters) {

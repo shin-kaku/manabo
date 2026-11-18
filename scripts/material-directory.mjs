@@ -21,7 +21,7 @@ function select(label, name, options, selected = "") {
 
 export function materialDirectory(kanji, levels, grades) {
   const rows = directoryRows(kanji);
-  const strokes = [...new Set(rows.map(row => Number(row["획"])))].filter(n => Number.isInteger(n) && n > 0).sort((a, b) => a - b);
+  const strokes = [...new Set(kanji.map(row => Number(row["획"])))].filter(n => Number.isInteger(n) && n > 0).sort((a, b) => a - b);
   const links = rows.slice(0, directoryPageSize).map(row => {
     const ch = row["한자"];
     return `<a href="${e(directoryHref(ch))}" aria-label="${e(ch)} ${e(row["훈, 음"])}"><span lang="ja">${e(ch)}</span> <small lang="ko">${e(directoryMeaning(row))}</small></a>`;
@@ -31,6 +31,7 @@ export function materialDirectory(kanji, levels, grades) {
     path: "kanji", title: "한자 도감",
     description: "한자, 뜻, 음 또는 획수로 검색하고 JLPT·학년·획수별로 학습할 글자를 고르세요.",
     body: `<section class="study-directory" data-study-directory>
+<p class="directory-guide">한자·뜻·음으로 검색해 보세요. <strong class="learning-action">한자를 누르면</strong> 암기 그림과 풀이, 획순을 볼 수 있습니다.</p>
 <h1>한자 도감</h1>
 <form class="directory-controls" oninput="event.target.dataset.earlyEdit = ''" action="/kanji/" role="search" aria-label="한자 검색">
   <label class="directory-query" for="directory-q">한자 검색<input type="search" id="directory-q" name="q" placeholder="한자, 뜻, 음, 획수" autocomplete="off" enterkeyhint="search"></label>

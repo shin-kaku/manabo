@@ -1023,7 +1023,7 @@
         letter-spacing: -0.045em;
         margin: 0;
       }
-      .story-guide {
+      .story-guide, .study-directory .directory-guide {
         margin: 0;
         font-size: 13px;
         line-height: 1.6;

@@ -29,6 +29,11 @@ for (const width of [320, 390, 768, 1280]) {
     await expect.poll(() => image.evaluate(img => img.complete && img.naturalWidth)).toBe(960);
     await expect.poll(() => stroke.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
     expect(await stroke.evaluate(img => new URL(img.currentSrc).pathname)).toBe(strokePath);
+    const entryBox = await page.locator("[data-entry-kanji]").boundingBox();
+    const pairBox = await page.locator(".entry-pair").boundingBox();
+    const leftMargin = pairBox.x - entryBox.x;
+    const rightMargin = entryBox.x + entryBox.width - pairBox.x - pairBox.width;
+    expect(Math.abs(leftMargin - rightMargin)).toBeLessThan(1);
     const meta = page.locator(".entry-header .entry-meta");
     await expect(meta.locator("a")).toHaveCount(3);
     const glyphBox = await page.locator(".entry-header h1 strong").boundingBox();

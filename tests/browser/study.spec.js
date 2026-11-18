@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
 const kanji = JSON.parse(await readFile(new URL("../../public/data/kanji.json", import.meta.url), "utf8"));
+const ministryCount = kanji.filter(row => Number(row.문부성) > 0).length.toLocaleString("ko-KR") + "자";
 const stories = JSON.parse(await readFile(new URL("../../public/data/stories.json", import.meta.url), "utf8"));
 const pixel = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j8ZkAAAAASUVORK5CYII=", "base64");
 
@@ -96,7 +97,7 @@ test("N5 reset survives reload and preserves unrelated URL state", async ({ page
   await page.reload();
   await expect(page.locator("#directory-jlpt")).toHaveValue("");
   await expect(page.locator("#directory-sort")).toHaveValue("ministry");
-  await expect(page.locator("[data-directory-count]")).toHaveText("2,324자");
+  await expect(page.locator("[data-directory-count]")).toHaveText(ministryCount);
 });
 
 for (const [filter, field, value] of [
@@ -104,7 +105,7 @@ for (const [filter, field, value] of [
 ]) {
   test(`legacy scoped detail preserves its ${value} catalog`, async ({ page }) => {
     await mockData(page);
-    const matching = kanji.filter(row => row[field] === value);
+    const matching = kanji.filter(row => row[field] === value && (value === "참고" || Number(row.문부성) > 0));
     const character = matching.at(-1)["한자"];
     await page.goto(`/kanji/?${filter}=${encodeURIComponent(value)}#kanji=${encodeURIComponent(character)}`);
     await expect(page.locator("[data-entry-kanji]")).toHaveAttribute("data-entry-kanji", character);
@@ -158,12 +159,12 @@ test("an active stroke filter can be cleared after an empty search", async ({ pa
 });
 
 for (const hash of ["%", "未登録"]) {
-  test(`unknown legacy hash ${hash} leaves the full list usable`, async ({ page }) => {
+  test(`unknown legacy hash ${hash} leaves the default list usable`, async ({ page }) => {
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     await mockData(page);
     await page.goto(`/kanji/#kanji=${hash}`);
-    await expect(page.locator("[data-directory-count]")).toHaveText("2,324자");
+    await expect(page.locator("[data-directory-count]")).toHaveText(ministryCount);
     await page.locator("#directory-q").fill("犬");
     await expect(page.locator("[data-directory-grid] a")).toHaveCount(1);
     expect(errors).toEqual([]);
@@ -234,12 +235,12 @@ test("quiz completion, insufficient pool, and valid restart never retain stale r
   await expect(page.locator("#gameProgress")).toHaveText("1 / 4");
 });
 
-test("unsupported filter values leave the full catalog usable", async ({ page }) => {
+test("unsupported filter values leave the default catalog usable", async ({ page }) => {
   await mockData(page);
   await page.goto("/kanji/?grade=invalid&jlpt=invalid");
   await expect(page.locator("#directory-grade")).toHaveValue("");
   await expect(page.locator("#directory-jlpt")).toHaveValue("");
-  await expect(page.locator("[data-directory-count]")).toHaveText("2,324자");
+  await expect(page.locator("[data-directory-count]")).toHaveText(ministryCount);
   await page.locator("#directory-q").fill("犬");
   await expect(page.locator("[data-directory-grid] a")).toHaveCount(1);
 });

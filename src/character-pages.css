@@ -42,7 +42,7 @@
 .entry-page figure img { display: block; }
 .entry-art { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; border-radius: 8px; }
 .entry-stroke { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; }
-.entry-pair { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: clamp(8px, 3vw, 26px); max-width: 600px; margin: 21px 0; }
+.entry-pair { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: clamp(8px, 3vw, 26px); max-width: 600px; margin: 21px auto; }
 .entry-pair figure { display: grid; grid-template-rows: 1fr auto; align-items: center; justify-items: center; padding: clamp(6px, 2vw, 15px); border: 1px solid var(--line); border-radius: 12px; }
 .entry-pair picture { width: 82%; }
 .entry-pair figcaption { margin-top: 6px; }

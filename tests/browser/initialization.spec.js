@@ -71,7 +71,7 @@ test("directory failure keeps initial links usable and retries with a fresh inde
   await expect(page.locator("[data-directory-message]")).toContainText("불러오지 못했습니다");
   await retry.click();
   await expect(retry).toBeHidden();
-  await expect(page.locator("[data-directory-count]")).toHaveText("2,324자");
+  await expect(page.locator("[data-directory-count]")).toHaveText(rows.filter(row => Number(row.문부성) > 0).length.toLocaleString("ko-KR") + "자");
   await page.locator("#directory-q").fill("犬");
   await expect(page.locator("[data-directory-grid] a")).toHaveCount(1);
   expect(calls).toBe(2);
