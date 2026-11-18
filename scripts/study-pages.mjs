@@ -4,16 +4,15 @@ import { studySeo } from "../src/seo.js";
 import { writeGeneratedFile } from "./generated-file.mjs";
 
 const root = new URL("../", import.meta.url);
-export const studyPages = [
+const studySections = [
   { path: "kanji", section: "kanji", title: "한자 도감" },
   { path: "reading", section: "story", title: "한자 독해" },
   { path: "quiz", section: "game", title: "한자 문제" },
 ];
 
+export const studyPages = studySections.filter(page => page.section !== "kanji");
+
 const studyFallback = {
-  kanji: `<h2>한자 도감 읽기</h2>
-<p><span lang="ja">木</span>과 <span lang="ja">目</span>은 한국 한자음이 모두 ‘목’입니다. 木은 나무를, 目은 눈을 뜻합니다. 두 글자의 모양을 비교해 보세요. 木에는 가지처럼 뻗은 획이 있고, 目에는 네모 안에 두 개의 가로획이 있습니다.</p>
-<p><a href="/materials/kanji/primary-1/">초등학교 1학년 한자 목록</a> · <a href="/materials/">학년별 도감 찾아보기</a></p>`,
   story: `<h2>한자 독해 읽기</h2>
 <p>“집 앞의 큰 木 아래에 앉아 本을 펼쳤다.” 이 문장에서 木은 나무이고, 本은 손에 든 책입니다. 한국어 문맥에 맞춰 뜻을 짐작한 다음 소리 내어 문장을 읽어 보세요.</p>
 <p><a href="/materials/#reading-materials">학년·JLPT별 창작 독해 고르기</a></p>`,
@@ -35,21 +34,11 @@ export function writeStudyPages() {
       .replace(/(<meta\s+property="og:description"\s+content=")[^"]*("\s*\/>)/, `$1${studySeo[page.section].description}$2`)
       .replace(/(<link\s+rel="canonical"\s+href=")[^"]*("\s*\/>)/, `$1${studySeo[page.section].canonical}$2`)
       .replace(/(<meta\s+property="og:url"\s+content=")[^"]*("\s*\/>)/, `$1https://kanjimanabo.com/${page.path}/$2`);
-    for (const candidate of studyPages) {
+    for (const candidate of studySections) {
       const view = `${candidate.section === "story" ? "story" : candidate.section === "game" ? "game" : "kanji"}View`;
       html = html.replace(new RegExp(`(<section id="${view}" class="[^"]*")(?: hidden)?(>)`), `$1${candidate === page ? "" : " hidden"}$2`);
       const id = candidate.section === "kanji" ? "navKanji" : candidate.section === "story" ? "navStory" : "navGame";
       html = html.replace(new RegExp(`(<a id="${id}" class=")[^"]*(" href="[^"]*")(?: aria-current="page")?`), `$1site-tab${candidate === page ? " active" : ""}$2${candidate === page ? ' aria-current="page"' : ""}`);
-    }
-    if (page.section === "kanji") {
-      html = html.replace(
-        '<link rel="preload" href="/data/kanji.json" as="fetch" crossorigin />',
-        `<script data-kanji-index>
-      window.kanjiIndexResponse = fetch("/data/kanji-index.json", {
-        signal: AbortSignal.timeout(10000),
-      }).catch(() => null);
-    </script>`,
-      );
     }
     const directory = new URL(`${page.path}/`, root);
     mkdirSync(directory, { recursive: true });

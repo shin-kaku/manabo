@@ -1,27 +1,10 @@
-import { parseExamples, parseReadings, examplePattern } from "./reading-groups.js";
 import { studySeo } from "./seo.js";
-import { createRubyResolver } from "./example-ruby.js";
-import { loadMedia, mediaCandidates as catalogCandidates, strokeMediaEntry as catalogStroke } from "./media.js";
-import { mnemonicComponents } from "./kanji-components.js";
-import { loadKanjiIndex } from "./kanji-list-data.js";
-import { applyStrokeTheme } from "./theme.js";
-import { createVirtualGrid } from "./virtual-grid.js";
-import { createCardImages } from "./card-images.js";
-import { driveFileId } from "./image-sources.js";
+import { loadMedia, mediaCandidates } from "./media.js";
+import { displayLabel, fillPopoverMeta, placeKanjiPopover } from "./kanji-popover.js";
+import { characterDetailPath, studyDetailHref } from "./study-path.js";
 
       let DATA = [];
       const els = {
-        grid: document.getElementById("grid"),
-        search: document.getElementById("search"),
-        grade: document.getElementById("grade"),
-        jlpt: document.getElementById("jlpt"),
-        sort: document.getElementById("sort"),
-        reset: document.getElementById("reset"),
-        resultCount: document.getElementById("resultCount"),
-        sentinel: document.getElementById("sentinel"),
-        sortLabel: document.getElementById("sortLabel"),
-        sortIndex: document.getElementById("sortIndex"),
-        kanjiView: document.getElementById("kanjiView"),
         storyView: document.getElementById("storyView"),
         gameView: document.getElementById("gameView"),
         navKanji: document.getElementById("navKanji"),
@@ -54,62 +37,20 @@ import { driveFileId } from "./image-sources.js";
         gameSettingsButton: document.getElementById("gameSettingsButton"),
       };
       let STORIES = [];
+      const defaultStoryId = "story-1";
       let activeStoryId = "";
 
-      let view = [];
-      let kanjiGrid;
-      const flippedCards = new Set();
-      const cardImages = createCardImages({
-        isScrolling: () => kanjiGrid?.isScrolling || activeSection !== "kanji" || !detail.overlay.hidden || !imageViewer.overlay.hidden,
-      });
-      let selectedStroke = null;
-      let selectedSound = null;
-
       const text = (v) => (v ?? "").toString().trim();
-      const displayLabel = (v) =>
-        text(v)
-          .replace(/^중학\s*(\d+)$/, "중학교 $1학년")
-          .replace(/^고교\s*(\d+)$/, "고등학교 $1학년")
-          .replace(/^중학(?=\s|$)/, "중학교")
-          .replace(/^고교(?=\s|$)/, "고등학교")
-          .replace("초등학교 ", "초");
       const storyDisplayLabel = (v) =>
         text(v)
           .replace(/^JLPT N([1-5])\((\d+)\)$/, "JLPT N$1-$2")
           .replace(/^(?:초등학교|초등|초)\s*(\d+)(?:학년)?$/, "초등 $1")
           .replace(/^(?:중학교|중학|중등)\s*(\d+)(?:학년)?$/, "중등$1")
           .replace(/^(?:고등학교|고교|고등)\s*(\d+)(?:학년)?$/, "고등 $1");
-      let KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
-      let KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
-      let RELATED_KANJI = new Map();
-      let resolveExampleRuby = createRubyResolver(DATA);
-      const hasKanjiIndex = !!document.querySelector('script[data-kanji-index], link[href="/data/kanji-index.json"]');
-      let kanjiIndex;
-      const rowFor = ch => kanjiIndex?.row(ch) || KANJI_MAP.get(ch);
-      const mediaCandidates = (row, kind, usage) => catalogCandidates(row, kind, usage, kanjiIndex?.context(row)?.media);
-      const strokeMediaEntry = (row, url) => catalogStroke(row, url, kanjiIndex?.context(row)?.media);
-      function rebuildDataIndexes() {
-        KANJI_SET = new Set(DATA.map((d) => text(d["한자"])).filter(Boolean));
-        KANJI_MAP = new Map(DATA.map((d) => [text(d["한자"]), d]));
-        if (kanjiIndex) return;
-        resolveExampleRuby = createRubyResolver(DATA);
-        RELATED_KANJI = new Map();
-        const ordered = DATA.slice().sort(
-          (a, b) => numberOrInf(a["획"]) - numberOrInf(b["획"]) ||
-            numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
-        );
-        for (const d of ordered) {
-          const ch = text(d["한자"]);
-          if (!ch) continue;
-          for (const component of mnemonicComponents(d["풀이"])) {
-            if (!RELATED_KANJI.has(component)) RELATED_KANJI.set(component, new Set());
-            RELATED_KANJI.get(component).add(ch);
-          }
-        }
-      }
+      let kanjiMap = new Map();
       let kanjiReady = false, storiesReady = false;
       let kanjiRequest = null, storiesRequest = null;
-      let activeSection = "", activation = 0;
+      let activation = 0;
       const learningStatus = document.getElementById("learningStatus");
       const learningMessage = document.getElementById("learningMessage");
       const learningRetry = document.getElementById("learningRetry");
@@ -126,37 +67,20 @@ import { driveFileId } from "./image-sources.js";
           clearTimeout(timeout);
         }
       }
-      function ensureKanji(section) {
-        if (kanjiReady && (!kanjiIndex || section === "kanji")) return Promise.resolve();
-        if (kanjiRequest) return kanjiRequest.then(() => ensureKanji(section));
-        kanjiRequest = (async () => {
-          if (!kanjiReady && hasKanjiIndex && section === "kanji") {
-            try { kanjiIndex = await loadKanjiIndex(); }
-            catch { /* Use the existing full dataset if the list index is unavailable. */ }
-          }
-          if (kanjiIndex && section === "kanji") DATA = kanjiIndex.rows;
-          else {
-            [DATA] = await Promise.all([fetchSavedRows("kanji"), loadMedia()]);
-            kanjiIndex = undefined;
-          }
-          rebuildDataIndexes();
+      function ensureKanji() {
+        if (kanjiReady) return Promise.resolve();
+        if (!kanjiRequest) kanjiRequest = (async () => {
+          [DATA] = await Promise.all([fetchSavedRows("kanji"), loadMedia()]);
+          kanjiMap = new Map(DATA.map(row => [text(row["한자"]), row]));
           populateFilters();
           kanjiReady = true;
         })().finally(() => { kanjiRequest = null; });
         return kanjiRequest;
       }
-      async function ensureKanjiDetail(ch) {
-        if (kanjiIndex) {
-          try { return await kanjiIndex.detail(ch); }
-          catch { await ensureKanji("full"); }
-        }
-        return KANJI_MAP.get(ch);
-      }
       function ensureStories() {
         if (storiesReady) return Promise.resolve();
         if (!storiesRequest) storiesRequest = (async () => {
           STORIES = await fetchSavedRows("stories");
-          activeStoryId = STORIES.find((s) => s.category === "학년별")?.id || STORIES[0].id;
           storiesReady = true;
         })().finally(() => { storiesRequest = null; });
         return storiesRequest;
@@ -168,19 +92,18 @@ import { driveFileId } from "./image-sources.js";
         learningMessage.textContent = "학습 데이터를 불러오는 중입니다.";
         learningRetry.hidden = true;
         els.gameStart.disabled = !kanjiReady;
-        const screen = { kanji: els.kanjiView, story: els.storyView, game: els.gameView }[section];
+        const screen = section === "story" ? els.storyView : els.gameView;
         screen.setAttribute("aria-busy", "true");
         try {
-          await Promise.all([ensureKanji(section), ...(section === "story" ? [ensureStories()] : [])]);
+          await Promise.all([ensureKanji(), ...(section === "story" ? [ensureStories()] : [])]);
           if (version !== activation) return false;
           learningStatus.hidden = true;
           document.documentElement.dataset.dataSource = "saved";
           els.gameStart.disabled = false;
-          if (section === "kanji") { readFilterUrl(); apply(); }
           if (section === "story") {
             const requestedStory = new URLSearchParams(location.search).get("story");
             activeStoryId = STORIES.find((story) => story.id === requestedStory)?.id ||
-              STORIES.find((story) => story.category === "학년별")?.id || STORIES[0].id;
+              STORIES.find((story) => story.id === defaultStoryId)?.id || STORIES[0].id;
             renderStory();
           }
           return true;
@@ -195,123 +118,6 @@ import { driveFileId } from "./image-sources.js";
           screen.setAttribute("aria-busy", "false");
         }
       }
-      const numberOrInf = (v) => {
-        const s = text(v);
-        if (!s) return Infinity;
-        const n = Number(s);
-        return Number.isFinite(n) ? n : Infinity;
-      };
-      const koreanCollator = new Intl.Collator("ko", {
-        sensitivity: "base",
-        numeric: true,
-      });
-      const primaryReading = (v) => text(v).split(/\s*[,|/]\s*/)[0] || "";
-      const compareKorean = (a, b) => {
-        const aa = primaryReading(a),
-          bb = primaryReading(b);
-        if (!aa && !bb) return 0;
-        if (!aa) return 1;
-        if (!bb) return -1;
-        return koreanCollator.compare(aa, bb);
-      };
-      const SOUND_GROUP_LABELS = [
-        "가",
-        "가",
-        "나",
-        "다",
-        "다",
-        "라",
-        "마",
-        "바",
-        "바",
-        "사",
-        "사",
-        "아",
-        "자",
-        "자",
-        "차",
-        "카",
-        "타",
-        "파",
-        "하",
-      ];
-      function soundGroup(v) {
-        const first = Array.from(primaryReading(v))[0] || "";
-        const code = first.charCodeAt(0);
-        if (code < 0xac00 || code > 0xd7a3) return "";
-        return SOUND_GROUP_LABELS[Math.floor((code - 0xac00) / 588)] || "";
-      }
-      function renderSortIndex(sortMode, source = view) {
-        els.sortIndex.replaceChildren();
-        let items = [];
-        if (sortMode === "strokes") {
-          const seen = new Set();
-          source.forEach((d) => {
-            const n = numberOrInf(d["획"]);
-            if (Number.isFinite(n) && !seen.has(n)) {
-              seen.add(n);
-              items.push({ label: `${n}획`, stroke: n });
-            }
-          });
-          if (selectedStroke !== null && !seen.has(selectedStroke))
-            items.push({ label: `${selectedStroke}획`, stroke: selectedStroke });
-          items.sort((a, b) => a.stroke - b.stroke);
-          els.sortIndex.setAttribute("aria-label", "획수 필터");
-        } else if (sortMode === "sound") {
-          const groups = new Set(
-            source.map((d) => soundGroup(d["음"])).filter(Boolean),
-          );
-          if (selectedSound) groups.add(selectedSound);
-          [
-            "가",
-            "나",
-            "다",
-            "라",
-            "마",
-            "바",
-            "사",
-            "아",
-            "자",
-            "차",
-            "카",
-            "타",
-            "파",
-            "하",
-          ].forEach((label) => {
-            if (groups.has(label)) items.push({ label, sound: label });
-          });
-          els.sortIndex.setAttribute("aria-label", "한자음 초성 필터");
-        }
-        els.sortIndex.hidden = !items.length;
-        items.forEach((item) => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "sort-index-button";
-          button.textContent = item.label;
-          if (sortMode === "strokes") {
-            const active = selectedStroke === item.stroke;
-            button.classList.toggle("active", active);
-            button.setAttribute("aria-pressed", String(active));
-            button.addEventListener("click", () => {
-              selectedStroke = active ? null : item.stroke;
-              apply();
-            });
-          } else {
-            const active = selectedSound === item.sound;
-            button.classList.toggle("active", active);
-            button.setAttribute("aria-pressed", String(active));
-            button.addEventListener("click", () => {
-              selectedSound = active ? null : item.sound;
-              apply();
-            });
-          }
-          els.sortIndex.append(button);
-        });
-      }
-      const pad = (v) => {
-        const n = numberOrInf(v);
-        return Number.isFinite(n) ? String(n).padStart(4, "0") : "—";
-      };
       function sortGrade(a, b) {
         const rank = (s) => {
           const elementary = s.match(/초등(?:학교)?\s*(\d+)학년/);
@@ -328,7 +134,7 @@ import { driveFileId } from "./image-sources.js";
         return rank(a) - rank(b) || a.localeCompare(b, "ko");
       }
       function populateFilters() {
-        for (const [select, label] of [[els.grade, "학년 전체"], [els.jlpt, "JLPT 전체"], [els.gameGrade, "학년 전체"], [els.gameJlpt, "JLPT 전체"]]) {
+        for (const [select, label] of [[els.gameGrade, "학년 전체"], [els.gameJlpt, "JLPT 전체"]]) {
           select.replaceChildren(new Option(label, ""));
         }
         const grades = [
@@ -336,9 +142,6 @@ import { driveFileId } from "./image-sources.js";
             DATA.map((d) => text(d["학년"])).filter(Boolean),
           ),
         ].sort(sortGrade);
-        grades.forEach((v) =>
-          els.grade.add(new Option(storyDisplayLabel(v), v)),
-        );
         const jlpts = [
           ...new Set(DATA.map((d) => text(d["등급"])).filter(Boolean)),
         ].sort((a, b) => {
@@ -346,7 +149,6 @@ import { driveFileId } from "./image-sources.js";
             nb = Number((b.match(/N(\d)/) || [])[1] || 99);
           return nb - na || a.localeCompare(b); // N5 -> N1
         });
-        jlpts.forEach((v) => els.jlpt.add(new Option(displayLabel(v), v)));
         grades.filter((v) => v !== "참고").forEach((v) =>
           els.gameGrade.add(new Option(storyDisplayLabel(v), v)),
         );
@@ -361,12 +163,6 @@ import { driveFileId } from "./image-sources.js";
         note: document.getElementById("popoverNote"),
         go: document.getElementById("popoverGo"),
       };
-      const detail = {
-        overlay: document.getElementById("detailOverlay"),
-        content: document.getElementById("detailContent"),
-        back: document.getElementById("detailBack"),
-        close: document.getElementById("detailClose"),
-      };
       const imageViewer = {
         overlay: document.getElementById("imageOverlay"),
         image: document.getElementById("imageZoom"),
@@ -377,13 +173,10 @@ import { driveFileId } from "./image-sources.js";
         popoverAnchor = null,
         popoverAnchorRect = null,
         popoverHoverTimer = null;
-      let detailReturnFocus = null,
-        imageReturnFocus = null,
-        detailCurrentKanji = "",
-        detailHistory = [];
+      let imageReturnFocus = null;
       const backgroundInert = new Map();
       function activeModal() {
-        return !imageViewer.overlay.hidden ? imageViewer.overlay : !detail.overlay.hidden ? detail.overlay : null;
+        return imageViewer.overlay.hidden ? null : imageViewer.overlay;
       }
       function syncModalState() {
         const modal = activeModal();
@@ -391,11 +184,10 @@ import { driveFileId } from "./image-sources.js";
           for (const [node, wasInert] of backgroundInert) node.inert = wasInert;
           backgroundInert.clear();
         } else {
-          const allowPopover = !popover.root.hidden && modal.contains(popoverAnchor);
           for (const node of document.body.children) {
             if (["SCRIPT", "STYLE", "LINK"].includes(node.tagName)) continue;
             if (!backgroundInert.has(node)) backgroundInert.set(node, node.inert);
-            node.inert = node !== modal && !(allowPopover && node === popover.root);
+            node.inert = node !== modal;
           }
         }
         document.body.classList.toggle("detail-open", Boolean(modal));
@@ -403,49 +195,29 @@ import { driveFileId } from "./image-sources.js";
       function modalFocusables() {
         const modal = activeModal();
         if (!modal) return [];
-        const roots = [modal];
-        if (!popover.root.hidden && modal.contains(popoverAnchor)) roots.push(popover.root);
-        return roots.flatMap((root) => [...root.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')])
+        return [...modal.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')]
           .filter((node) => node.tabIndex >= 0 && !node.disabled && !node.closest('[inert], [hidden]') && node.getClientRects().length);
       }
       function restoreFocus(opener) {
         const available = (node) => node?.isConnected && !node.closest('[hidden], [inert]') && node.getClientRects().length && !node.disabled;
-        const fallback = activeModal()?.querySelector('[role="dialog"]') || document.querySelector('.site-tab[aria-current="page"]') || els.search;
+        const fallback = activeModal()?.querySelector('[role="dialog"]') || document.querySelector('.site-tab[aria-current="page"]');
         const target = available(opener) ? opener : modalFocusables()[0] || fallback;
         target?.focus({ preventScroll: true });
       }
       document.addEventListener("focusin", (event) => {
         const modal = activeModal();
-        if (!modal || modal.contains(event.target) || (!popover.root.hidden && popover.root.contains(event.target))) return;
+        if (!modal || modal.contains(event.target)) return;
         (modalFocusables()[0] || modal.querySelector('[role="dialog"]')).focus();
       });
       new MutationObserver(() => { if (activeModal()) syncModalState(); })
         .observe(document.body, { childList: true });
       function positionKanjiPopover(anchor) {
-        const rect = anchor.getBoundingClientRect(),
-          box = popover.root.getBoundingClientRect(),
-          gap = 0,
-          pad = 14;
-        popoverAnchorRect = rect;
-        let top = rect.top - box.height - gap;
-        if (top < pad) top = rect.bottom + gap;
-        top = Math.max(
-          pad,
-          Math.min(top, window.innerHeight - box.height - pad),
-        );
-        const left = Math.max(
-          pad,
-          Math.min(
-            rect.left + (rect.width - box.width) / 2,
-            window.innerWidth - box.width - pad,
-          ),
-        );
-        popover.root.style.top = `${top}px`;
-        popover.root.style.left = `${left}px`;
+        popoverAnchorRect = anchor.getBoundingClientRect();
+        placeKanjiPopover(popover.root, popoverAnchorRect);
       }
       function showKanjiPopover(ch, anchor) {
         clearTimeout(popoverHoverTimer);
-        const d = rowFor(ch);
+        const d = kanjiMap.get(ch);
         if (!d) return;
         if (popoverAnchor && popoverAnchor !== anchor)
           popoverAnchor.setAttribute("aria-expanded", "false");
@@ -454,28 +226,9 @@ import { driveFileId } from "./image-sources.js";
         popoverAnchorRect = anchor.getBoundingClientRect();
         popover.glyph.textContent = ch;
         popover.meaning.textContent = text(d["훈, 음"]);
-        popover.meta.replaceChildren();
-        [
-          text(d["학년"]),
-          text(d["등급"]),
-        ]
-          .filter(Boolean)
-          .forEach((v) => {
-            const c = document.createElement("span");
-            c.className = "chip";
-            c.textContent = displayLabel(v);
-            popover.meta.append(c);
-          });
+        fillPopoverMeta(popover.meta, [text(d["학년"]), text(d["등급"])]);
         popover.note.textContent = text(d["풀이"]);
         popover.note.hidden = !text(d["풀이"]);
-        if (kanjiIndex && !kanjiIndex.row(ch)) {
-          ensureKanjiDetail(ch).then(row => {
-            if (popoverAnchor !== anchor || popoverKanji !== ch) return;
-            popover.note.textContent = text(row?.["풀이"]);
-            popover.note.hidden = !popover.note.textContent;
-            positionKanjiPopover(anchor);
-          }).catch(() => {});
-        }
         popover.root.hidden = false;
         anchor.setAttribute("aria-expanded", "true");
         syncModalState();
@@ -496,86 +249,6 @@ import { driveFileId } from "./image-sources.js";
         if (next && (popover.root.contains(next) || popoverAnchor?.contains(next)))
           return;
         hideKanjiPopover();
-      }
-      let detailIntent = 0;
-      function renderKanjiDetail(ch) {
-        hideKanjiPopover();
-        const d = rowFor(ch);
-        if (!d) return;
-        const card = createCard(d, true);
-        detail.content.replaceChildren(card);
-        detailCurrentKanji = ch;
-        detail.back.hidden = !detailHistory.length;
-        const previous = detailHistory[detailHistory.length - 1] || "";
-        detail.back.setAttribute(
-          "aria-label",
-          previous
-            ? `${previous} 한자로 돌아가기`
-            : "이전에 본 한자로 돌아가기",
-        );
-      }
-      async function openKanjiDetail(ch, returnFocus = popoverAnchor) {
-        const intent = ++detailIntent;
-        if (!KANJI_MAP.has(ch)) return;
-        if (!illustrationWarmup?.data) discardIllustrationWarmup();
-        if (kanjiIndex && !kanjiIndex.row(ch)) {
-          try { await ensureKanjiDetail(ch); }
-          catch {
-            if (intent !== detailIntent) return;
-            learningStatus.hidden = false;
-            learningStatus.setAttribute("role", "alert");
-            learningMessage.textContent = "한자 상세 정보를 불러오지 못했습니다. 다시 시도해 주세요.";
-            learningRetry.hidden = true;
-            return;
-          }
-          if (intent !== detailIntent) return;
-          learningStatus.hidden = true;
-        }
-        const alreadyOpen = !detail.overlay.hidden;
-        if (alreadyOpen && detailCurrentKanji && detailCurrentKanji !== ch)
-          detailHistory.push(detailCurrentKanji);
-        if (!alreadyOpen) {
-          detailReturnFocus = returnFocus;
-          detailHistory = [];
-        }
-        hideKanjiPopover();
-        renderKanjiDetail(ch);
-        detail.overlay.hidden = false;
-        syncModalState();
-        (alreadyOpen && detailHistory.length
-          ? detail.back
-          : detail.close
-        ).focus();
-      }
-      function goBackKanjiDetail() {
-        if (!detailHistory.length) return;
-        detailIntent++;
-        const previous = detailHistory.pop();
-        hideKanjiPopover();
-        renderKanjiDetail(previous);
-        (detailHistory.length ? detail.back : detail.close).focus();
-      }
-      function closeKanjiDetail() {
-        detailIntent++;
-        if (detail.overlay.hidden) return;
-        closeImageViewer();
-        hideKanjiPopover();
-        detail.overlay.hidden = true;
-        detail.content.replaceChildren();
-        syncModalState();
-        detailCurrentKanji = "";
-        detailHistory = [];
-        detail.back.hidden = true;
-        restoreFocus(detailReturnFocus);
-        detailReturnFocus = null;
-        kanjiGrid.refresh();
-      }
-      function dismissKanjiDetail() {
-        closeKanjiDetail();
-        if (location.hash.startsWith("#kanji=")) {
-          history.replaceState(history.state, "", location.pathname + location.search);
-          handledLocation = location.href;
-        }
       }
       function openImageViewer(d, returnFocus) {
         hideKanjiPopover();
@@ -610,11 +283,10 @@ import { driveFileId } from "./image-sources.js";
         imageViewer.image.onerror = null;
         syncModalState();
         restoreFocus(imageReturnFocus);
-        kanjiGrid.refresh();
         imageReturnFocus = null;
       }
-      function makeKanjiLink(ch, currentChar, context = "card") {
-        if (!KANJI_SET.has(ch) || ch === currentChar)
+      function makeKanjiLink(ch) {
+        if (!kanjiMap.has(ch))
           return document.createTextNode(ch);
         const b = document.createElement("button");
         b.type = "button";
@@ -641,91 +313,9 @@ import { driveFileId } from "./image-sources.js";
         });
         return b;
       }
-      function appendLinkedCharacters(
-        container,
-        source,
-        currentChar,
-        context = "card",
-      ) {
-        Array.from(source).forEach((ch) =>
-          container.append(makeKanjiLink(ch, currentChar, context)),
-        );
-      }
-      function appendMnemonicText(container, raw, currentChar) {
-        const source = text(raw);
-        const re = /([（(])([^()（）]+)([）)])/g;
-        let last = 0,
-          match;
-        while ((match = re.exec(source))) {
-          container.append(
-            document.createTextNode(source.slice(last, match.index) + match[1]),
-          );
-          appendLinkedCharacters(container, match[2], currentChar);
-          container.append(document.createTextNode(match[3]));
-          last = re.lastIndex;
-        }
-        container.append(document.createTextNode(source.slice(last)));
-      }
-      function appendExampleText(container, raw, currentChar, useRuby = false, ruby) {
-        const lines = text(raw).split("\n");
-        lines.forEach((line, i) => {
-          if (i) container.append(document.createTextNode("\n"));
-          const example = useRuby && line.match(examplePattern);
-          if (!example) {
-            appendLinkedCharacters(container, line, currentChar);
-            return;
-          }
-          const word = document.createElement("span");
-          word.className = "example-word";
-          word.lang = "ja";
-          const key = JSON.stringify([example[1], example[2]]);
-          for (const part of ruby?.[key] || resolveExampleRuby(example[1], example[2])) {
-            if (!part.reading) {
-              word.append(document.createTextNode(part.text));
-              continue;
-            }
-            const ruby = document.createElement("ruby");
-            appendLinkedCharacters(ruby, part.text, currentChar);
-            const before = document.createElement("rp");
-            before.textContent = "(";
-            const rt = document.createElement("rt");
-            rt.textContent = part.reading;
-            const after = document.createElement("rp");
-            after.textContent = ")";
-            ruby.append(before, rt, after);
-            word.append(ruby);
-          }
-          container.append(word, document.createTextNode(example[3]));
-        });
-      }
-      function findRenderedCard(ch) {
-        return (
-          [...els.grid.querySelectorAll(".card")].find(
-            (card) => card.dataset.kanji === ch,
-          ) || null
-        );
-      }
-      const sectionPaths = { kanji: "/kanji/", story: "/reading/", game: "/quiz/" };
+      const sectionPaths = { story: "/reading/", game: "/quiz/" };
       const sectionFromPath = () =>
-        Object.entries(sectionPaths).find(([, path]) => path.replace(/\/$/, "") === location.pathname.replace(/\/$/, ""))?.[0] || "kanji";
-      function readFilterUrl() {
-        const params = new URLSearchParams(location.search);
-        for (const filter of ["grade", "jlpt"]) {
-          const value = params.get(filter) || "";
-          els[filter].value = [...els[filter].options].some((option) => option.value === value) ? value : "";
-        }
-      }
-      function writeFilterUrl(mode = "replaceState", clearHash = false) {
-        const url = new URL(location.href);
-        if (activeSection === "kanji") url.pathname = sectionPaths.kanji;
-        for (const filter of ["grade", "jlpt"]) {
-          if (els[filter].value) url.searchParams.set(filter, els[filter].value);
-          else url.searchParams.delete(filter);
-        }
-        if (clearHash && url.hash.startsWith("#kanji=")) url.hash = "";
-        if (url.href !== location.href) history[mode](null, "", url);
-        handledLocation = location.href;
-      }
+        Object.entries(sectionPaths).find(([, path]) => path.replace(/\/$/, "") === location.pathname.replace(/\/$/, ""))?.[0] || "story";
       function setSection(section, updateUrl = true) {
         if (section === "story" && !document.getElementById("storyFont")) {
           const font = document.createElement("link");
@@ -737,10 +327,7 @@ import { driveFileId } from "./image-sources.js";
           document.head.append(font);
         }
         hideKanjiPopover();
-        closeKanjiDetail();
         closeImageViewer();
-        activeSection = section;
-        if (section !== "kanji") kanjiGrid.setItems([]);
         const story = section === "story";
         const game = section === "game";
         const seo = studySeo[section];
@@ -750,10 +337,8 @@ import { driveFileId } from "./image-sources.js";
         document.querySelector('meta[property="og:description"]').content = seo.description;
         document.querySelector('link[rel="canonical"]').href = seo.canonical;
         document.querySelector('meta[property="og:url"]').content = seo.canonical;
-        els.kanjiView.hidden = story || game;
         els.storyView.hidden = !story;
         els.gameView.hidden = !game;
-        els.navKanji.classList.toggle("active", !story && !game);
         els.navStory.classList.toggle("active", story);
         els.navGame.classList.toggle("active", game);
         for (const [key, link] of [["kanji", els.navKanji], ["story", els.navStory], ["game", els.navGame]]) {
@@ -763,62 +348,13 @@ import { driveFileId } from "./image-sources.js";
         if (updateUrl && location.pathname !== sectionPaths[section]) {
           const url = new URL(location.href);
           url.pathname = sectionPaths[section];
+          url.searchParams.delete("story");
           if (url.hash.startsWith("#kanji=")) url.hash = "";
           history.pushState(null, "", url);
           handledLocation = location.href;
         }
         window.scrollTo({ top: 0, behavior: "instant" });
         return activateSection(section);
-      }
-      async function navigateToKanji(ch, showBack = true) {
-        if (!await setSection("kanji")) return false;
-        const target = DATA.find((d) => text(d["한자"]) === ch);
-        if (!target) return false;
-
-        let index = view.findIndex((d) => text(d["한자"]) === ch);
-        if (index < 0) {
-          els.search.value = "";
-          els.grade.value = "";
-          els.jlpt.value = "";
-          selectedStroke = null;
-          selectedSound = null;
-          if (
-            els.sort.value === "ministry" &&
-            !Number.isFinite(numberOrInf(target["문부성"]))
-          )
-            els.sort.value = "memory";
-          writeFilterUrl();
-          apply();
-          index = view.findIndex((d) => text(d["한자"]) === ch);
-        }
-        if (index < 0) return false;
-
-        kanjiGrid.scrollToIndex(index);
-        requestAnimationFrame(() => {
-          const card = findRenderedCard(ch);
-          if (!card) return false;
-          setCardFlipped(card, showBack);
-          card.classList.remove("jump-target");
-          void card.offsetWidth;
-          card.classList.add("jump-target");
-          setTimeout(() => card.classList.remove("jump-target"), 1400);
-        });
-        return true;
-      }
-      async function navigateToKanjiFilter(filter, value) {
-        clearTimeout(timer);
-        closeKanjiDetail();
-        if (!await setSection("kanji", false)) return;
-        els.search.value = "";
-        els.grade.value = "";
-        els.jlpt.value = "";
-        els.sort.value = "memory";
-        selectedStroke = null;
-        selectedSound = null;
-        els[filter].value = value;
-        writeFilterUrl("pushState", true);
-        apply();
-        els[filter].focus({ preventScroll: true });
       }
       function selectStory(id, scroll = true) {
         if (!STORIES.some((s) => s.id === id)) return;
@@ -880,7 +416,7 @@ import { driveFileId } from "./image-sources.js";
           .forEach((line) => {
             const p = document.createElement("p");
             if (/^[“‘"']/.test(line)) p.className = "story-quote";
-            appendLinkedCharacters(p, line, "", "story");
+            for (const ch of line) p.append(makeKanjiLink(ch));
             els.storyCopy.append(p);
           });
       }
@@ -1005,7 +541,7 @@ import { driveFileId } from "./image-sources.js";
           : "틀린 한자가 없습니다.";
         els.gameMistakesGuide.hidden = !gameState.wrong.length;
         gameState.wrong.forEach((d) => {
-          const glyph = makeKanjiLink(text(d["한자"]), "");
+          const glyph = makeKanjiLink(text(d["한자"]));
           glyph.classList.add("game-mistake-glyph");
           els.gameMistakesList.append(glyph);
         });
@@ -1058,7 +594,7 @@ import { driveFileId } from "./image-sources.js";
       }
       window.addEventListener("popstate", () => { bootstrap(); });
       window.addEventListener("hashchange", (event) => { if (event.newURL === location.href) bootstrap(); });
-      for (const [section, link] of [["kanji", els.navKanji], ["story", els.navStory], ["game", els.navGame]]) {
+      for (const [section, link] of [["story", els.navStory], ["game", els.navGame]]) {
         link.addEventListener("click", (event) => {
           if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
           event.preventDefault();
@@ -1082,7 +618,7 @@ import { driveFileId } from "./image-sources.js";
       });
       els.gameSettingsButton.addEventListener("click", returnToGameSettings);
       popover.go.addEventListener("click", () => {
-        if (popoverKanji) openKanjiDetail(popoverKanji);
+        if (popoverKanji) location.assign(studyDetailHref(popoverKanji, location.search));
       });
       popover.root.addEventListener("mouseenter", () => {
         clearTimeout(popoverHoverTimer);
@@ -1095,11 +631,6 @@ import { driveFileId } from "./image-sources.js";
           !e.target.closest(".kanji-link")
         )
           hideKanjiPopover();
-      });
-      detail.close.addEventListener("click", dismissKanjiDetail);
-      detail.back.addEventListener("click", goBackKanjiDetail);
-      detail.overlay.addEventListener("click", (e) => {
-        if (e.target === detail.overlay) dismissKanjiDetail();
       });
       imageViewer.close.addEventListener("click", closeImageViewer);
       imageViewer.overlay.addEventListener("click", (e) => {
@@ -1135,7 +666,6 @@ import { driveFileId } from "./image-sources.js";
           hideKanjiPopover();
           restoreFocus(anchor);
         } else if (!imageViewer.overlay.hidden) closeImageViewer();
-        else if (!detail.overlay.hidden) dismissKanjiDetail();
         else return;
         e.preventDefault();
         e.stopPropagation();
@@ -1156,624 +686,6 @@ import { driveFileId } from "./image-sources.js";
           positionKanjiPopover(popoverAnchor);
       });
 
-      function searchable(d) {
-        return [d["한자"], d["훈, 음"], d["훈"], d["음"]]
-          .map(text)
-          .join(" ")
-          .toLowerCase();
-      }
-      function matchesSearch(d, q) {
-        if (!q) return true;
-        const strokeQuery = q.match(/^(\d+)\s*획?$/);
-        if (strokeQuery) return numberOrInf(d["획"]) === Number(strokeQuery[1]);
-        return searchable(d).includes(q);
-      }
-      function apply() {
-        if (!kanjiReady || activeSection !== "kanji") return;
-        const q = els.search.value.trim().toLowerCase();
-        const g = els.grade.value;
-        const j = els.jlpt.value;
-        // Reference entries have no ministry number to sort by.
-        const ministryOption = els.sort.querySelector('option[value="ministry"]');
-        ministryOption.disabled = g === "참고";
-        if (ministryOption.disabled && els.sort.value === "ministry") els.sort.value = "memory";
-        const sortMode = els.sort.value;
-        const isMinistry = sortMode === "ministry";
-        const base = isMinistry
-          ? DATA.filter((d) => Number.isFinite(numberOrInf(d["문부성"])))
-          : DATA;
-        const filtered = base.filter(
-          (d) =>
-            matchesSearch(d, q) &&
-            (!g || text(d["학년"]) === g) &&
-            (!j || text(d["등급"]) === j),
-        );
-        if (sortMode !== "strokes") selectedStroke = null;
-        if (sortMode !== "sound") selectedSound = null;
-        if (sortMode === "strokes" && selectedStroke !== null)
-          view = filtered.filter(
-            (d) => numberOrInf(d["획"]) === selectedStroke,
-          );
-        else if (sortMode === "sound" && selectedSound !== null)
-          view = filtered.filter((d) => soundGroup(d["음"]) === selectedSound);
-        else view = filtered.slice();
-        const sorters = {
-          memory: (a, b) => numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
-          ministry: (a, b) =>
-            numberOrInf(a["문부성"]) - numberOrInf(b["문부성"]) ||
-            numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
-          strokes: (a, b) =>
-            numberOrInf(a["획"]) - numberOrInf(b["획"]) ||
-            compareKorean(a["음"], b["음"]) ||
-            compareKorean(a["훈"], b["훈"]) ||
-            numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
-          sound: (a, b) =>
-            compareKorean(a["음"], b["음"]) ||
-            compareKorean(a["훈"], b["훈"]) ||
-            numberOrInf(a["획"]) - numberOrInf(b["획"]) ||
-            numberOrInf(a["암기순"]) - numberOrInf(b["암기순"]),
-        };
-        view.sort(sorters[sortMode] || sorters.memory);
-        els.resultCount.textContent = view.length.toLocaleString("ko-KR");
-        const sortLabel =
-          {
-            memory: "마나보 추천순",
-            ministry: "상용한자순",
-            strokes: "획순",
-            sound: "가나다순",
-          }[sortMode] || "마나보 추천순";
-        if (sortMode === "strokes" && selectedStroke !== null)
-          els.sortLabel.textContent = `${sortLabel} · ${selectedStroke}획`;
-        else if (sortMode === "sound" && selectedSound !== null)
-          els.sortLabel.textContent = `${sortLabel} · ${selectedSound}`;
-        else els.sortLabel.textContent = sortLabel;
-        renderSortIndex(sortMode, filtered);
-        kanjiGrid.setItems(view);
-        els.sentinel.textContent = "";
-        if (!view.length) {
-          const empty = document.createElement("div");
-          empty.className = "empty";
-          empty.textContent = "조건에 맞는 한자가 없습니다.";
-          els.grid.append(empty);
-          els.sentinel.textContent = "";
-          return;
-        }
-      }
-
-      const cardBackLoaders = new WeakMap();
-      function activateCardBack(card) {
-        cardBackLoaders.get(card)?.();
-        const image = card.querySelector(".visual img");
-        if (image) cardImages.activate(image);
-      }
-      function setCardFlipped(card, flipped, loadImage = true) {
-        const hadFocus = card.contains(document.activeElement);
-        card.classList.toggle("flipped", flipped);
-        card.querySelector(".front").inert = flipped;
-        card.querySelector(".back").inert = !flipped;
-        if (!card.classList.contains("detail-card")) {
-          if (loadImage) discardIllustrationWarmup();
-          if (flipped) flippedCards.add(card.dataset.kanji);
-          else flippedCards.delete(card.dataset.kanji);
-          if (flipped && loadImage) {
-            activateCardBack(card);
-            // The card may still be edge-on during the flip transition.
-            kanjiGrid.refresh();
-          }
-        }
-        if (hadFocus) {
-          card.querySelector(flipped ? ".back-flip-button" : ".front")?.focus({ preventScroll: true });
-        }
-      }
-
-      function makeBackFlipButton(card, ch) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "back-flip-button";
-        button.setAttribute("aria-label", `${ch} 카드 앞면 보기`);
-        button.addEventListener("click", e => {
-          e.stopPropagation();
-          setCardFlipped(card, false);
-        });
-        return button;
-      }
-
-      function copyCardIllustration(ch) {
-        const source = findRenderedCard(ch)?.querySelector(".visual img");
-        if (!source?.complete || !source.naturalWidth || !source.naturalHeight) return;
-        const canvas = document.createElement("canvas");
-        const scale = Math.min(1, 480 / Math.max(source.naturalWidth, source.naturalHeight));
-        canvas.width = Math.max(1, Math.round(source.naturalWidth * scale));
-        canvas.height = Math.max(1, Math.round(source.naturalHeight * scale));
-        const painter = canvas.getContext("2d");
-        if (!painter) return;
-        try { painter.drawImage(source, 0, 0, canvas.width, canvas.height); }
-        catch { return; }
-        canvas.className = "detail-illustration-preview";
-        canvas.setAttribute("aria-hidden", "true");
-        return canvas;
-      }
-
-      let illustrationWarmup;
-      let illustrationWarmupUsed = false;
-      const illustrationWarmupLimit = 256 * 1024;
-      function discardIllustrationWarmup() {
-        if (!illustrationWarmup) return;
-        clearTimeout(illustrationWarmup.timer);
-        illustrationWarmup.controller?.abort();
-        illustrationWarmup = undefined;
-      }
-
-      function scheduleIllustrationWarmup(row, card) {
-        if (illustrationWarmupUsed || illustrationWarmup || activeSection !== "kanji" ||
-            !detail.overlay.hidden || navigator.connection?.saveData) return;
-        const id = driveFileId(row["이미지 1"]);
-        const entry = kanjiIndex?.context(row)?.media.items.image1?.[id]?.detail;
-        if (!entry || !/^\/media\/image1\/[a-f0-9]{64}\.webp$/.test(entry.url) ||
-            entry.bytes > illustrationWarmupLimit) return;
-        const job = { card, url: entry.url };
-        illustrationWarmup = job;
-        job.timer = setTimeout(async () => {
-          const rect = card.getBoundingClientRect();
-          if (!card.isConnected || !card.classList.contains("flipped") || kanjiGrid.isScrolling ||
-              rect.bottom <= 0 || rect.top >= innerHeight || !detail.overlay.hidden) {
-            discardIllustrationWarmup();
-            return;
-          }
-          illustrationWarmupUsed = true;
-          job.controller = new AbortController();
-          try {
-            const response = await fetch(job.url, { signal: job.controller.signal, priority: "low" });
-            if (!response.ok || response.headers.get("content-type")?.split(";")[0] !== "image/webp") return;
-            const blob = await response.blob();
-            if (illustrationWarmup !== job || blob.size !== entry.bytes) return;
-            const reader = new FileReader();
-            reader.onload = () => { if (illustrationWarmup === job) job.data = reader.result; };
-            reader.readAsDataURL(blob);
-          } catch { /* A skipped warmup keeps the usual image request. */ }
-        }, 120);
-      }
-
-      function createCardBack(d, isDetail, card) {
-        const context = kanjiIndex?.context(d);
-        const strokeOrderUrls = isDetail ? mediaCandidates(d, "stroke", "detail") : [];
-        const prioritizeStroke = activeSection === "kanji" && strokeOrderUrls.length > 0;
-        let startIllustration;
-        const back = document.createElement("section");
-        back.className = "face back";
-        const visual = document.createElement("div");
-        visual.className = "visual";
-        visual.addEventListener("contextmenu", (e) => e.preventDefault());
-        visual.addEventListener("dragstart", (e) => e.preventDefault());
-        const fallback = document.createElement("div");
-        fallback.className = "fallback";
-        fallback.textContent = text(d["한자"]);
-        visual.append(fallback);
-        const urls = mediaCandidates(d, "image1", isDetail ? "detail" : "card");
-        if (urls.length) {
-          const img = isDetail ? document.createElement("img") : cardImages.create(
-            text(d["한자"]), urls, () => {
-              fallback.remove();
-              scheduleIllustrationWarmup(d, card);
-            }, () => img.remove(),
-          );
-          img.alt = `${text(d["한자"])} 암기 이미지`;
-          img.loading = isDetail ? "lazy" : "eager";
-          img.decoding = "async";
-          img.draggable = false;
-          if (isDetail) {
-            const preview = activeSection === "kanji" ? copyCardIllustration(text(d["한자"])) : undefined;
-            if (preview) visual.append(preview);
-            const warmed = illustrationWarmup?.url === urls[0] ? illustrationWarmup.data : undefined;
-            discardIllustrationWarmup();
-            let attempt = 0;
-            img.addEventListener("load", () => {
-              fallback.remove();
-              preview?.remove();
-            });
-            img.addEventListener("error", () => {
-              // A failed request can finish after this detail was closed or replaced.
-              if (!img.isConnected) return;
-              if (warmed && img.getAttribute("src") === warmed) {
-                img.src = urls[0];
-                return;
-              }
-              attempt++;
-              if (attempt < urls.length) img.src = urls[attempt];
-              else img.remove();
-            });
-            if (prioritizeStroke) {
-              // Let the SVG go first without blocking the illustration if it stalls.
-              startIllustration = () => {
-                clearTimeout(illustrationTimeout);
-                if (!visual.isConnected || img.hasAttribute("src")) return;
-                visual.prepend(img);
-                img.src = warmed || urls[0];
-              };
-              const illustrationTimeout = setTimeout(startIllustration, 350);
-            } else img.src = warmed || urls[0];
-          }
-          if (!startIllustration) visual.append(img);
-        }
-        if (isDetail) {
-          const zoom = document.createElement("button");
-          zoom.type = "button";
-          zoom.className = "detail-image-zoom";
-          zoom.setAttribute("aria-label", `${text(d["한자"])} 암기 이미지 크게 보기`);
-          zoom.addEventListener("click", () => openImageViewer(d, zoom));
-          visual.append(zoom);
-        }
-        if (!isDetail) visual.append(makeBackFlipButton(card, text(d["한자"])));
-        const detailButton = document.createElement("button");
-        detailButton.type = "button";
-        detailButton.className = "card-detail-button";
-        detailButton.textContent = "한자 자세히 보기";
-        detailButton.setAttribute(
-          "aria-label",
-          `${text(d["한자"])} 한자 자세히 보기`,
-        );
-        detailButton.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!card.classList.contains("detail-card"))
-            openKanjiDetail(text(d["한자"]), detailButton);
-        });
-        if (!isDetail) visual.append(detailButton);
-        const body = document.createElement("div");
-        body.className = "back-body";
-        const chips = document.createElement("div");
-        chips.className = "chips";
-        const gradeChip = { value: text(d["학년"]), filter: "grade" };
-        const jlptChip = { value: text(d["등급"]), filter: "jlpt" };
-        const chipItems = isDetail
-          ? [jlptChip, gradeChip]
-          : [gradeChip, jlptChip, { value: text(d["획"]) ? `${text(d["획"])}획` : "" }];
-        chipItems
-          .filter(({ value }) => Boolean(value))
-          .forEach(({ value, filter }) => {
-            const clickable = isDetail && filter &&
-              [...els[filter].options].some((option) => option.value === value);
-            const c = document.createElement(clickable ? "button" : "span");
-            c.className = "chip";
-            c.textContent = displayLabel(value);
-            if (clickable) {
-              c.type = "button";
-              c.setAttribute("aria-label", `${displayLabel(value)} 한자 모아 보기`);
-              c.addEventListener("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                navigateToKanjiFilter(filter, value);
-              });
-            }
-            chips.append(c);
-          });
-        if (chips.childElementCount) {
-          if (isDetail) {
-            chips.classList.add("detail-image-meta");
-            visual.append(chips);
-          } else body.append(chips);
-        }
-        const strokeCount = text(d["획"]);
-        const koreanReading = text(d["훈, 음"]);
-        if (isDetail && (strokeOrderUrls.length || strokeCount || koreanReading)) {
-          const section = document.createElement("div");
-          section.className = "info-section stroke-order-info";
-          const countValue = document.createElement("div");
-          countValue.className = "desc";
-          countValue.textContent = `${strokeCount}획`;
-          if (strokeOrderUrls.length) {
-            const frame = document.createElement("div");
-            frame.className = "stroke-order-frame";
-            const img = document.createElement("img");
-            img.className = "stroke-order-image";
-            img.alt = `${text(d["한자"])} 획순`;
-            img.loading = prioritizeStroke ? "eager" : "lazy";
-            img.decoding = "async";
-            img.draggable = false;
-            const picture = document.createElement("picture");
-            const still = document.createElement("source");
-            still.media = "(prefers-reduced-motion: reduce)";
-            picture.append(still, img);
-            let attempt = 0;
-            const showStroke = (url) => {
-              const entry = strokeMediaEntry(d, url);
-              const mode = entry?.strokeTheme;
-              countValue.textContent = `${strokeCount}획`;
-              if (entry?.strokeCount && strokeCount && entry.strokeCount !== Number(strokeCount)) {
-                countValue.append(document.createElement("br"), `획순도 ${entry.strokeCount}획`);
-              }
-              img.classList.toggle("themed-stroke", mode === "explicit" || mode === "auto");
-              if (mode === "explicit") {
-                picture.dataset.strokeUrl = url;
-                applyStrokeTheme(picture);
-              } else {
-                delete picture.dataset.strokeUrl;
-                if (mode === "auto") still.srcset = url + "#still";
-                else still.removeAttribute("srcset");
-                img.src = url;
-              }
-            };
-            if (startIllustration) img.addEventListener("load", startIllustration, { once: true });
-            img.addEventListener("error", () => {
-              if (!img.isConnected) return;
-              attempt++;
-              if (attempt < strokeOrderUrls.length) {
-                showStroke(strokeOrderUrls[attempt]);
-              } else {
-                startIllustration?.();
-                frame.remove();
-                countValue.textContent = `${strokeCount}획`;
-                if (!strokeCount && !koreanReading) section.remove();
-              }
-            });
-            showStroke(strokeOrderUrls[0]);
-            frame.append(picture);
-            section.append(frame);
-          }
-          const metadata = document.createElement("div");
-          metadata.className = "stroke-order-meta";
-          if (koreanReading) {
-            const reading = document.createElement("div");
-            reading.className = "korean-reading-info";
-            const label = document.createElement("div");
-            label.className = "section-label";
-            label.textContent = "한국한자";
-            const value = document.createElement("div");
-            value.className = "desc";
-            value.textContent = koreanReading;
-            reading.append(label, value);
-            metadata.append(reading);
-          }
-          if (strokeCount) {
-            const count = document.createElement("div");
-            count.className = "stroke-count-info";
-            const label = document.createElement("div");
-            label.className = "section-label";
-            label.textContent = "총획수";
-            count.append(label, countValue);
-            metadata.append(count);
-          }
-          if (metadata.childElementCount) section.append(metadata);
-          body.append(section);
-        }
-        if (text(d["풀이"])) {
-          const l = document.createElement("div");
-          l.className = "info-section mnemonic-info";
-          l.innerHTML = '<div class="section-label">암기 풀이</div>';
-          const p = document.createElement("div");
-          p.className = "desc";
-          appendMnemonicText(p, d["풀이"], text(d["한자"]));
-          l.append(p);
-          body.append(l);
-        }
-        const readingRows = isDetail ? parseReadings(d["발음"]) : [];
-        if (readingRows.length) {
-          const l = document.createElement("div");
-          l.className = "info-section reading-info";
-          l.innerHTML = '<div class="section-label">읽기</div>';
-          const groups = document.createElement("div");
-          groups.className = "reading-groups";
-          readingRows.forEach((r) => {
-            const row = document.createElement("div");
-            row.className = "reading-row";
-            const type = document.createElement("span");
-            type.className = "reading-type";
-            type.textContent = r.label;
-            const value = document.createElement("span");
-            value.className = "reading-value";
-            value.textContent = r.value;
-            row.append(type, value);
-            groups.append(row);
-          });
-          l.append(groups);
-          body.append(l);
-        }
-        const exGroups = isDetail ? parseExamples(d["예시단어"]) : [];
-        if (exGroups.length) {
-          const l = document.createElement("div");
-          l.className = "info-section examples-info";
-          l.innerHTML = '<div class="section-label">예시 단어</div>';
-          const wrap = document.createElement("div");
-          wrap.className = "example-groups";
-          exGroups.forEach((g) => {
-            const group = document.createElement("div");
-            group.className = "example-group";
-            const heading = document.createElement("div");
-            heading.className = "example-heading";
-            const type = document.createElement("span");
-            type.className = "example-type";
-            type.textContent = g.label;
-            heading.append(type);
-            const list = document.createElement("div");
-            list.className = "example-list";
-            appendExampleText(list, g.items.join("\n"), text(d["한자"]), isDetail, context?.ruby);
-            group.append(heading, list);
-            wrap.append(group);
-          });
-          l.append(wrap);
-          body.append(l);
-        }
-        if (isDetail) {
-          const components = mnemonicComponents(d["풀이"]);
-          if (components.length) {
-            const section = document.createElement("div");
-            section.className = "info-section related-kanji-info";
-            section.innerHTML = '<div class="section-label">관련 한자</div>';
-            const groups = document.createElement("div");
-            groups.className = "related-kanji-groups";
-            for (const component of components) {
-              const group = document.createElement("div");
-              group.className = "related-kanji-group";
-              const label = document.createElement("div");
-              label.className = "related-kanji-component";
-              label.textContent = component;
-              const list = document.createElement("div");
-              list.className = "related-kanji-list";
-              const related = new Set([component, ...(context?.related[component] || RELATED_KANJI.get(component) || [])]);
-              for (const ch of related) {
-                if (ch === text(d["한자"])) continue;
-                const item = document.createElement("span");
-                item.className = "related-kanji-item";
-                item.append(makeKanjiLink(ch, text(d["한자"])));
-                list.append(item);
-              }
-              if (list.childElementCount) {
-                group.append(label, list);
-                groups.append(group);
-              }
-            }
-            if (groups.childElementCount) {
-              section.append(groups);
-              body.append(section);
-            }
-          }
-        }
-        const hasLinkedKanji = Boolean(body.querySelector(".kanji-link"));
-        const learningPanel = isDetail ? document.createElement("div") : null;
-        if (learningPanel) {
-          learningPanel.className = "detail-learning-panel";
-          learningPanel.append(visual);
-        }
-        if (isDetail && hasLinkedKanji) {
-          for (const section of body.querySelectorAll(".examples-info, .related-kanji-info")) {
-            const guide = document.createElement("p");
-            guide.className = "detail-link-guide";
-            guide.textContent =
-              "한자를 눌러 뜻과 정보를 확인해 보세요.";
-            const heading = document.createElement("div");
-            heading.className = "info-section-heading";
-            heading.append(section.querySelector(".section-label"), guide);
-            section.prepend(heading);
-          }
-        }
-        back.append(learningPanel || visual, body);
-        return back;
-      }
-
-      function createCard(d, isDetail = false) {
-        const card = document.createElement("article");
-        card.className = isDetail ? "card detail-card" : "card";
-        card.dataset.kanji = text(d["한자"]);
-        card.setAttribute("role", "group");
-        card.setAttribute("aria-label", `${text(d["한자"])} 학습 카드`);
-        const inner = document.createElement("div");
-        inner.className = "card-inner";
-
-        const front = document.createElement(isDetail ? "section" : "button");
-        front.className = "face front";
-        if (!isDetail) {
-          front.type = "button";
-          front.setAttribute("aria-label", `${text(d["한자"])} 카드 뒤집기`);
-        }
-        const glyph = document.createElement("div");
-        glyph.className = "glyph";
-        glyph.textContent = text(d["한자"]);
-        const meaning = document.createElement("div");
-        meaning.className = "front-meaning";
-        meaning.textContent = text(d["훈, 음"]);
-        front.append(glyph, meaning);
-
-        const ch = text(d["한자"]);
-        inner.append(front);
-        if (isDetail || !kanjiIndex || kanjiIndex.row(ch)) {
-          inner.append(createCardBack(rowFor(ch) || d, isDetail, card));
-        } else {
-          const placeholder = document.createElement("section");
-          placeholder.className = "face back card-back-loading";
-          const status = document.createElement("p");
-          status.setAttribute("role", "status");
-          status.textContent = "카드를 불러오는 중입니다.";
-          const retry = document.createElement("button");
-          retry.type = "button";
-          retry.textContent = "다시 시도";
-          retry.hidden = true;
-          placeholder.append(makeBackFlipButton(card, ch), status, retry);
-          inner.append(placeholder);
-          let request;
-          function hydrate() {
-            if (request || !retry.hidden) return;
-            request = ensureKanjiDetail(ch).then(row => {
-              if (!card.isConnected || !row) return;
-              const focused = placeholder.contains(document.activeElement);
-              const back = createCardBack(row, false, card);
-              back.inert = !card.classList.contains("flipped");
-              placeholder.replaceWith(back);
-              cardBackLoaders.delete(card);
-              if (focused) back.querySelector(".back-flip-button")?.focus({ preventScroll: true });
-              activateCardBack(card);
-            }).catch(() => {
-              status.textContent = "카드를 불러오지 못했습니다.";
-              retry.hidden = false;
-            }).finally(() => { request = undefined; });
-          }
-          cardBackLoaders.set(card, hydrate);
-          retry.addEventListener("click", event => {
-            event.stopPropagation();
-            retry.hidden = true;
-            status.textContent = "카드를 불러오는 중입니다.";
-            hydrate();
-          });
-        }
-        card.append(inner);
-        const toggle = () => {
-          setCardFlipped(card, !card.classList.contains("flipped"));
-        };
-        if (!isDetail) {
-          front.addEventListener("click", (e) => {
-            e.stopPropagation();
-            toggle();
-          });
-          card.addEventListener("click", (e) => {
-            if (e.target.closest("button, a, input, select, textarea, [role='button']")) return;
-            toggle();
-          });
-        }
-        setCardFlipped(card, isDetail || flippedCards.has(text(d["한자"])), false);
-        return card;
-      }
-      kanjiGrid = createVirtualGrid({
-        element: els.grid,
-        createItem: d => createCard(d),
-        removeItem: card => {
-          if (illustrationWarmup?.card === card) discardIllustrationWarmup();
-          const img = card.querySelector(".visual img");
-          if (img) cardImages.release(img);
-        },
-        isActive: () => kanjiReady && activeSection === "kanji" && detail.overlay.hidden && imageViewer.overlay.hidden,
-        onScroll: () => {
-          if (illustrationWarmup?.controller && !illustrationWarmup.data) discardIllustrationWarmup();
-          cardImages.pause();
-        },
-        onIdle: () => {
-          for (const card of els.grid.querySelectorAll(".card.flipped")) activateCardBack(card);
-        },
-      });
-
-      let timer;
-      els.search.addEventListener("input", () => {
-        clearTimeout(timer);
-        timer = setTimeout(apply, 120);
-      });
-      [els.grade, els.jlpt].forEach((el) =>
-        el.addEventListener("change", () => { writeFilterUrl("pushState", true); apply(); }),
-      );
-      els.sort.addEventListener("change", () => {
-        selectedStroke = null;
-        selectedSound = null;
-        apply();
-      });
-      els.reset.addEventListener("click", () => {
-        els.search.value = "";
-        els.grade.value = "";
-        els.jlpt.value = "";
-        els.sort.value = "ministry";
-        selectedStroke = null;
-        selectedSound = null;
-        closeKanjiDetail();
-        hideKanjiPopover();
-        writeFilterUrl("pushState", true);
-        apply();
-      });
       const scrollTopButton = document.getElementById("scrollTop");
       const updateScrollTopButton = () =>
         scrollTopButton.classList.toggle("visible", window.scrollY > 480);
@@ -1790,23 +702,12 @@ import { driveFileId } from "./image-sources.js";
         const requestedLocation = location.href;
         if (!force && handledLocation === requestedLocation) return;
         handledLocation = requestedLocation;
-        const loaded = await setSection(sectionFromPath(), false);
-        if (!loaded) return;
-        let requestedKanji = "";
-        if (location.hash.startsWith("#kanji=")) {
-          try { requestedKanji = decodeURIComponent(location.hash.slice(7)); }
-          catch {
-            const url = new URL(location.href);
-            url.hash = "";
-            history.replaceState(null, "", url);
-          }
+        const requestedKanji = new URLSearchParams(location.hash.slice(1)).get("kanji");
+        if (characterDetailPath(requestedKanji)) {
+          location.replace(studyDetailHref(requestedKanji, location.search));
+          return;
         }
-        if (requestedKanji && KANJI_SET.has(requestedKanji)) {
-          // Deep links open one detail without rendering every preceding card.
-          if (activeSection !== "kanji" && !await setSection("kanji")) return;
-          openKanjiDetail(requestedKanji, findRenderedCard(requestedKanji)?.querySelector(".front") || els.search);
-        }
-        handledLocation = location.href;
+        await setSection(sectionFromPath(), false);
       }
       learningRetry.addEventListener("click", () => bootstrap({ force: true }));
       bootstrap();

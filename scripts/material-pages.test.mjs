@@ -10,8 +10,9 @@ const pages = materialPages(data);
 const plain = (html) => html.replace(/<[^>]*>/g, " ").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
   .replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 
-test("each grade and JLPT range links every member directly to its scoped catalog card", () => {
+test("each grade and JLPT range links every member directly to its scoped character page", () => {
   const hub = pages.find((page) => page.path === "materials");
+  assert.ok(hub.body.includes('href="/kanji/"'));
   const groups = pages.filter((page) => page.path.startsWith("materials/kanji/"));
   assert.equal(groups.length, 16);
   for (const group of groups) {
@@ -21,12 +22,17 @@ test("each grade and JLPT range links every member directly to its scoped catalo
     const expected = data.kanji.filter((row) => row[level ? "등급" : "학년"] === name)
       .sort((a, b) => a["문부성"] - b["문부성"]).map((row) => row["한자"]);
     assert.ok(expected.length > 0, name);
-    const cards = Array.from(group.body.matchAll(/<a id="char-([^"]+)" href="([^"]+)" lang="ja">([^<]+)<\/a>/g), ([, id, href, character]) => {
+    const directory = group.body.match(/<a href="([^"]+)">이 범위에서 검색하기<\/a>/);
+    assert.ok(directory, name);
+    const groupTarget = new URL(directory[1], "https://kanjimanabo.com");
+    assert.equal(groupTarget.pathname, "/kanji/");
+    assert.deepEqual([...groupTarget.searchParams], [[level ? "jlpt" : "grade", name]]);
+    const cards = Array.from(group.body.matchAll(/<a id="char-([^"]+)" data-study-kanji="\1" href="([^"]+)" lang="ja">([^<]+)<\/a>/g), ([, id, href, character]) => {
       assert.equal(id, character);
       const target = new URL(href, "https://kanjimanabo.com");
-      assert.equal(target.pathname, "/kanji/");
+      assert.equal(decodeURIComponent(target.pathname), `/kanji/${character}/`);
       assert.deepEqual([...target.searchParams], [[level ? "jlpt" : "grade", name]]);
-      assert.equal(decodeURIComponent(target.hash), `#kanji=${character}`);
+      assert.equal(target.hash, "");
       return character;
     });
     assert.deepEqual(cards, expected, name);

@@ -15,6 +15,9 @@
 .home-steps p { margin: 12px 0 24px; color: var(--muted); font-size: 15px; line-height: 1.8; word-break: keep-all; }
 .home-steps a { display: inline-flex; align-items: center; gap: 12px; align-self: flex-start; min-height: 44px; margin-top: auto; color: var(--accent); font-size: 14px; font-weight: 600; text-decoration: none; }
 .home-steps a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.tree-comparison-example { position: relative; }
+.tree-comparison-example a::after { content: ""; position: absolute; inset: 0; border-radius: var(--radius); }
+.tree-comparison-example:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
 .home-main a:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
 @media (max-width: 700px) {
   .home-main { margin-top: 24px; }

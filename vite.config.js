@@ -1,14 +1,19 @@
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { studyPages, studyTemplatePath, writeStudyPages } from "./scripts/study-pages.mjs";
-import { writeMaterialPages, materialTemplatePath, writeSitemap } from "./scripts/material-pages.mjs";
-
 import { writeKanjiListData } from "./scripts/kanji-list-data.mjs";
+
+const generator = fileURLToPath(new URL("./scripts/material-pages.mjs", import.meta.url));
+function generateMaterials() {
+  // A fresh Node process reads the newly generated route index on every data change.
+  return JSON.parse(execFileSync(process.execPath, [generator], { encoding: "utf8" }));
+}
 
 writeStudyPages();
 writeKanjiListData();
-let materials = writeMaterialPages();
+const materials = generateMaterials();
 
 export default defineConfig({
   plugins: [{
@@ -34,20 +39,26 @@ export default defineConfig({
       server.watcher.on("change", (path) => {
         if (/\/public\/data\/(kanji|media)\.json$/.test(path)) writeKanjiListData();
         if (path === studyTemplatePath) writeStudyPages();
-        if (path === materialTemplatePath || /\/public\/data\/(kanji|stories)\.json$/.test(path)) materials = writeMaterialPages();
+        if (path === studyTemplatePath ||
+            /\/src\/(materials\.html|(?:material-directory-data|study-path|reading-groups|kanji-components|media|image-sources)\.js)$/.test(path) ||
+            /\/scripts\/(material-directory|material-pages|character-pages|html)\.mjs$/.test(path) ||
+            /\/public\/data\/(kanji|stories|media)\.json$/.test(path)) generateMaterials();
       });
     },
   }, {
     name: "material-sitemap",
     apply: "build",
     closeBundle() {
-      writeSitemap(new URL("./dist/", import.meta.url), materials);
+      const base = readFileSync(new URL("./public/sitemap.xml", import.meta.url), "utf8");
+      const additional = materials.filter(path => path !== "kanji")
+        .map(path => `  <url><loc>https://kanjimanabo.com/${path}/</loc></url>`).join("\n");
+      writeFileSync(new URL("./dist/sitemap.xml", import.meta.url), base.replace("</urlset>", `${additional}\n</urlset>`));
     },
   }],
   build: {
     rollupOptions: {
       input: Object.fromEntries(
-        ["index", ...studyPages.map((page) => `${page.path}/index`), ...materials.map((page) => `${page.path}/index`), "about/index", "privacy-policy/index", "copyright/index", "contact/index"].map(
+        ["index", "materials/kanji/index", ...studyPages.map((page) => `${page.path}/index`), ...materials.map(path => `${path}/index`), "about/index", "privacy-policy/index", "copyright/index", "contact/index"].map(
           (page) => [page, fileURLToPath(new URL(`./${page}.html`, import.meta.url))],
         ),
       ),

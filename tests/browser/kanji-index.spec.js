@@ -1,64 +1,60 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { driveFileId } from "../../src/image-sources.js";
 
 const rows = JSON.parse(await readFile(new URL("../../public/data/kanji.json", import.meta.url)));
-const media = JSON.parse(await readFile(new URL("../../public/data/media.json", import.meta.url)));
-const kanji = glyph => rows.find(row => row["한자"] === glyph);
-const strokeUrl = row => media.items.stroke[driveFileId(row["움직이는 획순"])].detail.url;
+const links = "[data-directory-grid] a";
 
-async function captureRequests(page) {
-  const paths = new Set();
-  page.on("request", request => paths.add(new URL(request.url()).pathname));
-  await page.addInitScript(() => {
-    localStorage.setItem("manabo-theme-v1", "light");
-    localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() }));
-  });
-  await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1"
-    ? route.continue() : route.fulfill({ body: "" }));
-  return paths;
-}
-
-test("the kanji catalog opens from the index and loads the first card's real detail and stroke on demand", async ({ page }) => {
-  const paths = await captureRequests(page);
-  await page.goto("/kanji/");
-  const first = page.locator("#grid .card").first();
-  await expect(first.locator(".front")).toBeVisible();
-  expect([...paths].filter(path => path.startsWith("/data/"))).toEqual(["/data/kanji-index.json"]);
-  expect([...paths].filter(path => path.startsWith("/media/"))).toEqual([]);
-
-  const row = kanji(await first.getAttribute("data-kanji"));
-  await first.locator(".front").click();
-  await expect(first.locator(".mnemonic-info .desc")).toContainText(row["풀이"].trim());
-  await first.locator(".card-detail-button").click();
-  const detail = page.locator("#detailOverlay .detail-card");
-  await expect(detail).toHaveAttribute("data-kanji", row["한자"]);
-  await expect(detail.locator(".mnemonic-info .desc")).toContainText(row["풀이"].trim());
-  const stroke = detail.locator(".stroke-order-image");
-  await expect(stroke).toHaveAttribute("src", strokeUrl(row) + "#light");
-  await expect.poll(() => stroke.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
-  expect([...paths].filter(path => path.startsWith("/data/kanji-detail/"))).toHaveLength(1);
-  expect(paths.has("/data/kanji.json")).toBe(false);
-  expect(paths.has("/data/media.json")).toBe(false);
-
-  await page.keyboard.press("Escape");
-  const target = kanji("機");
-  await page.locator("#grade").selectOption(target["학년"]);
-  await page.locator("#jlpt").selectOption(target["등급"]);
-  await page.locator("#search").fill(target["한자"]);
-  await expect(page.locator("#resultCount")).toHaveText("1");
-  await expect(page.locator("#grid .card")).toHaveAttribute("data-kanji", target["한자"]);
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
 });
 
-test("a missing versioned detail falls back to the full data and opens the correct direct link", async ({ page }) => {
-  const paths = await captureRequests(page);
-  await page.route("**/data/kanji-detail/**", route => route.fulfill({ status: 404 }));
-  const row = kanji("亀");
-  await page.goto("/kanji/#kanji=" + encodeURIComponent(row["한자"]));
-  const detail = page.locator("#detailOverlay .detail-card");
-  await expect(detail).toHaveAttribute("data-kanji", row["한자"]);
-  await expect(detail.locator(".mnemonic-info .desc")).toContainText(row["풀이"].trim());
-  await expect(detail.locator(".stroke-order-image")).toHaveAttribute("src", strokeUrl(row) + "#light");
-  expect(paths.has("/data/kanji.json")).toBe(true);
-  expect(paths.has("/data/media.json")).toBe(true);
+test("search and filters share one lightweight index without loading character media", async ({ page }) => {
+  const paths = [];
+  page.on("request", request => {
+    const path = new URL(request.url()).pathname;
+    if (path.startsWith("/data/") || path.startsWith("/media/")) paths.push(path);
+  });
+  await page.goto("/kanji/");
+  await expect(page.locator("[data-directory-more]")).toBeVisible();
+  for (const [mode, first] of [["memory", "丶"], ["strokes", "丨"], ["sound", "苛"], ["ministry", "文"]]) {
+    await page.locator("#directory-sort").selectOption(mode);
+    await expect(page.locator(links + " > span").first()).toHaveText(first);
+  }
+
+  const target = rows.find(row => row.한자 === "機");
+  await page.locator("#directory-jlpt").selectOption(target.등급);
+  await page.locator("#directory-grade").selectOption(target.학년);
+  await page.locator("#directory-strokes").selectOption(String(target.획));
+  await page.locator("#directory-q").fill(target.한자);
+  await expect(page.locator("[data-directory-count]")).toHaveText("1자");
+  await expect(page.locator(links)).toHaveAccessibleName("機 " + target["훈, 음"]);
+  await page.locator("[data-directory-reset]").click();
+  for (const query of ["나무", "8획", "검색결과없음"]) {
+    await page.locator("#directory-q").fill(query);
+    const matches = rows.filter(row => query === "8획" ? Number(row.획) === 8 : [row.한자, row["훈, 음"], row.훈, row.음].join(" ").includes(query));
+    await expect(page.locator("[data-directory-count]")).toHaveText(matches.length.toLocaleString("ko-KR") + "자");
+    await expect(page.locator(links)).toHaveCount(Math.min(matches.length, 96));
+  }
+  await expect(page.locator("[data-directory-message]")).toContainText("조건에 맞는 한자가 없습니다.");
+  expect(paths).toEqual(["/data/kanji-index.json"]);
+});
+
+test.describe("server-rendered study content", () => {
+  test.use({ javaScriptEnabled: false });
+  test("the initial list and each character's mnemonic, reading and examples work without JavaScript", async ({ page }) => {
+    await page.goto("/kanji/");
+    await expect(page.locator(links)).toHaveCount(96);
+    const link = page.locator(links).first();
+    const ch = await link.locator("[lang=ja]").textContent();
+    const row = rows.find(item => item.한자 === ch);
+    await expect(link.locator("small")).toHaveText(row["훈, 음"]);
+    await link.click();
+    const entry = page.locator("[data-entry-kanji]");
+    await expect(entry).toHaveAttribute("data-entry-kanji", ch);
+    await expect(entry.locator("h1")).toContainText(row["훈, 음"]);
+    await expect(entry).toContainText(row.풀이.trim());
+    for (const title of ["일본어 읽기", "예시 단어"]) await expect(entry.getByRole("heading", { name: title })).toBeVisible();
+    await expect(entry.locator("ruby rt").first()).toBeVisible();
+    await expect(entry.locator(".entry-stroke")).toHaveAttribute("alt", new RegExp(ch + " " + row.획 + "획"));
+  });
 });

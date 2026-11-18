@@ -1,0 +1,19 @@
+.study-link-hint {
+  color: var(--accent);
+  font-size: .875rem;
+  font-weight: 500;
+  line-height: 1.55;
+  text-align: start;
+  word-break: keep-all;
+}
+:root[data-theme="dark"] .study-link-hint {
+  color: color-mix(in srgb, var(--accent) 63%, white);
+}
+.study-lookup { color: var(--ink); max-height: calc(100dvh - 28px); }
+.study-lookup::backdrop { background: rgb(0 0 0 / .38); }
+.study-lookup.study-lookup-hover { inset: auto; margin: 0; overflow: auto; overscroll-behavior: contain; }
+.study-lookup .popover-go { display: grid; place-items: center; text-decoration: none; }
+.study-lookup .study-lookup-close { position: absolute; top: 4px; right: 4px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--paper); color: var(--muted); font-size: 1.25rem; }
+.study-lookup:modal .popover-main { padding-inline-end: 18px; }
+.study-lookup-hover .study-lookup-close { display: none; }
+.study-lookup :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

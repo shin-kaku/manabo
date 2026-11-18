@@ -1,120 +1,42 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
+import sharp from "sharp";
 import { driveFileId } from "../../src/image-sources.js";
 
 const rows = JSON.parse(await readFile(new URL("../../public/data/kanji.json", import.meta.url)));
-const row = rows.find(item => item.한자 === "文");
-const pixel = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j8ZkAAAAASUVORK5CYII=", "base64");
-const small = `/media/image1/${"a".repeat(64)}.webp`;
-const large = `/media/image1/${"b".repeat(64)}.webp`;
-const stroke = `/media/stroke/${"c".repeat(64)}.svg`;
-const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100"><animate attributeName="fill" values="black;white;black" dur="4s" repeatCount="indefinite"/></rect></svg>';
+const media = JSON.parse(await readFile(new URL("../../public/data/media.json", import.meta.url)));
+const row = rows.find(row => row.한자 === "車");
+const artPath = media.items.image1[driveFileId(row["이미지 1"])].detail.url;
+const strokePath = media.items.stroke[driveFileId(row["움직이는 획순"])].detail.url;
+const svg = await readFile(new URL("../../public/strokes/車.svg", import.meta.url));
+const art = await sharp({ create: { width: 960, height: 960, channels: 3, background: "white" } }).webp().toBuffer();
 
-async function prepare(page, { failedLocal = false, failedCatalog = false } = {}) {
-  const requests = [];
-  await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
-  await page.route("**/*", route => {
-    const request = route.request();
-    const url = new URL(request.url());
-    if (url.pathname === "/favicon.svg") return route.continue();
-    if (request.resourceType() === "image") {
-      requests.push(url);
-      if (url.pathname === stroke) return route.fulfill({ contentType: "image/svg+xml", headers: { "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox" }, body: svg });
-      if (failedLocal && url.pathname.startsWith("/media/")) return route.fulfill({ status: 404, body: "missing" });
-      return route.fulfill({ contentType: "image/png", body: pixel });
-    }
-    if (url.hostname !== "127.0.0.1") return route.fulfill({ body: "" });
-    return route.continue();
-  });
-  await page.route("**/data/kanji-index.json", route => route.fulfill({ status: 404 }));
-  await page.route("**/data/kanji.json", route => route.fulfill({ json: [{ ...row, "획순 SVG": "https://drive.google.com/file/d/animated/view" }] }));
-  await page.route("**/data/media.json", route => route.fulfill(failedCatalog ? { status: 503, body: "unavailable" } : { json: {
-    schema: 1, items: {
-      image1: { [driveFileId(row["이미지 1"])]: { card: { url: small }, detail: { url: large } } },
-      stroke: { animated: { card: { url: stroke }, detail: { url: stroke } } },
-    },
-  } }));
-  await page.goto("/kanji/");
-  await expect(page.locator("#learningStatus")).toBeHidden();
-  return requests;
-}
-
-for (const width of [390, 1280]) test(`card uses 480px, detail/zoom use 960px, SVG stays animated at ${width}px`, async ({ page }) => {
-  await page.setViewportSize({ width, height: 900 });
-  const requests = await prepare(page);
-  expect(requests).toHaveLength(0);
-  await page.locator("#grid .front").click();
-  await expect(page.locator("#grid .visual img")).toHaveAttribute("src", small);
-  await page.locator("#grid .card-detail-button").click();
-  await expect(page.locator("#detailOverlay .visual img")).toHaveAttribute("src", large);
-  const image = page.locator("#detailOverlay .stroke-order-image");
-  await expect(image).toHaveAttribute("src", stroke);
-  await expect.poll(() => image.evaluate(img => img.complete && img.naturalWidth)).toBe(100);
-  await image.scrollIntoViewIfNeeded();
-  const box = await image.boundingBox();
-  const clip = { x: Math.max(0, box.x), y: Math.max(0, box.y), width: 100, height: 100 };
-  const first = await page.screenshot({ clip });
-  await expect.poll(async () => (await page.screenshot({ clip })).equals(first), { intervals: [250, 400, 650], timeout: 5000 }).toBe(false);
-  await expect(page.getByRole("button", { name: "文 획순 크게 보기" })).toHaveCount(0);
-  await image.click();
-  await expect(page.locator("#imageOverlay")).toBeHidden();
-  await page.locator(".detail-image-zoom").click();
-  await expect(page.locator("#imageOverlay img")).toHaveAttribute("src", large);
-  await expect(page.locator("#imageOverlay img")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-  expect(requests.every(url => url.hostname === "127.0.0.1")).toBe(true);
-});
-
-test("missing optimized image falls back once to Drive; missing catalog also retains images", async ({ page }) => {
-  const requests = await prepare(page, { failedLocal: true });
-  await page.locator("#grid .front").click();
-  await expect.poll(() => page.locator("#grid .visual img").evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
-  expect(requests.filter(url => url.pathname === small)).toHaveLength(1);
-  expect(requests.filter(url => url.hostname === "drive.google.com")).toHaveLength(1);
-});
-
-test("unavailable media catalog does not prevent legacy images loading", async ({ page }) => {
-  const requests = await prepare(page, { failedCatalog: true });
-  await page.locator("#grid .front").click();
-  await expect.poll(() => page.locator("#grid .visual img").evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
-  expect(requests.some(url => url.hostname === "drive.google.com")).toBe(true);
-});
-
-for (const width of [320, 640, 768, 844, 1024]) test(`stroke size and horizontal metadata stay fixed at ${width}px`, async ({ page }) => {
-  await page.setViewportSize({ width, height: 390 });
-  await prepare(page);
-  await page.locator("#grid .front").click();
-  await page.locator("#grid .card-detail-button").click();
-  const section = page.locator(".stroke-order-info");
-  await expect(section).toBeVisible();
-  if (width === 640) {
-    // Short readings now fit beside the closer diagram; longer ones must wrap below.
-    await section.locator(".korean-reading-info .desc").evaluate(el => {
-      el.textContent = "목구멍 인, 삼킬 연, 울음소리 열";
+for (const width of [320, 390, 768, 1280]) {
+  test(`direct entry serves the 960px illustration, stroke and aligned metadata at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
+    await page.route("**" + artPath, route => route.fulfill({ contentType: "image/webp", body: art }));
+    await page.route("**" + strokePath + "*", route => route.fulfill({ contentType: "image/svg+xml", body: svg }));
+    const dataRequests = [];
+    page.on("request", request => {
+      const path = new URL(request.url()).pathname;
+      if (path.startsWith("/data/")) dataRequests.push(path);
     });
-  }
-  for (const label of await section.locator(".section-label, .stroke-count-info .desc").all()) {
-    expect(await label.evaluate(el => {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      return range.getClientRects().length;
-    })).toBe(1);
-  }
-  const frame = await page.locator(".stroke-order-frame").boundingBox();
-  const metadata = await page.locator(".stroke-order-meta").boundingBox();
-  // Labels may use the SVG canvas's trailing whitespace without shrinking it.
-  const beside = metadata.x >= frame.x + frame.width - 24;
-  const below = metadata.y >= frame.y + frame.height;
-  expect(beside || below).toBe(true);
-  if (width === 640) expect(below).toBe(true);
-  const body = await page.locator(".detail-card .back-body").boundingBox();
-  expect(metadata.x + metadata.width).toBeLessThanOrEqual(body.x + body.width);
-  expect(frame.width).toBe(220);
-  expect(frame.height).toBe(220);
-  expect(await page.locator(".detail-card .back-body").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
-  const firstLabel = section.locator(".section-label").first();
-  await firstLabel.scrollIntoViewIfNeeded();
-  expect(await firstLabel.evaluate(el => {
-    const rect = el.getBoundingClientRect();
-    return el.contains(document.elementFromPoint(rect.left + 2, rect.top + rect.height / 2));
-  })).toBe(true);
-});
+    await page.goto("/kanji/車/", { waitUntil: "domcontentloaded" });
+    const image = page.locator(".entry-art");
+    const stroke = page.locator(".entry-stroke");
+    await expect(image).toHaveAttribute("src", artPath);
+    await expect.poll(() => image.evaluate(img => img.complete && img.naturalWidth)).toBe(960);
+    await expect.poll(() => stroke.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+    expect(await stroke.evaluate(img => new URL(img.currentSrc).pathname)).toBe(strokePath);
+    const meta = page.locator(".entry-header .entry-meta");
+    await expect(meta.locator("a")).toHaveCount(3);
+    const glyphBox = await page.locator(".entry-header h1 strong").boundingBox();
+    const metaBox = await meta.boundingBox();
+    expect(Math.abs(metaBox.y + metaBox.height / 2 - glyphBox.y - glyphBox.height / 2)).toBeLessThan(6);
+    expect(metaBox.x).toBeGreaterThan(glyphBox.x + glyphBox.width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    await expect(page.locator("[data-entry-zoom]")).toHaveAttribute("href", artPath);
+    expect(dataRequests).toEqual([]);
+  });
+}

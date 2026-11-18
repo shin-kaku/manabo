@@ -19,6 +19,11 @@ test("homepage renders and its controls work without waiting for the reading fon
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     expect(fontRequests).toEqual([]);
     expect(await page.locator("main").evaluate(el => getComputedStyle(el).fontFamily)).not.toContain("Nanum Myeongjo");
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".site-info-menu summary")).toBeFocused();
+    await page.getByRole("link", { name: "한자 도감 열기", exact: true }).click();
+    await expect(page).toHaveURL(/\/kanji\/$/);
+    await expect(page.locator("[data-directory-grid] a").first()).toBeVisible();
   } finally {
     releaseFont();
   }

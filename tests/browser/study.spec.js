@@ -1,4 +1,3 @@
-import { expectWindowedCards } from "./virtual-grid-helpers.js";
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
@@ -13,9 +12,7 @@ async function mockData(page, options = {}) {
     if (new URL(route.request().url()).hostname === "127.0.0.1") return route.continue();
     return route.fulfill({ status: 200, contentType: route.request().resourceType() === "image" ? "image/png" : "text/plain", body: route.request().resourceType() === "image" ? pixel : "" });
   });
-  await page.route("**/data/*.json", (route) => {
-    if (new URL(route.request().url()).pathname.endsWith("/kanji-index.json")) return route.fulfill({ status: 404 });
-    if (new URL(route.request().url()).pathname.endsWith("/media.json")) return route.fulfill({ json: { schema: 1, items: {} } });
+  await page.route(/\/data\/(?:kanji|stories)\.json$/, (route) => {
     const resource = new URL(route.request().url()).pathname.includes("kanji") ? "kanji" : "stories";
     state[`${resource}Calls`]++;
     return route.fulfill({ status: state[`${resource}Status`], json: state[resource] });
@@ -23,70 +20,13 @@ async function mockData(page, options = {}) {
   return state;
 }
 const ready = (page) => expect(page.locator("#learningStatus")).toBeHidden();
-async function openDetail(page, ch = "文") {
-  await page.goto(`/kanji/#kanji=${encodeURIComponent(ch)}`);
-  await expect(page.locator("#detailOverlay")).toBeVisible();
-}
-const activeIn = (page, selector) => page.evaluate((selector) => document.querySelector(selector).contains(document.activeElement), selector);
-
-for (const failThumbnail of [false, true]) {
-  test(`Drive images load in cards, details and zoom without uc requests (thumbnail fails: ${failThumbnail})`, async ({ page }) => {
-    await mockData(page, { kanji: [kanji.find((row) => row["한자"] === "文")] });
-    const requests = [];
-    await page.route(/https:\/\/(drive\.google\.com|lh3\.googleusercontent\.com)\//, (route) => {
-      const url = new URL(route.request().url());
-      requests.push(url);
-      const rejected = url.pathname === "/uc" || (failThumbnail && url.pathname === "/thumbnail");
-      return route.fulfill({ status: rejected ? 403 : 200, contentType: rejected ? "text/plain" : "image/png", body: rejected ? "Forbidden" : pixel });
-    });
-    await page.goto("/kanji/");
-    await ready(page);
-    await page.locator("#grid button.front").click();
-    const loaded = async (selector) => {
-      await expect(page.locator(selector)).toBeVisible();
-      await expect.poll(() => page.locator(selector).evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
-    };
-    await loaded("#grid .visual img");
-    await page.locator("#grid .card-detail-button").click();
-    await loaded("#detailOverlay .visual img");
-    await loaded("#detailOverlay .stroke-order-image");
-    await page.locator(".detail-image-zoom").click();
-    await loaded("#imageOverlay img");
-    expect(requests.length).toBeGreaterThan(0);
-    expect(requests.some((url) => url.pathname === "/uc")).toBe(false);
-    expect(requests.some((url) => url.hostname === "lh3.googleusercontent.com")).toBe(failThumbnail);
-  });
-}
-
-test("unavailable Drive images stop retrying and keep the kanji fallback", async ({ page }) => {
-  await mockData(page, { kanji: [kanji.find((row) => row["한자"] === "文")] });
-  const attempts = new Map();
-  await page.route(/https:\/\/(drive\.google\.com|lh3\.googleusercontent\.com)\//, (route) => {
-    const url = route.request().url();
-    attempts.set(url, (attempts.get(url) || 0) + 1);
-    return route.fulfill({ status: 403, body: "Forbidden" });
-  });
-  await openDetail(page);
-  await expect(page.locator("#detailOverlay .visual img")).toHaveCount(0);
-  await expect(page.locator("#detailOverlay .stroke-order-frame")).toHaveCount(0);
-  await expect(page.locator("#detailOverlay .visual .fallback")).toHaveText("文");
-  const beforeZoom = [...attempts.values()].reduce((sum, count) => sum + count, 0);
-  await page.locator(".detail-image-zoom").click();
-  await expect.poll(() => [...attempts.values()].reduce((sum, count) => sum + count, 0)).toBeGreaterThanOrEqual(beforeZoom + 2);
-  await expect(page.locator("#imageOverlay img")).toBeHidden();
-  await expect(page.locator("#imageFallback")).toBeVisible();
-  // Each image element tries each candidate once, including the enlarged image.
-  expect([...attempts.keys()].some((url) => new URL(url).pathname === "/uc")).toBe(false);
-  expect(Math.max(...attempts.values())).toBeLessThanOrEqual(3);
-});
-
 for (const path of ["/kanji/", "/quiz/"]) {
   test(`${path} works while stories is unavailable and never requests it`, async ({ page }) => {
     const state = await mockData(page, { storiesStatus: 503 });
     await page.goto(path);
     await ready(page);
     expect(state.storiesCalls).toBe(0);
-    if (path === "/kanji/") await expectWindowedCards(page);
+    if (path === "/kanji/") await expect(page.locator("[data-directory-grid] a")).toHaveCount(96);
     else {
       await expect(page.locator("#grid .card")).toHaveCount(0);
       await page.locator("#gameStart").click();
@@ -101,7 +41,7 @@ for (const path of ["/kanji/", "/quiz/"]) {
   });
 }
 
-for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], ["/quiz/", "kanji"], ["/kanji/", "kanji"]]) {
+for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], ["/quiz/", "kanji"]]) {
   test(`${path} visible ${failed} error retries real requests without duplicates`, async ({ page }) => {
     const state = await mockData(page, { [`${failed}Status`]: 503 });
     await page.goto(path);
@@ -114,7 +54,6 @@ for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], 
     await ready(page);
     expect(state[`${failed}Calls`]).toBe(3);
     const grades = new Set(kanji.map((row) => row["학년"]).filter(Boolean));
-    await expect(page.locator("#grade option")).toHaveCount(grades.size + 1);
     await expect(page.locator("#gameGrade option")).toHaveCount([...grades].filter(value => value !== "참고").length + 1);
     if (path === "/reading/") {
       await expect(page.locator("#grid .card")).toHaveCount(0);
@@ -124,220 +63,150 @@ for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], 
   });
 }
 
-test("same-document navigation loads dependencies, retains successful data, and recovers reading", async ({ page }) => {
+test("quiz and reading share loaded data and can open standalone kanji details", async ({ page }) => {
   const state = await mockData(page, { storiesStatus: 503 });
   await page.goto("/quiz/");
   await ready(page);
   await page.locator("#navStory").click();
   await expect(page.locator("#learningRetry")).toBeVisible();
-  await page.locator("#navKanji").click();
+  await page.locator("#navGame").click();
   await ready(page);
-  await expectWindowedCards(page);
-  expect(state.kanjiCalls).toBe(1);
   state.storiesStatus = 200;
   await page.locator("#navStory").click();
-  await ready(page);
+  await expect(page.locator("#storyCopy .kanji-link").first()).toBeVisible();
   expect(state.storiesCalls).toBe(2);
-  await page.locator("#storyCopy .kanji-link").first().click();
+  expect(state.kanjiCalls).toBe(1);
+  const anchor = page.locator("#storyCopy .kanji-link").first();
+  const character = await anchor.textContent();
+  await anchor.click();
   await page.locator("#popoverGo").click();
-  await expect(page.locator("#detailOverlay")).toBeVisible();
-  await page.locator("#detailOverlay .detail-image-meta button").first().click();
-  await expect(page).toHaveURL(/\/kanji\/\?jlpt=/);
-  await ready(page);
-  await expect(page.locator("#detailOverlay")).toBeHidden();
-  await expect(page.locator("#grid .card").first()).toBeVisible();
+  await expect(page.locator("[data-entry-kanji]")).toHaveAttribute("data-entry-kanji", character.trim());
+  await page.locator(".entry-meta a").first().click();
+  await expect(page.locator("[data-directory-grid] a").first()).toBeVisible();
 });
 
 test("N5 reset survives reload and preserves unrelated URL state", async ({ page }) => {
   await mockData(page);
   await page.goto("/kanji/?jlpt=JLPT+N5&utm_source=test#other");
-  await ready(page);
-  await expect(page.locator("#jlpt")).toHaveValue("JLPT N5");
-  await page.locator("#reset").click();
+  await expect(page.locator("#directory-jlpt")).toHaveValue("JLPT N5");
+  await page.locator("[data-directory-reset]").click();
   expect(new URL(page.url()).searchParams.has("jlpt")).toBe(false);
   expect(new URL(page.url()).searchParams.get("utm_source")).toBe("test");
   expect(new URL(page.url()).hash).toBe("#other");
   await page.reload();
-  await ready(page);
-  await expect(page.locator("#jlpt")).toHaveValue("");
-  await expect(page.locator("#sort")).toHaveValue("ministry");
-  await expect(page.locator("#resultCount")).toHaveText(kanji.filter((row) => row["문부성"] !== "").length.toLocaleString("ko-KR"));
+  await expect(page.locator("#directory-jlpt")).toHaveValue("");
+  await expect(page.locator("#directory-sort")).toHaveValue("ministry");
+  await expect(page.locator("[data-directory-count]")).toHaveText("2,324자");
 });
 
 for (const [filter, field, value] of [
   ["grade", "학년", "중학 1"], ["jlpt", "등급", "JLPT N3"], ["grade", "학년", "참고"],
 ]) {
-  test(`material card opens the right detail and closes to its ${value} catalog`, async ({ page }) => {
+  test(`legacy scoped detail preserves its ${value} catalog`, async ({ page }) => {
     await mockData(page);
     const matching = kanji.filter(row => row[field] === value);
-    const ch = matching.at(-1)["한자"];
-    await page.goto(`/kanji/?${filter}=${encodeURIComponent(value)}#kanji=${encodeURIComponent(ch)}`);
-    await expect(page.locator(`#detailContent .card[data-kanji="${ch}"]`)).toBeVisible();
-    await page.locator("#detailClose").click();
-    expect(new URL(page.url()).hash).toBe("");
-    expect(new URL(page.url()).searchParams.get(filter)).toBe(value);
+    const character = matching.at(-1)["한자"];
+    await page.goto(`/kanji/?${filter}=${encodeURIComponent(value)}#kanji=${encodeURIComponent(character)}`);
+    await expect(page.locator("[data-entry-kanji]")).toHaveAttribute("data-entry-kanji", character);
+    const url = new URL(page.url());
+    expect(decodeURIComponent(url.pathname)).toBe(`/kanji/${character}/`);
+    expect(url.searchParams.get(filter)).toBe(value);
+    await expect(page.locator("[data-previous-kanji]")).toBeHidden();
+    const catalog = page.locator("[data-entry-catalog]");
+    if (!(await catalog.isVisible())) await page.locator(".site-info-menu summary").click();
+    await catalog.click();
     await page.reload();
-    await ready(page);
-    await expect(page.locator("#detailOverlay")).toBeHidden();
-    await expect(page.locator(`#${filter}`)).toHaveValue(value);
-    await expect(page.locator("#resultCount")).toHaveText(matching.length.toLocaleString("ko-KR"));
+    await expect(page.locator(`#directory-${filter}`)).toHaveValue(value);
+    await expect(page.locator("[data-directory-count]")).toHaveText(matching.length.toLocaleString("ko-KR") + "자");
   });
 }
 
-test("direct filters, detail JLPT links and back/forward keep URL and UI synchronized", async ({ page }) => {
+test("selecting filters supports browser Back and Forward", async ({ page }) => {
   await mockData(page);
   await page.goto("/kanji/?unrelated=keep");
-  await ready(page);
-  await page.locator("#jlpt").selectOption("JLPT N5");
+  const grade = page.locator("#directory-grade");
+  const jlpt = page.locator("#directory-jlpt");
+  await jlpt.selectOption("JLPT N5");
   await page.goBack();
-  await ready(page);
-  await expect(page.locator("#jlpt")).toHaveValue("");
+  await expect(jlpt).toHaveValue("");
   await page.goForward();
-  await ready(page);
-  await expect(page.locator("#jlpt")).toHaveValue("JLPT N5");
-  await page.locator("#grade").selectOption("초등학교 1학년");
+  await expect(jlpt).toHaveValue("JLPT N5");
+  await grade.selectOption("초등학교 1학년");
   await page.goBack();
-  await ready(page);
-  await expect(page.locator("#grade")).toHaveValue("");
-  await expect(page.locator("#jlpt")).toHaveValue("JLPT N5");
+  await expect(grade).toHaveValue("");
+  await expect(jlpt).toHaveValue("JLPT N5");
   await page.goForward();
-  await ready(page);
-  await expect(page.locator("#grade")).toHaveValue("초등학교 1학년");
-  await page.locator("#grid button.front").first().press("Enter");
-  await page.locator("#grid .card-detail-button").first().press("Enter");
-  await page.locator("#detailOverlay .detail-image-meta button").filter({ hasText: "JLPT" }).click();
-  await ready(page);
-  await expect(page.locator("#grade")).toHaveValue("");
+  await expect(grade).toHaveValue("초등학교 1학년");
   expect(new URL(page.url()).searchParams.get("unrelated")).toBe("keep");
-  expect(new URL(page.url()).searchParams.get("jlpt")).toBe(await page.locator("#jlpt").inputValue());
+  await page.locator("[data-directory-grid] a").first().press("Enter");
+  await page.locator(".entry-meta a").filter({ hasText: "JLPT" }).click();
+  await expect(grade).toHaveValue("");
+  await expect(jlpt).toHaveValue("JLPT N5");
 });
 
-for (const sort of ["strokes", "sound"]) {
-  test(`active empty ${sort} index remains visible and can be cleared`, async ({ page }) => {
-    await mockData(page);
-    await page.goto("/kanji/");
-    await ready(page);
-    await page.locator("#sort").selectOption(sort);
-    const label = sort === "strokes" ? "1획" : "나";
-    const selected = page.locator("#sortIndex").getByRole("button", { name: label, exact: true });
-    await selected.click();
-    await page.locator("#search").fill("犬");
-    await expect(page.locator("#resultCount")).toHaveText("0");
-    await expect(selected).toHaveAttribute("aria-pressed", "true");
-    await selected.click();
-    await expect(page.locator("#resultCount")).toHaveText("1");
-    await expect(page.locator("#grid .glyph")).toHaveText("犬");
-  });
-}
-
-for (const hash of ["%", "未登録", encodeURIComponent("文")]) {
-  test(`direct hash ${hash} does not corrupt data initialization`, async ({ page }) => {
-    await mockData(page);
-    await page.goto(`/kanji/#kanji=${hash}`);
-    await ready(page);
-    await expectWindowedCards(page);
-    if (hash === encodeURIComponent("文")) {
-      await expect(page.locator("#detailOverlay")).toBeVisible();
-      await page.keyboard.press("Escape");
-      await page.locator("#reset").click();
-      expect(new URL(page.url()).hash).toBe("");
-      await page.reload();
-      await ready(page);
-      await expect(page.locator("#detailOverlay")).toBeHidden();
-    } else await expect(page.locator("#detailOverlay")).toBeHidden();
-  });
-}
-
-test("same-document hash changes and repeated reset do not duplicate filters or cards", async ({ page }) => {
-  const state = await mockData(page);
-  await page.goto("/reading/");
-  await ready(page);
-  await expect(page.locator("#grid .card")).toHaveCount(0);
-  await page.evaluate(() => { location.hash = "kanji=%"; });
-  await ready(page);
-  await expect(page.locator("#learningRetry")).toBeHidden();
-  await page.evaluate(() => { location.hash = "kanji=" + encodeURIComponent("文"); });
-  await expect(page.locator("#detailOverlay")).toBeVisible();
-  await page.keyboard.press("Escape");
-  const count = await page.locator("#grade option").count();
-  for (let i = 0; i < 3; i++) await page.locator("#reset").click();
-  await expect(page.locator("#grade option")).toHaveCount(count);
-  await expectWindowedCards(page);
-  expect(state.kanjiCalls).toBe(1);
-});
-
-test("detail modal traps Tab/Shift+Tab, popover closes first, and opener focus restores", async ({ page }) => {
+test("an active stroke filter can be cleared after an empty search", async ({ page }) => {
   await mockData(page);
   await page.goto("/kanji/");
-  await ready(page);
-  const card = page.locator('#grid .card[data-kanji="文"]');
-  await card.locator(".front").press("Space");
-  const opener = card.locator(".card-detail-button");
-  await opener.press("Enter");
-  await expect(page.locator("#detailClose")).toBeFocused();
-  await page.keyboard.press("Shift+Tab");
-  expect(await activeIn(page, "#detailOverlay")).toBe(true);
-  await page.keyboard.press("Tab");
-  await expect(page.locator("#detailClose")).toBeFocused();
-  await page.locator("#detailOverlay .kanji-link").first().click();
-  await expect(page.locator("#kanjiPopover")).toBeVisible();
-  expect(await page.locator("#kanjiPopover").evaluate((node) => node.inert)).toBe(false);
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#kanjiPopover")).toBeHidden();
-  await expect(page.locator("#detailOverlay")).toBeVisible();
-  await page.locator("#detailClose").click();
-  await expect(opener).toBeFocused();
-  expect(await page.locator("body").evaluate((node) => node.classList.contains("detail-open"))).toBe(false);
-  await opener.click();
-  await page.locator("#detailOverlay .kanji-link").first().click();
-  await page.locator("#detailOverlay").click({ position: { x: 4, y: 4 } });
-  await expect(page.locator("#detailOverlay")).toBeHidden();
-  await expect(page.locator("#kanjiPopover")).toBeHidden();
+  await page.locator("#directory-sort").selectOption("strokes");
+  const strokes = page.locator("#directory-strokes");
+  await strokes.selectOption("1");
+  await page.locator("#directory-q").fill("犬");
+  await expect(page.locator("[data-directory-count]")).toHaveText("0자");
+  await expect(strokes).toHaveValue("1");
+  await strokes.selectOption("");
+  await expect(page.locator("[data-directory-grid] a span")).toHaveText("犬");
 });
 
-test("image modal traps keys and restores underlying detail modal and scroll lock", async ({ page }) => {
+for (const hash of ["%", "未登録"]) {
+  test(`unknown legacy hash ${hash} leaves the full list usable`, async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await mockData(page);
+    await page.goto(`/kanji/#kanji=${hash}`);
+    await expect(page.locator("[data-directory-count]")).toHaveText("2,324자");
+    await page.locator("#directory-q").fill("犬");
+    await expect(page.locator("[data-directory-grid] a")).toHaveCount(1);
+    expect(errors).toEqual([]);
+  });
+}
+
+test("a keyboard-opened lookup can be dismissed and followed to the previous kanji", async ({ page }) => {
   await mockData(page);
-  await openDetail(page);
-  const zoom = page.getByRole("button", { name: "文 암기 이미지 크게 보기", exact: true });
-  await zoom.click();
-  await expect(page.locator("#imageClose")).toBeFocused();
-  for (const key of ["Shift+Tab", "Tab"]) {
-    await page.keyboard.press(key);
-    await expect(page.locator("#imageClose")).toBeFocused();
-  }
+  await page.goto("/kanji/?q=木");
+  await page.locator("[data-directory-grid] a").first().press("Enter");
+  const detail = page.locator("[data-entry-kanji]");
+  await expect(detail).toHaveAttribute("data-entry-kanji", "木");
+  await expect(page.locator("[data-previous-kanji]")).toBeHidden();
+  const anchor = page.locator('.entry-page [data-study-kanji="林"]').first();
+  await anchor.press("Enter");
+  const popover = page.locator("dialog.study-lookup");
+  await expect(popover).toBeVisible();
+  await expect(popover.locator(".popover-go")).toBeFocused();
   await page.keyboard.press("Escape");
-  await expect(page.locator("#imageOverlay")).toBeHidden();
-  await expect(page.locator("#detailOverlay")).toBeVisible();
-  await expect(zoom).toBeFocused();
-  expect(await page.locator("body").evaluate((node) => node.classList.contains("detail-open"))).toBe(true);
-  await page.locator("#detailClose").click();
-  expect(await page.locator("body").evaluate((node) => node.classList.contains("detail-open"))).toBe(false);
+  await expect(popover).toBeHidden();
+  await expect(anchor).toBeFocused();
+  await anchor.press("Enter");
+  await popover.locator(".popover-go").press("Enter");
+  await expect(detail).toHaveAttribute("data-entry-kanji", "林");
+  expect(new URL(page.url()).searchParams.get("q")).toBe("木");
+  await page.reload();
+  await page.getByRole("link", { name: "이전 한자 木" }).press("Enter");
+  await expect(detail).toHaveAttribute("data-entry-kanji", "木");
+  await expect(page.locator("[data-previous-kanji]")).toBeHidden();
+  await expect(popover).toBeHidden();
 });
 
-test("missing opener falls back safely; parent/backdrop/history close removes child popover", async ({ page }) => {
+test("image zoom opens from the detail and returns keyboard focus to its opener", async ({ page }) => {
   await mockData(page);
-  await page.goto("/quiz/");
-  await ready(page);
-  await page.locator("#navKanji").click();
-  await ready(page);
-  await page.locator("#grid button.front").first().click();
-  await page.locator("#grid .card-detail-button").first().click();
-  await page.evaluate(() => document.querySelector("#grid .card").remove());
+  await page.goto("/kanji/文/");
+  const trigger = page.locator("[data-entry-zoom]");
+  await trigger.press("Enter");
+  const viewer = page.getByRole("dialog", { name: "文 암기 이미지 크게 보기" });
+  await expect(viewer.getByRole("button", { name: "닫기" })).toBeFocused();
+  await expect(viewer.locator("img")).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.locator("#navKanji")).toBeFocused();
-  await page.locator("#grid button.front").first().click();
-  await page.locator("#grid .card-detail-button").first().click();
-  await page.locator("#detailOverlay .kanji-link").first().click();
-  await page.locator("#popoverGo").click();
-  await expect(page.locator("#detailBack")).toBeVisible();
-  await page.locator("#detailBack").click();
-  await expect(page.locator("#kanjiPopover")).toBeHidden();
-  await page.locator("#detailOverlay .kanji-link").first().click();
-  await page.goBack();
-  await ready(page);
-  await expect(page.locator("#detailOverlay")).toBeHidden();
-  await expect(page.locator("#kanjiPopover")).toBeHidden();
-  await expect(page.locator("#gameView")).toBeVisible();
+  await expect(viewer).toBeHidden();
+  await expect(trigger).toBeFocused();
 });
 
 test("quiz completion, insufficient pool, and valid restart never retain stale results", async ({ page }) => {
@@ -365,32 +234,12 @@ test("quiz completion, insufficient pool, and valid restart never retain stale r
   await expect(page.locator("#gameProgress")).toHaveText("1 / 4");
 });
 
-test("modal with no focusable controls still contains keyboard focus", async ({ page }) => {
-  await mockData(page);
-  await openDetail(page);
-  await page.evaluate(() => {
-    const lateControl = document.createElement("button");
-    lateControl.id = "lateBackgroundControl";
-    lateControl.textContent = "background";
-    document.body.append(lateControl);
-    const dialog = document.querySelector('#detailOverlay [role="dialog"]');
-    for (const button of dialog.querySelectorAll("button")) button.disabled = true;
-    dialog.focus();
-  });
-  await expect(page.locator("#lateBackgroundControl")).toHaveAttribute("inert", "");
-  for (const key of ["Tab", "Shift+Tab"]) {
-    await page.keyboard.press(key);
-    expect(await activeIn(page, "#detailOverlay")).toBe(true);
-  }
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#detailOverlay")).toBeHidden();
-});
-
-test("unsupported filter values are ignored without breaking the list", async ({ page }) => {
+test("unsupported filter values leave the full catalog usable", async ({ page }) => {
   await mockData(page);
   await page.goto("/kanji/?grade=invalid&jlpt=invalid");
-  await ready(page);
-  await expect(page.locator("#grade")).toHaveValue("");
-  await expect(page.locator("#jlpt")).toHaveValue("");
-  await expectWindowedCards(page);
+  await expect(page.locator("#directory-grade")).toHaveValue("");
+  await expect(page.locator("#directory-jlpt")).toHaveValue("");
+  await expect(page.locator("[data-directory-count]")).toHaveText("2,324자");
+  await page.locator("#directory-q").fill("犬");
+  await expect(page.locator("[data-directory-grid] a")).toHaveCount(1);
 });

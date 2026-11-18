@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="/src/styles.css" />
     <style>
       @media (scripting: none) {
-        #kanjiView, #storyView, #gameView, [data-analytics-settings], [data-theme-toggle] { display: none; }
+        #storyView, #gameView, [data-analytics-settings], [data-theme-toggle] { display: none; }
       }
     </style>
     <link rel="stylesheet" href="/src/site-info.css" />
@@ -82,53 +82,6 @@
         <span id="learningMessage"></span>
         <button id="learningRetry" type="button" hidden>다시 시도</button>
       </div>
-      <section id="kanjiView" class="kanji-view">
-        <div class="toolbar-wrap">
-          <div class="toolbar">
-            <input
-              id="search"
-              class="control search"
-              type="search"
-              autocomplete="off"
-              placeholder="한자・훈음・총획수 입력하여 검색"
-              aria-label="검색"
-            />
-            <select id="grade" class="control" aria-label="학년 필터">
-              <option value="">학년 전체</option>
-            </select>
-            <select id="jlpt" class="control" aria-label="JLPT 필터">
-              <option value="">JLPT 전체</option>
-            </select>
-            <select id="sort" class="control" aria-label="정렬">
-              <option value="memory">마나보 추천순</option>
-              <option value="ministry" selected>상용한자순</option>
-              <option value="strokes">획순</option>
-              <option value="sound">가나다순</option>
-            </select>
-            <button id="reset" class="reset" type="button">초기화</button>
-          </div>
-        </div>
-
-        <div class="status">
-          <div class="status-summary">
-            <b id="resultCount">0</b>자 표시&nbsp; | &nbsp;현재 정렬
-            <b id="sortLabel">상용한자순</b>
-          </div>
-          <nav
-            id="sortIndex"
-            class="sort-index"
-            aria-label="정렬 구간 바로가기"
-            hidden
-          ></nav>
-          <div class="hint attention-text">
-            <strong class="learning-action">한자 카드를 눌러</strong>, 그림과 암기 풀이로 일본어 한자를 익혀보세요.
-          </div>
-        </div>
-
-        <main id="grid" class="grid" aria-live="polite"></main>
-        <div id="sentinel" class="sentinel">아래로 내려 더 보기</div>
-      </section>
-
       <section id="storyView" class="story-view" hidden>
         <div class="story-layout">
           <aside class="story-sidebar" aria-label="스토리 분류">
@@ -278,34 +231,6 @@
         자세히 보기 →
       </button>
     </aside>
-    <div id="detailOverlay" class="detail-overlay" hidden>
-      <section
-        class="detail-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label="한자 상세 정보"
-        tabindex="-1"
-      >
-        <button
-          id="detailBack"
-          class="detail-back"
-          type="button"
-          aria-label="이전에 본 한자로 돌아가기"
-          hidden
-        >
-          ← 이전 한자
-        </button>
-        <button
-          id="detailClose"
-          class="detail-close"
-          type="button"
-          aria-label="상세 정보 닫기"
-        >
-          ×
-        </button>
-        <div id="detailContent" class="detail-content"></div>
-      </section>
-    </div>
     <div id="imageOverlay" class="image-overlay" hidden>
       <section
         class="image-stage"

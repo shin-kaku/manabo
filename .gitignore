@@ -12,11 +12,11 @@ dist
 dist-ssr
 .wrangler
 # Generated from src/study.html by the Vite config.
-/kanji/index.html
 /reading/index.html
 /quiz/index.html
 # Generated from src/materials.html and public/data by the Vite config.
 /materials/
+/kanji/
 *.local
 .env.local
 
@@ -42,5 +42,6 @@ dist-ssr
 /public/media/
 
 # Generated catalog and versioned details. The source JSON remains tracked.
+/src/catalog-characters.json
 /public/data/kanji-index.json
 /public/data/kanji-detail/

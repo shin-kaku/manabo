@@ -49,7 +49,7 @@ HTML 보고서·스크린샷·trace를 3일간 보관합니다. 성공한 실행
 
 ## 데이터 동기화
 
-브라우저는 `public/data/kanji.json`, `public/data/stories.json`과 최적화 이미지 카탈로그 `media.json`을 읽습니다.
+도감은 동기화된 한자·이미지 JSON에서 개별 HTML을 생성합니다. 목록 검색과 간단 정보는 한자 인덱스를 공유합니다.
 한자·퀴즈는 독해 JSON을 요청하지 않으며, 독해는 독해 JSON 및 한자 링크에 필요한 한자 인덱스를 준비합니다.
 실패한 데이터는 활성 화면의 **다시 시도** 버튼으로 다시 요청할 수 있습니다.
 
@@ -83,7 +83,7 @@ npm run sync-data -- --allow-story-removal=story-ID
 ## 파일과 공개 경로
 
 이미지1은 480/960px WebP를 Cloudflare 정적 파일로 제공하도록 구성했습니다.
-상세 화면은 R열의 움직이는 획순 SVG를 Cloudflare에서 220px로 표시하고, R이 비어 있거나 로드에 실패하면 Q열의 번호 획순도를 표시합니다. 공간이 부족하면 한국한자·총획수는 획순 아래로 배치합니다.
+상세 페이지는 R열의 움직이는 획순 SVG를 Cloudflare에서 불러옵니다. 애니메이션을 불러올 수 없으면 Q열의 번호 획순도를 사용합니다.
 2,324개 원본 연결과 실제 화면 확인 결과는 [획순 SVG 검증 기록](reports/stroke-svg-2026-11-06.md)에 있습니다.
 Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 자동화와
 이미지2·애니메이션 획순 SVG 확장 방법은 [이미지 자동화 안내](docs/media-automation.md)를 참고하세요.
@@ -94,11 +94,11 @@ Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 �
 | --- | --- |
 | `index.html`, `src/home.js`, `src/home.css` | 별도 홈 `/` |
 | `src/study.html` | 학습 HTML 원본 |
-| `scripts/study-pages.mjs` | `/kanji/`, `/reading/`, `/quiz/` HTML 생성 |
+| `scripts/study-pages.mjs` | `/reading/`, `/quiz/` HTML 생성 |
 | `src/materials.html`, `scripts/material-pages.mjs` | 학습 자료 모음과 학년·JLPT별 한자 카드 목록 및 독해 본문 HTML 생성 |
 | `src/main.js`, `src/styles.css` | 학습 로직과 스타일 |
-| `src/virtual-grid.js` | CSS 열 수에 맞춘 가상 목록·화면 회전 시 위치 유지·키보드 이동 |
-| `src/card-images.js` | 카드 이미지 요청 지연·동시 요청 제한·최근 이미지 재사용 |
+| `scripts/material-directory.mjs`, `src/material-directory.js` | 한자 도감의 검색·필터·정렬 및 목록 추가 표시 |
+| `scripts/character-pages.mjs`, `src/study-path.js` | 글자별 상세 페이지와 이전 한자 이동 |
 | `src/example-ruby.js` | 상세 예시 단어의 한자별 루비 대응 및 단어 전체 표시 대체 처리 |
 | `src/seo.js` | 학습 페이지별 제목·설명·canonical |
 | `public/data/*.json` | Sheets에서 동기화한 공개 학습 데이터 |
@@ -108,28 +108,16 @@ Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 �
 | `.github/workflows/ci.yml` | 설치·테스트·빌드 CI |
 | `vite.config.js`, `wrangler.jsonc` | 다중 페이지 빌드·`dist` 산출물 설정 |
 
-생성된 `kanji/index.html`, `reading/index.html`, `quiz/index.html`을 직접 고치지 마세요.
-기본 사이트맵은 `/`, `/kanji/`, `/reading/`, `/quiz/`, `/about/`,
-`/privacy-policy/`, `/copyright/`, `/contact/`의 8개 경로입니다.
-빌드 시 `public/data`의 기존 자료로 `/materials/`, 학년·참고 목록 11개, JLPT 목록 5개,
-독해 본문 19개를 생성하고 `dist/sitemap.xml`에 포함합니다. 현재 총 44개 경로입니다.
-목록의 한자 카드는 해당 학년 또는 JLPT 필터가 적용된 도감 상세 화면을 엽니다.
-`materials/`의 생성 HTML을 직접 편집하지 마세요. 공통 틀은 `src/materials.html`,
-본문·목록 생성은 `scripts/material-pages.mjs`, 학습 내용은 기존 JSON이 원본입니다.
-개발 중에는 자료 틀과 JSON 변경을 감지해 재생성하며, 정식 빌드는 항상 최신 JSON으로 생성합니다.
+도감 목록은 `/kanji/`, 상세 페이지는 `/kanji/木/`와 같은 개별 주소에서 열립니다.
+사이트맵에는 각 글자의 대표 주소, 木·林·森 비교, 학년·JLPT 자료, 독해 본문도 포함합니다.
+`kanji/`, `materials/`, `reading/`, `quiz/` 아래의 HTML은 빌드 때 생성됩니다.
+도감 본문은 `public/data/kanji.json`과 한자 상세 데이터에서 생성합니다.
 정적 독해 본문에서 `/reading/?story=story-ID`로 해당 대화형 독해를 열 수 있습니다.
-도감의 canonical은 `/kanji/`입니다.
 
-도감은 전체 목록의 스크롤 높이를 유지하면서 화면 주변 3개 행까지만 카드를 만듭니다.
-CSS의 2~6열 반응형 설정으로 카드 크기를 계산하고, 화면 밖 카드는 DOM에서 제거합니다.
-키보드로 포커스한 카드 1개는 유지하며, 상세보기 동안 목록을 고정해 복귀 위치를 보존합니다.
-카드 뒤집기 상태는 한자별로 보관합니다. 목록 이미지는 뒤집힌 카드가 실제 화면에 보이고
-스크롤이 160ms 이상 멈췄을 때 요청하며, 정지 상태에서 직접 뒤집으면 바로 요청합니다.
-목록 이미지 요청은 동시 2개, 제거된 카드의 완료 이미지 캐시는 최근 4개로 제한합니다.
-빠른 스크롤 중 대기 요청을 비우고 화면 밖 미완료 이미지의 `src`를 해제합니다.
-이미 서버에 전송된 요청의 네트워크 취소 시점은 브라우저가 결정합니다.
-상세보기·확대 이미지의 기존 요청 및 대체 URL 동작은 별도입니다.
-자료/이미지를 스크롤마다 다시 가져오는 API 요청은 추가하지 않았습니다.
+목록에는 한자와 훈음이 표시됩니다. 검색·필터·정렬은 주소에 반영되며,
+‘더 보기’로 다음 한자를 표시할 수 있습니다. 목록의 한자를 누르면 해당 주소로 이동합니다.
+상세 페이지 안의 다른 한자는 간단 정보를 먼저 표시합니다.
+‘자세히 보기’로 다른 글자를 열면 ‘이전 한자’로 직전에 본 글자에 돌아갈 수 있습니다.
 
 상세보기의 예시 단어는 기존 `단어(읽기) 뜻` 데이터를 루비로 표시합니다.
 `src/example-ruby.js`는 한자의 `발음`과 단어 전체 읽기를 대조하고, 오쿠리가나와 복합어의

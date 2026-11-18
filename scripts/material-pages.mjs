@@ -1,9 +1,21 @@
-import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { readFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { writeGeneratedFile } from "./generated-file.mjs";
+import { escapeHtml as e } from "./html.mjs";
+export { escapeHtml } from "./html.mjs";
 
 const root = new URL("../", import.meta.url);
 const origin = "https://kanjimanabo.com";
+const kanji = JSON.parse(readFileSync(new URL("public/data/kanji.json", root), "utf8"));
+const characters = kanji.map(row => row["한자"]);
+if (new Set(characters).size !== characters.length || characters.some(ch => !/^\p{Script=Han}$/u.test(ch))) {
+  throw new Error("도감의 한자 식별자는 중복 없는 한 글자여야 합니다.");
+}
+// The browser and the page generator must resolve the same character URLs after a Sheets sync.
+writeGeneratedFile(new URL("src/catalog-characters.json", root), JSON.stringify(characters.join("")) + "\n");
+const { characterPages, characterPath, comparisonPath } = await import("./character-pages.mjs");
+const { directoryPageTemplate, materialDirectory } = await import("./material-directory.mjs");
+
 const grades = [
   ["primary-1", "초등학교 1학년"], ["primary-2", "초등학교 2학년"],
   ["primary-3", "초등학교 3학년"], ["primary-4", "초등학교 4학년"],
@@ -12,10 +24,6 @@ const grades = [
   ["high-1", "고교 1"], ["high-2", "고교 2"], ["reference", "참고"],
 ];
 const levels = ["N5", "N4", "N3", "N2", "N1"].map((level) => [level.toLowerCase(), `JLPT ${level}`]);
-export const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
-  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-})[ch]);
-const e = escapeHtml;
 const paragraphs = (value) => String(value).split(/\n\s*\n/).filter(Boolean)
   .map((line) => `<p>${e(line)}</p>`).join("\n");
 const link = (href, label) => `<a href="${e(href)}">${e(label)}</a>`;
@@ -57,6 +65,7 @@ export function materialPages({ kanji, stories }) {
     body: `<h1>한자 학습 자료 모음</h1>
 <p class="info-lead">그림으로 기억한 한자를 읽기와 단어, 이야기로 연결해 보세요.</p>
 <p>${kanji.length.toLocaleString("ko-KR")}자의 도감에서 공부할 범위를 고르거나 독해 ${stories.length}편을 읽어 보세요.</p>
+<p>${link("/kanji/", "한자 도감에서 전체 보기·검색")}</p>
 <h2 id="kanji-materials">학년별 한자 카드</h2>
 ${groupLinks(gradeGroups)}
 <h2 id="jlpt-materials">JLPT 등급별 한자 카드</h2>
@@ -73,16 +82,19 @@ ${["학년별", "JLPT"].map((category) => `<h3>${category}</h3>${list(stories.fi
 <p>마나보의 풀이는 글자의 모양을 이야기와 연결하기 위해 운영자가 기획·작성한 기억 보조 설명입니다. 역사적 어원이나 글자의 실제 형성 과정을 설명하는 자료와는 다를 수 있습니다. 그림도 해당 풀이를 기억하도록 AI 도구를 활용해 제작했습니다.</p>
 <p>학년·JLPT 표시는 학습 범위를 나누기 위한 참고 분류입니다. 잘못된 풀이·읽기·단어를 발견하면 ${link("/contact/", "문의하기")}로 한자와 문제가 되는 부분을 알려주세요.</p>`,
   }];
+  pages.push(materialDirectory(kanji, levels, grades));
   for (const group of [...gradeGroups, ...levelGroups]) {
     pages.push({
       path: group.path, title: `${group.name} 한자 카드`,
       description: `${group.name} 한자 ${group.rows.length}자를 모았습니다. 카드를 골라 뜻과 읽기, 획순을 확인하세요.`,
       body: `<h1>${e(group.name)} 한자 카드</h1>
-<p>${group.rows.length}자 · 한자를 누르면 도감의 상세 카드가 열립니다.</p>
+<p>${group.rows.length}자 · ${link(group.catalog, "이 범위에서 검색하기")}</p>
 <nav aria-label="한자 카드" class="material-character-index">${group.rows.map((row) => {
   const character = row["한자"];
-  const href = `${group.catalog}#kanji=${encodeURIComponent(character)}`;
-  return `<a id="char-${e(character)}" href="${e(href)}" lang="ja">${e(character)}</a>`;
+  const entry = characterPath(character);
+  if (!entry) throw Error("도감 상세 주소 누락: " + character);
+  const href = entry + group.catalog.slice(group.catalog.indexOf("?"));
+  return `<a id="char-${e(character)}" data-study-kanji="${e(character)}" href="${e(href)}" lang="ja">${e(character)}</a>`;
 }).join("\n")}</nav>`,
     });
   }
@@ -103,24 +115,41 @@ ${["학년별", "JLPT"].map((category) => `<h3>${category}</h3>${list(stories.fi
 
 export const materialTemplatePath = fileURLToPath(new URL("src/materials.html", root));
 export function writeMaterialPages() {
-  const kanji = JSON.parse(readFileSync(new URL("public/data/kanji.json", root), "utf8"));
   const stories = JSON.parse(readFileSync(new URL("public/data/stories.json", root), "utf8"));
   const template = readFileSync(materialTemplatePath, "utf8");
-  const pages = materialPages({ kanji, stories });
+  const media = JSON.parse(readFileSync(new URL("public/data/media.json", root), "utf8"));
+  const pages = [...materialPages({ kanji, stories }), ...characterPages(kanji, media)];
+  const entryTemplate = template.replace("</head>", '<link rel="stylesheet" href="/src/character-pages.css">\n</head>')
+    .replace("</body>", '<script type="module" src="/src/character-page.js"></script>\n</body>');
+  const studyTemplate = readFileSync(new URL("src/study.html", root), "utf8");
+  const studyNav = studyTemplate.match(/<div class="site-nav-wrap">[\s\S]*?<\/nav>\s*<\/div>/)?.[0];
+  if (!studyNav) throw Error("학습 페이지의 콘텐츠 전환 메뉴가 없습니다.");
+  const directoryTemplate = directoryPageTemplate(template, studyNav);
+  const groupTemplate = template.replace("</body>", '<script type="module" src="/src/study-lookup.js"></script>\n</body>');
   for (const page of pages) {
+    let pageTemplate = template;
+    if (page.path === "kanji") pageTemplate = directoryTemplate;
+    else if (page.path.startsWith("materials/kanji/")) pageTemplate = groupTemplate;
+    else if (page.path === comparisonPath) pageTemplate = entryTemplate;
+    else if (page.path.startsWith("kanji/")) {
+      pageTemplate = entryTemplate.replace('<a href="/materials/">학습 자료 모음</a>',
+        '<a href="/materials/">학습 자료 모음</a>\n            <a data-entry-catalog href="/kanji/">한자 도감</a>');
+    }
     const values = { TITLE: e(`${page.title} | 마나보`), DESCRIPTION: e(page.description), URL: `${origin}/${page.path}/`, BODY: page.body,
-      BACK: page.path === "materials" ? link("/", "← 홈으로 돌아가기") : link("/materials/", "← 학습 자료 모음"),
+      BACK: page.back ?? (page.path === "materials" ? link("/", "← 홈으로 돌아가기") : link("/materials/", "← 학습 자료 모음")),
     };
-    const html = template.replace(/\{\{(TITLE|DESCRIPTION|URL|BODY|BACK)\}\}/g, (_, key) => values[key]);
+    const html = pageTemplate.replace(/\{\{(TITLE|DESCRIPTION|URL|BODY|BACK)\}\}/g, (_, key) => values[key]);
     const directory = new URL(`${page.path}/`, root);
     mkdirSync(directory, { recursive: true });
     writeGeneratedFile(new URL("index.html", directory), html);
   }
+  const alias = new URL("materials/kanji/index.html", root);
+  writeGeneratedFile(alias, `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>한자 도감 | 마나보</title>
+<link rel="canonical" href="${origin}/kanji/"><script>location.replace("/kanji/" + location.search + location.hash)</script>
+<noscript><meta http-equiv="refresh" content="0;url=/kanji/"></noscript></head><body><a href="/kanji/">한자 도감</a></body></html>`);
   return pages;
 }
 
-export function writeSitemap(directory, pages) {
-  const base = readFileSync(new URL("public/sitemap.xml", root), "utf8");
-  const additional = pages.map((page) => `  <url><loc>${origin}/${page.path}/</loc></url>`).join("\n");
-  writeFileSync(new URL("sitemap.xml", directory), base.replace("</urlset>", `${additional}\n</urlset>`));
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  process.stdout.write(JSON.stringify(writeMaterialPages().map(page => page.path)));
 }
