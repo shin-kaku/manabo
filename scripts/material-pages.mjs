@@ -119,6 +119,7 @@ export function writeMaterialPages() {
   const template = readFileSync(materialTemplatePath, "utf8");
   const media = JSON.parse(readFileSync(new URL("public/data/media.json", root), "utf8"));
   const pages = [...materialPages({ kanji, stories }), ...characterPages(kanji, media)];
+  const zoomScript = readFileSync(new URL("src/entry-art-zoom.js", root), "utf8");
   const entryTemplate = template.replace("</head>", '<link rel="stylesheet" href="/src/character-pages.css">\n</head>')
     .replace("</body>", '<script type="module" src="/src/character-page.js"></script>\n</body>');
   const studyTemplate = readFileSync(new URL("src/study.html", root), "utf8");
@@ -132,7 +133,7 @@ export function writeMaterialPages() {
     else if (page.path.startsWith("materials/kanji/")) pageTemplate = groupTemplate;
     else if (page.path === comparisonPath) pageTemplate = entryTemplate;
     else if (page.path.startsWith("kanji/")) {
-      pageTemplate = entryTemplate.replace('<a href="/materials/">학습 자료 모음</a>',
+      pageTemplate = entryTemplate.replace("</head>", () => `<script>${zoomScript}</script>\n</head>`).replace('<a href="/materials/">학습 자료 모음</a>',
         '<a href="/materials/">학습 자료 모음</a>\n            <a data-entry-catalog href="/kanji/">한자 도감</a>');
     }
     const values = { TITLE: e(`${page.title} | 마나보`), DESCRIPTION: e(page.description), URL: `${origin}/${page.path}/`, BODY: page.body,

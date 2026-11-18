@@ -1,5 +1,4 @@
 import "./study-lookup.js";
-import "./entry-art-zoom.js";
 import { setupEntryNavigation } from "./study-path.js";
 
 function updateStrokeImages() {

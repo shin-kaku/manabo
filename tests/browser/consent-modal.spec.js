@@ -5,6 +5,8 @@ for (const entry of ["deep link", "list"]) {
   test(`pending consent stays separate from the image viewer (${entry})`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.fulfill({ body: "" }));
+    // Exercise the first activation while the progressively enhanced detail module is unavailable.
+    await page.route("**/src/character-page.js*", route => route.abort());
     await page.goto(entry === "deep link" ? "/kanji/#kanji=%E6%96%87" : "/kanji/");
     const banner = page.locator(".analytics-banner");
     if (entry === "list") {

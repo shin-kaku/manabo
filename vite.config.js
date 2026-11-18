@@ -40,7 +40,7 @@ export default defineConfig({
         if (/\/public\/data\/(kanji|media)\.json$/.test(path)) writeKanjiListData();
         if (path === studyTemplatePath) writeStudyPages();
         if (path === studyTemplatePath ||
-            /\/src\/(materials\.html|(?:material-directory-data|study-path|reading-groups|kanji-components|media|image-sources)\.js)$/.test(path) ||
+            /\/src\/(materials\.html|(?:entry-art-zoom|material-directory-data|study-path|reading-groups|kanji-components|media|image-sources)\.js)$/.test(path) ||
             /\/scripts\/(material-directory|material-pages|character-pages|html)\.mjs$/.test(path) ||
             /\/public\/data\/(kanji|stories|media)\.json$/.test(path)) generateMaterials();
       });
