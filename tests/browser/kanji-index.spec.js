@@ -58,3 +58,21 @@ test.describe("server-rendered study content", () => {
     await expect(entry.locator(".entry-stroke")).toHaveAttribute("alt", new RegExp(ch + " " + row.획 + "획"));
   });
 });
+
+test("input on the first paint survives a delayed directory module", async ({ page }) => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  await page.route("**/src/material-directory.js*", async route => {
+    await gate;
+    await route.continue();
+  });
+  try {
+    await page.goto("/kanji/?jlpt=JLPT+N4", { waitUntil: "commit" });
+    await page.locator("#directory-q").fill("수풀");
+    await page.locator("#directory-strokes").selectOption("8");
+  } finally { release(); }
+  await expect(page.locator("[data-directory-count]")).toHaveText("1자");
+  await expect(page.locator("[data-directory-grid] a")).toHaveText(/林/);
+  expect(new URL(page.url()).searchParams.get("q")).toBe("수풀");
+  await expect(page.locator("#directory-jlpt")).toHaveValue("JLPT N4");
+});

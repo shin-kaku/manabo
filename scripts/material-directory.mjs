@@ -32,7 +32,7 @@ export function materialDirectory(kanji, levels, grades) {
     description: "한자, 뜻, 음 또는 획수로 검색하고 JLPT·학년·획수별로 학습할 글자를 고르세요.",
     body: `<section class="study-directory" data-study-directory>
 <h1>한자 도감</h1>
-<form class="directory-controls" action="/kanji/" role="search" aria-label="한자 검색">
+<form class="directory-controls" oninput="event.target.dataset.earlyEdit = ''" action="/kanji/" role="search" aria-label="한자 검색">
   <label class="directory-query" for="directory-q">한자 검색<input type="search" id="directory-q" name="q" placeholder="한자, 뜻, 음, 획수" autocomplete="off" enterkeyhint="search"></label>
   <div class="directory-filters">${select("JLPT", "jlpt", options(levels))}${select("학년", "grade", options(grades))}${select("획수", "strokes", [["", "전체"], ...strokes.map(n => [String(n), n + "획"])])}${select("정렬", "sort", directorySortNames, defaultDirectorySort)}</div>
 </form>

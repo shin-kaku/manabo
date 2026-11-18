@@ -27,6 +27,10 @@ function restoreControls() {
   const params = new URLSearchParams(location.search);
   for (const name of directoryFields) {
     const control = form.elements.namedItem(name);
+    if (control.hasAttribute("data-early-edit")) {
+      control.removeAttribute("data-early-edit");
+      continue;
+    }
     control.value = params.get(name) || "";
     if (name === "sort" && !control.value) control.value = defaultDirectorySort;
   }
@@ -127,9 +131,13 @@ function restoreDirectory() {
     location.replace(studyDetailHref(ch, location.search));
     return;
   }
+  // The HTML form can receive input before its module has arrived.
+  const hasEarlyInput = form.querySelector("[data-early-edit]");
   restoreControls();
+  if (hasEarlyInput) remember(readControls(), directoryPageSize);
   render(visibleLimit());
 }
+form.removeAttribute("oninput");
 window.addEventListener("popstate", restoreDirectory);
 window.addEventListener("hashchange", restoreDirectory);
 restoreDirectory();
