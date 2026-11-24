@@ -68,12 +68,12 @@ test("quiz and reading share loaded data and can open standalone kanji details",
   const state = await mockData(page, { storiesStatus: 503 });
   await page.goto("/quiz/");
   await ready(page);
-  await page.locator("#navStory").click();
+  await page.getByRole("button", { name: "독해 시작하기", exact: true }).click();
   await expect(page.locator("#learningRetry")).toBeVisible();
   await page.locator("#navGame").click();
   await ready(page);
   state.storiesStatus = 200;
-  await page.locator("#navStory").click();
+  await page.getByRole("button", { name: "독해 시작하기", exact: true }).click();
   await expect(page.locator("#storyCopy .kanji-link").first()).toBeVisible();
   expect(state.storiesCalls).toBe(2);
   expect(state.kanjiCalls).toBe(1);
@@ -179,8 +179,10 @@ test("a keyboard-opened lookup can be dismissed and followed to the previous kan
   await expect(detail).toHaveAttribute("data-entry-kanji", "木");
   await expect(page.locator("[data-previous-kanji]")).toBeHidden();
   const anchor = page.locator('.entry-page [data-study-kanji="林"]').first();
-  await anchor.press("Enter");
   const popover = page.locator("dialog.study-lookup");
+  // Before the lookup module loads, the server-rendered link opens the character directly.
+  await expect(popover).toBeAttached();
+  await anchor.press("Enter");
   await expect(popover).toBeVisible();
   await expect(popover.locator(".popover-go")).toBeFocused();
   await page.keyboard.press("Escape");
@@ -220,7 +222,7 @@ test("quiz completion, insufficient pool, and valid restart never retain stale r
   await page.locator("#gameStart").click();
   await expect(page.locator("#gameProgress")).toHaveText("1 / 4");
   for (let i = 0; i < 4; i++) { await page.locator(".game-choice").first().click(); await page.locator("#gameNext").click(); }
-  await expect(page.locator("#gameQuestionLabel")).toHaveText("게임 완료");
+  await expect(page.locator("#gameQuestionLabel")).toHaveText("사지선다 완료");
   await page.locator("#gameSettingsButton").click();
   await page.locator("#gameGrade").selectOption("초등학교 2학년");
   await page.locator("#gameStart").click();

@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
 import { readFileSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { studyNavigation } from "./scripts/study-nav.mjs";
 import { studyPages, studyTemplatePath, writeStudyPages } from "./scripts/study-pages.mjs";
 import { writeKanjiListData } from "./scripts/kanji-list-data.mjs";
 
@@ -17,6 +18,11 @@ const materials = generateMaterials();
 
 export default defineConfig({
   plugins: [{
+    name: "home-study-navigation",
+    transformIndexHtml(html, context) {
+      if (context.path === "/index.html" || context.path === "/") return html.replace("<!-- STUDY_NAV -->", studyNavigation());
+    },
+  }, {
     name: "adsense-site-verification",
     transformIndexHtml: () => [{
       tag: "meta",
@@ -38,7 +44,7 @@ export default defineConfig({
     configureServer(server) {
       server.watcher.on("change", (path) => {
         if (/\/public\/data\/(kanji|media)\.json$/.test(path)) writeKanjiListData();
-        if (path === studyTemplatePath) writeStudyPages();
+        if (path === studyTemplatePath || path.endsWith("/public/data/stories.json")) writeStudyPages();
         if (path === studyTemplatePath ||
             /\/src\/(materials\.html|(?:entry-art-zoom|material-directory-data|study-path|reading-groups|kanji-components|media|image-sources)\.js)$/.test(path) ||
             /\/scripts\/(material-directory|material-pages|character-pages|html)\.mjs$/.test(path) ||

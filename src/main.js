@@ -7,9 +7,10 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       const els = {
         storyView: document.getElementById("storyView"),
         gameView: document.getElementById("gameView"),
-        navKanji: document.getElementById("navKanji"),
-        navStory: document.getElementById("navStory"),
         navGame: document.getElementById("navGame"),
+        readingSetup: document.getElementById("readingSetup"),
+        readingJlpt: document.getElementById("readingJlpt"),
+        readingGrade: document.getElementById("readingGrade"),
         storyCopy: document.getElementById("storyCopy"),
         storyTitle: document.getElementById("storyTitle"),
         gradeStoryLevels: document.getElementById("gradeStoryLevels"),
@@ -101,7 +102,8 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
           document.documentElement.dataset.dataSource = "saved";
           els.gameStart.disabled = false;
           if (section === "story") {
-            const requestedStory = new URLSearchParams(location.search).get("story");
+            // A native form submission before startup can include both range controls.
+            const requestedStory = new URLSearchParams(location.search).getAll("story").filter(Boolean).at(-1);
             activeStoryId = STORIES.find((story) => story.id === requestedStory)?.id ||
               STORIES.find((story) => story.id === defaultStoryId)?.id || STORIES[0].id;
             renderStory();
@@ -316,7 +318,16 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       const sectionPaths = { story: "/reading/", game: "/quiz/" };
       const sectionFromPath = () =>
         Object.entries(sectionPaths).find(([, path]) => path.replace(/\/$/, "") === location.pathname.replace(/\/$/, ""))?.[0] || "story";
-      function setSection(section, updateUrl = true) {
+      function navigateToSection(section, storyId, hash = "") {
+        const url = new URL(location.href);
+        url.pathname = sectionPaths[section];
+        url.hash = hash;
+        if (storyId) url.searchParams.set("story", storyId);
+        else url.searchParams.delete("story");
+        if (url.href !== location.href) history.pushState(null, "", url);
+        return bootstrap();
+      }
+      function setSection(section) {
         if (section === "story" && !document.getElementById("storyFont")) {
           const font = document.createElement("link");
           font.id = "storyFont";
@@ -339,21 +350,10 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         document.querySelector('meta[property="og:url"]').content = seo.canonical;
         els.storyView.hidden = !story;
         els.gameView.hidden = !game;
-        els.navStory.classList.toggle("active", story);
-        els.navGame.classList.toggle("active", game);
-        for (const [key, link] of [["kanji", els.navKanji], ["story", els.navStory], ["game", els.navGame]]) {
-          if (key === section) link.setAttribute("aria-current", "page");
-          else link.removeAttribute("aria-current");
-        }
-        if (updateUrl && location.pathname !== sectionPaths[section]) {
-          const url = new URL(location.href);
-          url.pathname = sectionPaths[section];
-          url.searchParams.delete("story");
-          if (url.hash.startsWith("#kanji=")) url.hash = "";
-          history.pushState(null, "", url);
-          handledLocation = location.href;
-        }
-        window.scrollTo({ top: 0, behavior: "instant" });
+        const card = game && ["#reading-setup", "#choice-card"].includes(location.hash)
+          ? document.getElementById(location.hash.slice(1)) : null;
+        if (card) card.scrollIntoView({ block: "start", behavior: "instant" });
+        else window.scrollTo({ top: 0, behavior: "instant" });
         return activateSection(section);
       }
       function selectStory(id, scroll = true) {
@@ -402,6 +402,8 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       function renderStory() {
         const story = STORIES.find((s) => s.id === activeStoryId);
         const version = story?.versions?.[0];
+        els.readingJlpt.value = story?.category === "JLPT" ? story.id : "";
+        els.readingGrade.value = story?.category === "학년별" ? story.id : "";
         renderStoryNavigation();
         els.storyTitle.textContent = story?.title || "";
         if (!version || !text(version.body)) {
@@ -523,7 +525,7 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       function showGameResult() {
         gameState.finished = true;
         els.gameQuestion.classList.add("result");
-        els.gameQuestionLabel.textContent = "게임 완료";
+        els.gameQuestionLabel.textContent = "사지선다 완료";
         els.gameQuestionLabel.hidden = false;
         const rate = Math.round(
           (gameState.score / gameState.questions.length) * 100,
@@ -594,13 +596,25 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       }
       window.addEventListener("popstate", () => { bootstrap(); });
       window.addEventListener("hashchange", (event) => { if (event.newURL === location.href) bootstrap(); });
-      for (const [section, link] of [["story", els.navStory], ["game", els.navGame]]) {
-        link.addEventListener("click", (event) => {
+      for (const link of [els.navGame, ...els.storyView.querySelectorAll(".story-exit")]) {
+        link.addEventListener("click", event => {
           if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
           event.preventDefault();
-          setSection(section);
+          navigateToSection("game", undefined, link.hash);
+          if (link.hash) document.getElementById("readingStart").focus({ preventScroll: true });
         });
       }
+      els.readingSetup.addEventListener("change", event => {
+        const select = event.target;
+        const other = select === els.readingJlpt ? els.readingGrade : els.readingJlpt;
+        if (select.value) other.value = "";
+        else if (!other.value) els.readingSetup.reset();
+      });
+      els.readingSetup.addEventListener("submit", async event => {
+        event.preventDefault();
+        const storyId = els.readingGrade.value || els.readingJlpt.value || defaultStoryId;
+        if (await navigateToSection("story", storyId)) els.storyTitle.focus({ preventScroll: true });
+      });
       els.gameStart.addEventListener("click", startGame);
       els.gamePicture.addEventListener("click", () => {
         const question = gameState.questions[gameState.index];
@@ -707,7 +721,7 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
           location.replace(studyDetailHref(requestedKanji, location.search));
           return;
         }
-        await setSection(sectionFromPath(), false);
+        return setSection(sectionFromPath());
       }
       learningRetry.addEventListener("click", () => bootstrap({ force: true }));
       bootstrap();

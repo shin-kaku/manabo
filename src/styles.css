@@ -939,6 +939,25 @@
         margin: 0 auto;
         padding-top: 20px;
       }
+      .story-exit {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        color: var(--ink);
+        font-size: 14px;
+        text-decoration: none;
+      }
+      .story-exit:hover, .story-exit:focus-visible {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .story-view > .story-exit { margin-bottom: 12px; }
+      .story-copy + .story-exit { margin-top: 24px; }
       .story-layout {
         display: grid;
         grid-template-columns: minmax(210px, 280px) minmax(0, 1fr);
@@ -1078,6 +1097,21 @@
         border-radius: var(--radius);
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.045);
       }
+      .game-shell + .game-shell {
+        margin-top: 20px;
+      }
+      .upcoming-game {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .upcoming-game p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        white-space: nowrap;
+      }
       .game-title {
         margin: 0;
         font-size: 24px;
@@ -1098,6 +1132,9 @@
         margin-top: 28px;
         padding-top: 28px;
         border-top: 1px solid var(--line);
+      }
+      .reading-settings {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .game-settings[hidden] {
         display: none;

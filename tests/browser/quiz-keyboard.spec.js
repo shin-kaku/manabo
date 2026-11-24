@@ -21,7 +21,7 @@ test("keyboard focus follows quiz questions, results and settings", async ({ pag
     await expect(page.locator("#gameNext")).toBeFocused();
     await page.keyboard.press("Enter");
   }
-  await expect(page.locator("#gameQuestionLabel")).toHaveText("게임 완료");
+  await expect(page.locator("#gameQuestionLabel")).toHaveText("사지선다 완료");
   await expect(page.locator("#gameNext")).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(page.locator("#gameSettingsButton")).toBeFocused();

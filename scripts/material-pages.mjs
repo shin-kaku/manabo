@@ -1,6 +1,7 @@
 import { readFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { writeGeneratedFile } from "./generated-file.mjs";
+import { studyNavigation } from "./study-nav.mjs";
 import { escapeHtml as e } from "./html.mjs";
 export { escapeHtml } from "./html.mjs";
 
@@ -77,12 +78,17 @@ ${["학년별", "JLPT"].map((category) => `<h3>${category}</h3>${list(stories.fi
 <ol><li>한 학습 범위에서 모양이 헷갈리는 한자를 골라 뜻과 암기 풀이를 읽어 보세요. 풀이를 가리고 글자만 보며 뜻을 떠올려 봅니다.</li>
 <li>읽기를 확인한 뒤 예시 단어를 소리 내어 읽어 보세요. 같은 한자도 단어에 따라 읽는 법이 달라질 수 있으니 단어와 함께 기억합니다.</li>
 <li>독해에서 아는 한자를 찾아 뜻을 떠올려 보세요. 뜻을 몰랐던 한자는 도감으로 돌아가 풀이와 단어를 다시 확인합니다.</li>
-<li>${link("/quiz/", "한자 문제")}에서 같은 범위를 선택해 복습하세요. 이 문제는 한국어 훈음을 고르는 연습이므로 일본어 읽기도 예시 단어로 따로 확인해 주세요.</li></ol>
+<li>${link("/quiz/#choice-card", "사지선다")}에서 같은 범위를 선택해 복습하세요. 이 문제는 한국어 훈음을 고르는 연습이므로 일본어 읽기도 예시 단어로 따로 확인해 주세요.</li></ol>
 <h2>암기 풀이를 읽을 때</h2>
 <p>마나보의 풀이는 글자의 모양을 이야기와 연결하기 위해 운영자가 기획·작성한 기억 보조 설명입니다. 역사적 어원이나 글자의 실제 형성 과정을 설명하는 자료와는 다를 수 있습니다. 그림도 해당 풀이를 기억하도록 AI 도구를 활용해 제작했습니다.</p>
 <p>학년·JLPT 표시는 학습 범위를 나누기 위한 참고 분류입니다. 잘못된 풀이·읽기·단어를 발견하면 ${link("/contact/", "문의하기")}로 한자와 문제가 되는 부분을 알려주세요.</p>`,
   }];
   pages.push(materialDirectory(kanji, levels, grades));
+  pages.push({
+    path: "textbook", title: "한자 교재",
+    description: "준비중",
+    body: `<h1>준비중</h1>`,
+  });
   for (const group of [...gradeGroups, ...levelGroups]) {
     pages.push({
       path: group.path, title: `${group.name} 한자 카드`,
@@ -122,14 +128,14 @@ export function writeMaterialPages() {
   const zoomScript = readFileSync(new URL("src/entry-art-zoom.js", root), "utf8");
   const entryTemplate = template.replace("</head>", '<link rel="stylesheet" href="/src/character-pages.css">\n</head>')
     .replace("</body>", '<script type="module" src="/src/character-page.js"></script>\n</body>');
-  const studyTemplate = readFileSync(new URL("src/study.html", root), "utf8");
-  const studyNav = studyTemplate.match(/<div class="site-nav-wrap">[\s\S]*?<\/nav>\s*<\/div>/)?.[0];
-  if (!studyNav) throw Error("학습 페이지의 콘텐츠 전환 메뉴가 없습니다.");
-  const directoryTemplate = directoryPageTemplate(template, studyNav);
+  const directoryTemplate = directoryPageTemplate(template, studyNavigation("navKanji"));
+  const textbookTemplate = template.replace("</header>", "</header>\n" + studyNavigation("navBooks"))
+    .replace('<div class="info-back">{{BACK}}</div>', "");
   const groupTemplate = template.replace("</body>", '<script type="module" src="/src/study-lookup.js"></script>\n</body>');
   for (const page of pages) {
     let pageTemplate = template;
     if (page.path === "kanji") pageTemplate = directoryTemplate;
+    else if (page.path === "textbook") pageTemplate = textbookTemplate;
     else if (page.path.startsWith("materials/kanji/")) pageTemplate = groupTemplate;
     else if (page.path === comparisonPath) pageTemplate = entryTemplate;
     else if (page.path.startsWith("kanji/")) {

@@ -22,7 +22,7 @@ for (const width of [390, 1280]) test(`theme menu persists across learning pages
   await page.screenshot({ path: testInfo.outputPath(`theme-home-dark-${width}.png`) });
   await page.keyboard.press("Escape");
   await expect(page.locator(".site-info-menu summary")).toBeFocused();
-  for (const path of ["/kanji/", "/kanji/林/", "/reading/", "/quiz/", "/materials/", "/about/"]) {
+  for (const path of ["/kanji/", "/kanji/林/", "/reading/", "/quiz/", "/textbook/", "/materials/", "/about/"]) {
     await page.goto(path);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expect(page.locator("body")).toHaveCSS("color", "rgb(245, 245, 245)");

@@ -17,6 +17,7 @@ dist-ssr
 # Generated from src/materials.html and public/data by the Vite config.
 /materials/
 /kanji/
+/textbook/
 *.local
 .env.local
 
