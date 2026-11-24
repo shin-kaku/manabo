@@ -57,6 +57,7 @@ export function writeKanjiListData(directory = resolve("public/data")) {
   }
   const list = rows.map((row, i) => ({
     ...Object.fromEntries(fields.map(field => [field, row[field]])),
+    components: mnemonicComponents(row["풀이"]).filter(ch => ch !== row["한자"]).join(""),
     detailBlock: Math.floor(i / blockSize),
   }));
   writeFileSync(resolve(directory, "kanji-index.json"), JSON.stringify({ schema: 1, version, rows: list }));

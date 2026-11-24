@@ -40,18 +40,36 @@ export function directoryRows(rows, mode = defaultDirectorySort) {
   return entries.sort(sorts.get(sort));
 }
 
+function matchesText(row, query, compactLabel) {
+  if (compactLabel && row["훈, 음"].split("|").some(label => label.replace(/\s+/g, "") === compactLabel)) return true;
+  return [row["한자"], row["훈, 음"], row["훈"], row["음"]]
+    .map(value => String(value ?? "").trim()).join(" ").toLowerCase().includes(query);
+}
+
 export function filterDirectory(rows, filters) {
   const query = (filters.q || "").trim().toLowerCase();
   const strokeQuery = query.match(/^(\d+)\s*획?$/);
-  return rows.filter(row => {
-    if (filters.jlpt && row["등급"] !== filters.jlpt) return false;
-    if (filters.grade && row["학년"] !== filters.grade) return false;
-    if (filters.strokes && Number(row["획"]) !== Number(filters.strokes)) return false;
-    if (!query) return true;
-    if (strokeQuery) return Number(row["획"]) === Number(strokeQuery[1]);
-    return [row["한자"], row["훈, 음"], row["훈"], row["음"]]
-      .map(value => String(value ?? "").trim()).join(" ").toLowerCase().includes(query);
-  });
+  const expand = filters.sort === "memory" && query && !strokeQuery;
+  const compact = expand ? query.replace(/\s+/g, "") : "";
+  const matchedCharacters = new Set();
+  const direct = [];
+  const related = [];
+
+  // In memory order a component can lead only to later entries in the learning sequence.
+  for (const row of rows) {
+    const matches = !query || (strokeQuery
+      ? Number(row["획"]) === Number(strokeQuery[1])
+      : matchesText(row, query, compact));
+    if (!matches && !(expand && Array.from(row.components || "").some(ch => matchedCharacters.has(ch)))) continue;
+    // A filtered-out character can still connect two entries, as in 門 → 間 → 簡.
+    if (expand) matchedCharacters.add(row["한자"]);
+    if (filters.jlpt && row["등급"] !== filters.jlpt) continue;
+    if (filters.grade && row["학년"] !== filters.grade) continue;
+    if (filters.strokes && Number(row["획"]) !== Number(filters.strokes)) continue;
+    if (matches) direct.push(row);
+    else related.push(row);
+  }
+  return direct.concat(related);
 }
 
 export const directoryHref = studyDetailHref;

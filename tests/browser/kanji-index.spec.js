@@ -43,6 +43,34 @@ test("search and filters share one lightweight index without loading character m
   expect(paths).toEqual(["/data/kanji-index.json"]);
 });
 
+test("recommended search follows later mnemonic components through intermediate entries", async ({ page }) => {
+  const glyphs = page.locator(links + " > span");
+  const search = page.locator("#directory-q");
+  const sort = page.locator("#directory-sort");
+  const family = Array.from("門問閉開間閑聞関閣閥潤閲闇闘欄簡");
+  await page.goto("/kanji/?" + new URLSearchParams({ q: "문 문", sort: "memory" }));
+  for (const query of ["문 문", "門", "문문"]) {
+    await search.fill(query);
+    await expect(glyphs).toHaveText(family);
+  }
+  await page.locator("#directory-jlpt").selectOption("JLPT N2");
+  await page.locator("#directory-grade").selectOption("초등학교 6학년");
+  await page.locator("#directory-strokes").selectOption("18");
+  await expect(glyphs).toHaveText(["簡"]);
+  await glyphs.click();
+  await expect(page.locator("[data-entry-kanji]")).toHaveAttribute("data-entry-kanji", "簡");
+  await page.goBack();
+  await expect(glyphs).toHaveText(["簡"]);
+  await page.locator("[data-directory-reset]").click();
+  await search.fill("문 문");
+  for (const mode of ["ministry", "sound", "strokes", "memory"]) {
+    await sort.selectOption(mode);
+    await expect(glyphs).toHaveText(mode === "memory" ? family : ["門"]);
+  }
+  await search.fill("8획");
+  await expect(page.locator("[data-directory-count]")).toHaveText(totalLabel(rows.filter(row => Number(row.획) === 8)));
+});
+
 test.describe("server-rendered study content", () => {
   test.use({ javaScriptEnabled: false });
   test("the initial list and each character's mnemonic, reading and examples work without JavaScript", async ({ page }) => {
@@ -106,7 +134,8 @@ test("reference grade selects an available sort across history, reset and bookma
   await expect(ministry).toHaveJSProperty("disabled", false);
   await expect(count).toHaveText(totalLabel(ministryRows));
 
-  const ref = referenceRows.find(row => !row.문부성);
+  // A reference entry with no later component matches keeps the single-result checks meaningful.
+  const ref = referenceRows.find(row => row.한자 === "兎");
   await page.goto("/kanji/?" + new URLSearchParams({ q: ref.한자, grade: "참고", sort: "ministry" }));
   await expect(sort).toHaveValue("memory");
   await expect(ministry).toHaveJSProperty("disabled", true);
