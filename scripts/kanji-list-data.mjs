@@ -1,10 +1,12 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { basename, resolve } from "node:path";
 import { driveFileId, strokeSources } from "../src/image-sources.js";
+import { isQuizImageUrl, quizImagePath } from "../src/quiz-image.js";
 import { createRubyResolver } from "../src/example-ruby.js";
 import { mnemonicComponents } from "../src/kanji-components.js";
 import { examplePattern, parseExamples } from "../src/reading-groups.js";
+import { writeGeneratedFile } from "./generated-file.mjs";
 
 const fields = ["암기순", "문부성", "한자", "훈, 음", "훈", "음", "학년", "등급", "획"];
 const numeric = (value) => {
@@ -13,11 +15,27 @@ const numeric = (value) => {
   return raw && Number.isFinite(number) ? number : Infinity;
 };
 
+function writeQuizImageLinks(directory, rows, media) {
+  const dir = resolve(directory, "quiz-image");
+  mkdirSync(dir, { recursive: true });
+  const oldFiles = new Set(readdirSync(dir).filter(name => /^[0-9a-f]+\.json$/.test(name)));
+  for (const row of rows) {
+    const path = quizImagePath(row["한자"]);
+    if (!path) continue;
+    const name = basename(path);
+    const url = media.items.image1?.[driveFileId(row["이미지 1"])]?.detail?.url;
+    writeGeneratedFile(resolve(dir, name), JSON.stringify(isQuizImageUrl(url) ? url : null));
+    oldFiles.delete(name);
+  }
+  for (const name of oldFiles) rmSync(resolve(dir, name), { force: true });
+}
+
 export function writeKanjiListData(directory = resolve("public/data")) {
   const kanjiBytes = readFileSync(resolve(directory, "kanji.json"));
   const mediaBytes = readFileSync(resolve(directory, "media.json"));
   const rows = JSON.parse(kanjiBytes);
   const media = JSON.parse(mediaBytes);
+  writeQuizImageLinks(directory, rows, media);
   const blockSize = 16;
   const version = createHash("sha256").update(`kanji-detail-v1:${blockSize}\0`)
     .update(kanjiBytes).update(mediaBytes).digest("hex");

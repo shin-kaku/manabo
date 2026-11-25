@@ -1,6 +1,6 @@
 import { populateQuizLevels } from "./quiz-levels.js";
 import { studySeo } from "./seo.js";
-import { loadMedia, mediaCandidates } from "./media.js";
+import { quizImageCandidates } from "./quiz-image.js";
 import { displayLabel, fillPopoverMeta, placeKanjiPopover } from "./kanji-popover.js";
 import { characterDetailPath, studyDetailHref } from "./study-path.js";
 
@@ -72,7 +72,7 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       function ensureKanji() {
         if (kanjiReady) return Promise.resolve();
         if (!kanjiRequest) kanjiRequest = (async () => {
-          [DATA] = await Promise.all([fetchSavedRows("kanji"), loadMedia()]);
+          DATA = await fetchSavedRows("kanji");
           kanjiMap = new Map(DATA.map(row => [text(row["한자"]), row]));
           populateFilters();
           kanjiReady = true;
@@ -178,6 +178,7 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         popoverAnchorRect = null,
         popoverHoverTimer = null;
       let imageReturnFocus = null;
+      let imageRequestId = 0;
       const backgroundInert = new Map();
       function activeModal() {
         return imageViewer.overlay.hidden ? null : imageViewer.overlay;
@@ -254,37 +255,43 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
           return;
         hideKanjiPopover();
       }
-      function openImageViewer(d, returnFocus) {
+      async function openImageViewer(d, returnFocus) {
+        const id = ++imageRequestId;
         hideKanjiPopover();
-        const ch = text(d["한자"]),
-          urls = mediaCandidates(d, "image1", "detail");
+        const ch = text(d["한자"]);
         imageReturnFocus = returnFocus;
         imageViewer.fallback.textContent = ch;
         imageViewer.fallback.hidden = false;
         imageViewer.image.hidden = true;
         imageViewer.image.alt = `${ch} 암기 이미지 크게 보기`;
+        imageViewer.overlay.hidden = false;
+        syncModalState();
+        imageViewer.close.focus();
+
+        const urls = await quizImageCandidates(d);
+        if (id !== imageRequestId) return;
         let attempt = 0;
         imageViewer.image.onload = () => {
+          if (id !== imageRequestId) return;
           imageViewer.image.hidden = false;
           imageViewer.fallback.hidden = true;
         };
         imageViewer.image.onerror = () => {
+          if (id !== imageRequestId) return;
           attempt++;
           if (attempt < urls.length) imageViewer.image.src = urls[attempt];
           else imageViewer.image.hidden = true;
         };
         if (urls.length) imageViewer.image.src = urls[0];
-        imageViewer.overlay.hidden = false;
-        syncModalState();
-        imageViewer.close.focus();
       }
       function closeImageViewer() {
         if (imageViewer.overlay.hidden) return;
+        imageRequestId++;
         imageViewer.overlay.hidden = true;
-        imageViewer.image.removeAttribute("src");
-        imageViewer.image.hidden = true;
         imageViewer.image.onload = null;
         imageViewer.image.onerror = null;
+        imageViewer.image.removeAttribute("src");
+        imageViewer.image.hidden = true;
         syncModalState();
         restoreFocus(imageReturnFocus);
         imageReturnFocus = null;

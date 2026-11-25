@@ -47,3 +47,4 @@ dist-ssr
 /src/catalog-characters.json
 /public/data/kanji-index.json
 /public/data/kanji-detail/
+/public/data/quiz-image/
