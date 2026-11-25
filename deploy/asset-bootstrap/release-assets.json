@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "generations": [
+    {
+      "assets/character-page-DPBKSL1W.js": "cd1af4d4c7e7c6a988247a509fec4d5cb44ef81a07002d7d696feb956fcf7b09",
+      "assets/character-page-Dz6jc8YM.css": "12ddadaf874f994af9311acbc453a7d121ffbace147e5dd1b3b917af13fb4f17",
+      "assets/index-BHeFnJGH.js": "27cb12b7933d60987e05a9a85856433ff8794828dcf3b3687db18dbc6795a201",
+      "assets/index-Bj54ffGf.css": "8b83764bbda86204d088be104dacb352a753e33a74e9520e62bf07dd37033f93",
+      "assets/index-CKaiutzx.css": "f713e30e090e6a4593d6bac98278dd2ebf6accaaff731a2a593958cee31b008e",
+      "assets/kanji-popover-Dbn4FvXQ.js": "64ecd76d2cb31d42e6d5c5b7b831ee628869a6e0c71ba7f45ed0b1bf23be2760",
+      "assets/kanji/index-BhD-380f.js": "93714d727aeebf17eff4a05d0ac51d401a46827a2954138928a22924c440cad9",
+      "assets/main-CBOxMmTo.js": "7d5e81435aa1f8cd819112ca394a5abc845ab593fa1fcc1a3052bcb669c5999b",
+      "assets/site-info-C0hLgL4s.js": "a11150d52142ff2240a899cd68aa8a2445b697ced0ca05d845420148a5bb73e4",
+      "assets/site-info-CT9nqPa4.css": "d4b9b465e6b1d84a71c781ebae6283a0c0336b1a5b95c4bc5ed015e694260907",
+      "assets/study-index-Bm_nMAGP.js": "cdd6528675f21a64eb7ae4deaef542fead7fb55d96316c4393ed2ca4bb44417b",
+      "assets/study-lookup-gfq27v97.js": "24689a065610102f91e322095b73ce6661d5bf45eb181b445e1d0a8253033229",
+      "assets/study-lookup-qeTrFF7k.css": "57bb1b7109e2b21e4c7f0840be13ad909addda38c51f608f7eecc0f902da1701",
+      "assets/study-path-CtcSkV1X.js": "8ff5cf1bbbced5701a7d03c2e1d6401920204c5bc18493cce68cdfbbd46a6aad"
+    },
+    {
+      "assets/character-page-DPBKSL1W.js": "cd1af4d4c7e7c6a988247a509fec4d5cb44ef81a07002d7d696feb956fcf7b09",
+      "assets/character-page-Dz6jc8YM.css": "12ddadaf874f994af9311acbc453a7d121ffbace147e5dd1b3b917af13fb4f17",
+      "assets/index-BHeFnJGH.js": "27cb12b7933d60987e05a9a85856433ff8794828dcf3b3687db18dbc6795a201",
+      "assets/index-Bj54ffGf.css": "8b83764bbda86204d088be104dacb352a753e33a74e9520e62bf07dd37033f93",
+      "assets/index-CKaiutzx.css": "f713e30e090e6a4593d6bac98278dd2ebf6accaaff731a2a593958cee31b008e",
+      "assets/kanji-popover-Dbn4FvXQ.js": "64ecd76d2cb31d42e6d5c5b7b831ee628869a6e0c71ba7f45ed0b1bf23be2760",
+      "assets/kanji/index-BhD-380f.js": "93714d727aeebf17eff4a05d0ac51d401a46827a2954138928a22924c440cad9",
+      "assets/main-CZCVprgO.js": "f89e3c733619bb8fd7c397d706a4c83389c3cb342c644163b9b44dd79a23ce3d",
+      "assets/site-info-C0hLgL4s.js": "a11150d52142ff2240a899cd68aa8a2445b697ced0ca05d845420148a5bb73e4",
+      "assets/site-info-CT9nqPa4.css": "d4b9b465e6b1d84a71c781ebae6283a0c0336b1a5b95c4bc5ed015e694260907",
+      "assets/study-index-Bm_nMAGP.js": "cdd6528675f21a64eb7ae4deaef542fead7fb55d96316c4393ed2ca4bb44417b",
+      "assets/study-lookup-gfq27v97.js": "24689a065610102f91e322095b73ce6661d5bf45eb181b445e1d0a8253033229",
+      "assets/study-lookup-qeTrFF7k.css": "57bb1b7109e2b21e4c7f0840be13ad909addda38c51f608f7eecc0f902da1701",
+      "assets/study-path-CtcSkV1X.js": "8ff5cf1bbbced5701a7d03c2e1d6401920204c5bc18493cce68cdfbbd46a6aad"
+    }
+  ]
+}

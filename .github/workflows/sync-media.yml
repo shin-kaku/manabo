@@ -90,6 +90,9 @@ jobs:
           if-no-files-found: warn
       - if: steps.content.outputs.changed == 'true'
         run: npm run build
+      - name: Retain bundles used by previously published pages
+        if: steps.content.outputs.changed == 'true'
+        run: npm run release:assets
       - name: Refuse stale release if source code changed during the job
         if: steps.content.outputs.changed == 'true'
         run: |
