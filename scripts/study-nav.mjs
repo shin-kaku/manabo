@@ -1,7 +1,7 @@
 const tabs = [
   ["navKanji", "한자 도감", "/kanji/"],
   ["navGame", "한자 퀴즈", "/quiz/"],
-  ["navBooks", "한자 교재", "/textbook/"],
+  ["navBooks", "한자 교재", "/book/"],
 ];
 
 export function studyNavigation(current = "") {

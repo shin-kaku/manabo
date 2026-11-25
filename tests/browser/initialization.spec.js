@@ -24,14 +24,14 @@ test("slow reading font never blocks kanji or reading data and is requested only
     await expect(page.locator("[data-directory-grid] a")).toHaveCount(96);
     expect(calls).toBe(0);
     await page.locator("#navGame").click();
-    await expect(page.locator("#readingStart")).toBeVisible();
+    await expect(page.locator("#choose-reading")).toBeVisible();
     expect(calls).toBe(0);
-    await page.locator("#readingStart").click();
+    await page.locator("#choose-reading").click();
     await expect(page.locator("#storyCopy")).not.toBeEmpty();
     await expect(page.locator("#learningStatus")).toBeHidden();
     await expect.poll(() => calls).toBe(1);
     await page.locator("#navGame").click();
-    await page.locator("#readingStart").click();
+    await page.locator("#choose-reading").click();
     await expect(page.locator("#storyCopy")).toBeVisible();
     expect(calls).toBe(1);
     release();

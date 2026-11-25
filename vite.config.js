@@ -44,7 +44,7 @@ export default defineConfig({
     configureServer(server) {
       server.watcher.on("change", (path) => {
         if (/\/public\/data\/(kanji|media)\.json$/.test(path)) writeKanjiListData();
-        if (path === studyTemplatePath || path.endsWith("/public/data/stories.json")) writeStudyPages();
+        if (path === studyTemplatePath) writeStudyPages();
         if (path === studyTemplatePath ||
             /\/src\/(materials\.html|(?:entry-art-zoom|material-directory-data|study-path|reading-groups|kanji-components|media|image-sources)\.js)$/.test(path) ||
             /\/scripts\/(material-directory|material-pages|character-pages|html)\.mjs$/.test(path) ||
@@ -64,7 +64,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: Object.fromEntries(
-        ["index", "materials/kanji/index", ...studyPages.map((page) => `${page.path}/index`), ...materials.map(path => `${path}/index`), "about/index", "privacy-policy/index", "copyright/index", "contact/index"].map(
+        ["index", "textbook/index", "materials/kanji/index", ...studyPages.map((page) => `${page.path}/index`), ...materials.map(path => `${path}/index`), "about/index", "privacy-policy/index", "copyright/index", "contact/index"].map(
           (page) => [page, fileURLToPath(new URL(`./${page}.html`, import.meta.url))],
         ),
       ),

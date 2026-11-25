@@ -24,9 +24,9 @@
   align-items: center;
   gap: 10px;
   min-height: 44px;
-  padding: 8px 14px;
+  padding: 8px var(--control-chevron-inset);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--control-radius);
   background: var(--paper);
   font-size: 14px;
   font-weight: 600;
@@ -34,14 +34,7 @@
   cursor: pointer;
 }
 .site-info-menu summary::-webkit-details-marker { display: none; }
-.site-info-menu summary::after {
-  content: "";
-  flex-shrink: 0;
-  width: 12px;
-  height: 12px;
-  background: var(--muted);
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 5.5 8 10.5 13 5.5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-}
+.site-info-menu summary::after { flex-shrink: 0; }
 .site-info-menu[open] summary::after { transform: scaleY(-1); }
 .site-info-menu summary:hover, .site-info-menu[open] summary { border-color: var(--accent); color: var(--accent); }
 .site-info-menu summary:hover::after, .site-info-menu[open] summary::after { background: currentColor; }
@@ -64,7 +57,7 @@
 .header-info-links a {
   display: block;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: var(--control-radius);
   color: var(--ink);
   font-size: 14px;
   line-height: 1.5;
@@ -90,7 +83,7 @@
   min-height: 44px;
   padding: 12px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--control-radius);
   background: transparent;
   color: var(--ink);
   font: inherit;
@@ -171,7 +164,7 @@
   min-height: 44px;
   padding: 8px 16px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--control-radius);
   background: var(--paper);
   color: var(--ink);
   font: inherit;
@@ -190,13 +183,20 @@
 .brand-name { line-height: 30px; }
 .brand-subtitle { color: var(--muted); font-size: 13px; font-weight: 400; letter-spacing: normal; line-height: 16px; }
 .brand-icon { display: block; width: 46px; height: 46px; flex-shrink: 0; }
-.info-wrap { max-width: 960px; }
-.info-page {
+.wrap.info-wrap { max-width: 960px; }
+/* Keep short tabs aligned when the browser uses a classic vertical scrollbar. */
+:root:has(.info-wrap > .site-nav-wrap) { overflow-y: scroll; }
+@media (min-width: 601px) {
+  .info-wrap .site-tab { min-width: 7.5em; }
+}
+.info-page, .game-view.content-panel {
   margin-top: 36px;
   padding: 40px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+}
+.info-page {
   font-size: 16px;
   line-height: 1.9;
   overflow-wrap: anywhere;
@@ -214,7 +214,7 @@
 .info-contact { padding: 20px; border: 1px solid var(--line); border-radius: 8px; }
 .material-links li { line-height: 1.8; }
 .material-character-index { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 8px; margin: 24px 0 0; }
-.material-character-index a { display: grid; place-items: center; min-height: 48px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font-size: 1.35rem; line-height: 1; text-decoration: none; }
+.material-character-index a { display: grid; place-items: center; min-height: 48px; border: 1px solid var(--line); border-radius: var(--control-radius); color: var(--ink); font-size: 1.35rem; line-height: 1; text-decoration: none; }
 .material-character-index a:hover, .material-character-index a:focus-visible { color: var(--accent); border-color: var(--accent); }
 .material-story { border-top: 1px solid var(--line); margin-top: 28px; padding-top: 16px; }
 .material-story p { white-space: pre-line; }
@@ -224,12 +224,13 @@
   .site-header { gap: 12px; }
   .header-actions { display: contents; }
   .site-header h1 { font-size: 18px; line-height: 1.3; }
-  .site-info-menu summary { padding: 8px 10px; font-size: 13px; }
+  .site-info-menu summary { font-size: 13px; }
   .brand-link { font-size: 18px; gap: 6px; }
   .brand-name { line-height: 21px; }
   .brand-subtitle { font-size: 11px; line-height: 13px; }
   .brand-icon { width: 34px; height: 34px; }
-  .info-page { margin-top: 24px; padding: 24px 20px; font-size: 15px; }
+  .info-page, .game-view.content-panel { margin-top: 24px; padding: 24px 20px; }
+  .info-page { font-size: 15px; }
   .info-page h1 { font-size: 26px; }
   .info-page h2 { font-size: 18px; }
   .info-lead { font-size: 16px; }

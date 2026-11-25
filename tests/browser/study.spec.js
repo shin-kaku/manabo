@@ -21,7 +21,7 @@ async function mockData(page, options = {}) {
   return state;
 }
 const ready = (page) => expect(page.locator("#learningStatus")).toBeHidden();
-for (const path of ["/kanji/", "/quiz/"]) {
+for (const path of ["/kanji/", "/quiz/choice/"]) {
   test(`${path} works while stories is unavailable and never requests it`, async ({ page }) => {
     const state = await mockData(page, { storiesStatus: 503 });
     await page.goto(path);
@@ -42,7 +42,7 @@ for (const path of ["/kanji/", "/quiz/"]) {
   });
 }
 
-for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], ["/quiz/", "kanji"]]) {
+for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], ["/quiz/choice/", "kanji"]]) {
   test(`${path} visible ${failed} error retries real requests without duplicates`, async ({ page }) => {
     const state = await mockData(page, { [`${failed}Status`]: 503 });
     await page.goto(path);
@@ -54,9 +54,10 @@ for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], 
     await page.locator("#learningRetry").click();
     await ready(page);
     expect(state[`${failed}Calls`]).toBe(3);
-    const grades = new Set(kanji.map((row) => row["학년"]).filter(Boolean));
-    await expect(page.locator("#gameGrade option")).toHaveCount([...grades].filter(value => value !== "참고").length + 1);
-    if (path === "/reading/") {
+    if (path === "/quiz/choice/") {
+      const grades = new Set(kanji.map(row => row["학년"]).filter(value => value && value !== "참고"));
+      await expect(page.locator("#gameGrade input[type=radio]")).toHaveCount(grades.size + 1);
+    } else {
       await expect(page.locator("#grid .card")).toHaveCount(0);
       await expect(page.locator("#storyCopy .kanji-link").first()).toBeVisible();
       await expect(page.locator(".story-level")).toHaveCount(stories.length);
@@ -67,13 +68,15 @@ for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], 
 test("quiz and reading share loaded data and can open standalone kanji details", async ({ page }) => {
   const state = await mockData(page, { storiesStatus: 503 });
   await page.goto("/quiz/");
-  await ready(page);
-  await page.getByRole("button", { name: "독해 시작하기", exact: true }).click();
+  await expect(page.locator("#choose-reading")).toBeVisible();
+  expect(state.kanjiCalls).toBe(0);
+  expect(state.storiesCalls).toBe(0);
+  await page.locator("#choose-reading").click();
   await expect(page.locator("#learningRetry")).toBeVisible();
   await page.locator("#navGame").click();
   await ready(page);
   state.storiesStatus = 200;
-  await page.getByRole("button", { name: "독해 시작하기", exact: true }).click();
+  await page.locator("#choose-reading").click();
   await expect(page.locator("#storyCopy .kanji-link").first()).toBeVisible();
   expect(state.storiesCalls).toBe(2);
   expect(state.kanjiCalls).toBe(1);
@@ -216,21 +219,21 @@ test("quiz completion, insufficient pool, and valid restart never retain stale r
   const smallPool = kanji.slice(0, 5).map((row, index) => ({ ...row,
     학년: index < 4 ? "초등학교 1학년" : "초등학교 2학년", 등급: "JLPT N5" }));
   await mockData(page, { kanji: smallPool });
-  await page.goto("/quiz/");
+  await page.goto("/quiz/choice/");
   await ready(page);
-  await page.locator("#gameGrade").selectOption("초등학교 1학년");
+  await page.locator('#gameGrade input[value="초등학교 1학년"]').check();
   await page.locator("#gameStart").click();
   await expect(page.locator("#gameProgress")).toHaveText("1 / 4");
   for (let i = 0; i < 4; i++) { await page.locator(".game-choice").first().click(); await page.locator("#gameNext").click(); }
   await expect(page.locator("#gameQuestionLabel")).toHaveText("사지선다 완료");
   await page.locator("#gameSettingsButton").click();
-  await page.locator("#gameGrade").selectOption("초등학교 2학년");
+  await page.locator('#gameGrade input[value="초등학교 2학년"]').check();
   await page.locator("#gameStart").click();
   await expect(page.locator("#gameSetupError")).toBeVisible();
   await expect(page.locator("#gameSetup")).toBeVisible();
   await expect(page.locator("#gamePlay")).toBeHidden();
   await expect(page.getByText("같은 조건으로 다시", { exact: true })).toBeHidden();
-  await page.locator("#gameGrade").selectOption("초등학교 1학년");
+  await page.locator('#gameGrade input[value="초등학교 1학년"]').check();
   await page.locator("#gameStart").click();
   await expect(page.locator("#gameSetupError")).toBeHidden();
   await expect(page.locator(".game-choice")).toHaveCount(4);

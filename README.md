@@ -94,7 +94,7 @@ Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 �
 | --- | --- |
 | `index.html`, `src/home.js`, `src/home.css` | 별도 홈 `/` |
 | `src/study.html` | 학습 HTML 원본 |
-| `scripts/study-pages.mjs` | `/reading/`, `/quiz/` HTML 생성 |
+| `scripts/study-pages.mjs` | `/reading/`, `/quiz/`, `/quiz/choice/` HTML 생성 |
 | `src/materials.html`, `scripts/material-pages.mjs` | 학습 자료 모음과 학년·JLPT별 한자 카드 목록 및 독해 본문 HTML 생성 |
 | `src/main.js`, `src/styles.css` | 학습 로직과 스타일 |
 | `scripts/material-directory.mjs`, `src/material-directory.js` | 한자 도감의 검색·필터·정렬 및 목록 추가 표시 |

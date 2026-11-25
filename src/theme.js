@@ -14,6 +14,9 @@ function applyTheme(theme) {
   root.dataset.theme = theme === "dark" ? "dark" : "light";
   for (const picture of document.querySelectorAll("picture[data-stroke-url]")) applyStrokeTheme(picture);
   const dark = root.dataset.theme === "dark";
+  for (const source of document.querySelectorAll("source[data-dark-preview]")) {
+    source.media = dark ? "all" : "not all";
+  }
   for (const button of buttons) {
     button.textContent = dark ? "화이트모드로 전환" : "다크모드로 전환";
   }

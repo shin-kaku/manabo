@@ -16,7 +16,7 @@ export function directoryPageTemplate(template, studyNav) {
 
 function select(label, name, options, selected = "") {
   const option = options.map(([value, text]) => `<option value="${e(value)}"${value === selected ? " selected" : ""}>${e(text)}</option>`).join("");
-  return `<label for="directory-${name}">${label}<select id="directory-${name}" name="${name}">${option}</select></label>`;
+  return `<label for="directory-${name}">${label}<span class="select-field"><select id="directory-${name}" name="${name}">${option}</select></span></label>`;
 }
 
 export function materialDirectory(kanji, levels, grades) {

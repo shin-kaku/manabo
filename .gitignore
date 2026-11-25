@@ -14,10 +14,11 @@ dist-ssr
 # Generated from src/study.html by the Vite config.
 /reading/index.html
 /quiz/index.html
+/quiz/choice/index.html
 # Generated from src/materials.html and public/data by the Vite config.
 /materials/
 /kanji/
-/textbook/
+/book/
 *.local
 .env.local
 

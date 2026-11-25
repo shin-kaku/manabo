@@ -4,7 +4,7 @@ export const directoryPageSize = 96;
 export const directoryFields = ["q", "jlpt", "grade", "strokes", "sort"];
 export const defaultDirectorySort = "ministry";
 export const directorySortNames = [
-  ["memory", "마나보 추천순"], ["ministry", "상용한자순"],
+  ["memory", "마나보 추천순 🔥"], ["ministry", "상용한자순"],
   ["strokes", "획순"], ["sound", "가나다순"],
 ];
 

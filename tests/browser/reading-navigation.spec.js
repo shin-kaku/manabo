@@ -18,92 +18,179 @@ test("reader restores a linked story from history and the quiz hub starts the de
   await expect(page.locator("#storyTitle")).toHaveText(original.title);
   await page.goForward();
   await page.locator("#navGame").click();
-  await expect(page.locator("#readingJlpt")).toHaveValue("story-1");
-  await page.getByRole("button", { name: "독해 시작하기", exact: true }).click();
+  await page.locator("#choose-reading").click();
   await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-1").title);
 });
 
-test("keyboard story selection retains focus on the selected level", async ({ page }) => {
+test("keyboard story selection retains focus on the selected level", async ({ page, browserName }) => {
   await page.goto("/reading/");
   await expect(page.locator("#learningStatus")).toBeHidden();
   await page.locator("#jlptStoryLevels button").first().focus();
   await page.keyboard.press("Enter");
   const chosen = page.locator('#jlptStoryLevels button[aria-current="true"]');
   await expect(chosen).toBeFocused();
-  await page.keyboard.press("Tab");
+  // macOS WebKit uses Option+Tab to include every focusable control.
+  const nextControl = browserName === "webkit" && process.platform === "darwin" ? "Alt+Tab" : "Tab";
+  await page.keyboard.press(nextControl);
   await expect(page.locator("#jlptStoryLevels button").nth(1)).toBeFocused();
 });
 
-test("quiz hub opens a chosen JLPT or grade story only when the reader is started", async ({ page }) => {
+test("the quiz hub opens the reader and its JLPT and grade stories", async ({ page }) => {
   await page.goto("/quiz/");
-  const jlpt = page.locator("#readingJlpt");
-  const grade = page.locator("#readingGrade");
-  const start = page.getByRole("button", { name: "독해 시작하기", exact: true });
-  const jlptStories = stories.filter(story => story.category === "JLPT");
-  const gradeStories = stories.filter(story => story.category === "학년별");
-  for (const [select, category] of [[jlpt, jlptStories], [grade, gradeStories]]) {
-    const ids = await select.locator("option").evaluateAll(options => options.map(option => option.value).filter(Boolean));
-    expect(ids).toEqual(category.map(story => story.id));
-  }
-  for (const [select, other, story] of [[grade, jlpt, gradeStories.at(-1)], [jlpt, grade, jlptStories.at(-1)]]) {
-    await select.selectOption(story.id);
-    await expect(other).toHaveValue("");
-    await expect(page).toHaveURL(/\/quiz\/$/);
-    await expect(page.locator("#storyView")).toBeHidden();
-    await start.click();
-    await expect(page.locator("#storyTitle")).toHaveText(story.title);
-    expect(new URL(page.url()).searchParams.get("story")).toBe(story.id);
+  await page.locator("#choose-reading").click();
+  await expect(page).toHaveURL(/\/reading\/$/);
+  await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-1").title);
+  for (const [group, category] of [["#jlptStoryLevels", "JLPT"], ["#gradeStoryLevels", "학년별"]]) {
+    const levels = stories.filter(story => story.category === category);
+    const buttons = page.locator(group).getByRole("button");
+    await expect(buttons).toHaveCount(levels.length);
+    const last = levels.at(-1);
+    await buttons.last().click();
+    await expect(page.locator("#storyTitle")).toHaveText(last.title);
+    expect(new URL(page.url()).searchParams.get("story")).toBe(last.id);
+    await page.reload();
+    await expect(page.locator("#storyTitle")).toHaveText(last.title);
+    await expect(buttons.last()).toHaveAttribute("aria-current", "true");
     await expect(page.locator("#navGame")).toHaveAttribute("aria-current", "page");
-    await page.goBack();
-    await expect(start).toBeVisible();
-    await expect(select).toHaveValue(story.id);
   }
 });
 
-test("reader exits from either end to its quiz card, including bookmarked stories", async ({ page }) => {
+test("exiting a bookmarked story at either end restores the reader link in the hub", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/reading/?story=story-12");
   const exits = page.locator("#storyView").getByRole("link", { name: "독해 나가기", exact: true });
-  const start = page.getByRole("button", { name: "독해 시작하기", exact: true });
-  await expect(exits).toHaveCount(2);
-  await expect(exits.first()).toBeInViewport();
-  await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-12").title);
-  for (const exit of [exits.first(), exits.last()]) {
-    await exit.click();
-    await expect(page).toHaveURL(/\/quiz\/#reading-setup$/);
-    await expect(page.locator("#readingGrade")).toHaveValue("story-12");
-    await expect(start).toBeFocused();
-    await start.click();
-    await expect(page.locator("#storyTitle")).toBeVisible();
+  for (const position of [0, 1]) {
+    await page.goto("/reading/?story=story-12");
+    await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-12").title);
+    await expect(exits).toHaveCount(2);
+    await expect(exits.first()).toBeInViewport();
+    await exits.nth(position).click();
+    await expect(page).toHaveURL(/\/quiz\/$/);
+    await expect(page.locator("#choose-reading")).toBeFocused();
   }
 });
 
-test("mobile quiz hub stacks three cards and its textbook tab opens a separate page", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 });
+test("the quiz gallery links to a dedicated choice setup and skips the unreleased game", async ({ page }) => {
   await page.goto("/quiz/");
-  const nav = page.getByRole("navigation", { name: "콘텐츠 전환" });
-  await expect(nav.getByRole("link")).toHaveText(["한자 도감", "한자 퀴즈", "한자 교재"]);
-  await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 퀴즈");
-  const cards = page.locator("#gameView .game-shell");
-  await expect(cards.getByRole("heading")).toHaveText(["사지선다", "한자음 독해 문제", "일본어 한자 게임"]);
-  const bounds = await cards.evaluateAll(items => items.map(card => {
-    const { top, bottom, left, right } = card.getBoundingClientRect();
-    return { top, bottom, left, right };
-  }));
-  for (const [index, box] of bounds.entries()) {
-    expect(box.left).toBeGreaterThanOrEqual(0);
-    expect(box.right).toBeLessThanOrEqual(375);
-    if (index > 0) expect(box.top).toBeGreaterThanOrEqual(bounds[index - 1].bottom);
+  const shelf = page.locator(".quiz-shelf");
+  const choice = shelf.getByRole("link", { name: "사지선다", exact: true });
+  const reading = shelf.getByRole("link", { name: "한자음 독해", exact: true });
+  await expect(shelf.getByRole("link")).toHaveCount(2);
+  await expect(choice).toHaveAttribute("href", "/quiz/choice/");
+  await expect(reading).toHaveAttribute("href", "/reading/");
+  await expect(choice.locator("picture img")).toBeVisible();
+  await expect(reading.locator("picture img")).toBeVisible();
+  const upcoming = shelf.locator(".quiz-upcoming:last-child");
+  await expect(upcoming).toBeVisible();
+  await expect(upcoming).toContainText("일본어 한자 게임");
+  await expect(upcoming).toContainText("준비 중");
+  expect(await upcoming.evaluate(card => card.tabIndex)).toBe(-1);
+  await expect(upcoming.locator("a, button, img")).toHaveCount(0);
+  await expect(page.locator("#choice-card")).toBeHidden();
+  await choice.press("Enter");
+  await expect(page).toHaveURL(/\/quiz\/choice\/$/);
+  await expect(page.locator("#choice-card")).toBeVisible();
+  await expect(shelf).toBeHidden();
+  const jlpt = page.locator("#gameJlpt");
+  const grade = page.locator("#gameGrade");
+  await expect(jlpt.locator('input[value=""]')).toBeChecked();
+  await expect(grade.locator('input[value=""]')).toBeChecked();
+  const n5 = jlpt.locator('input[value="JLPT N5"]');
+  await n5.check();
+  await expect(n5).toBeChecked();
+  await expect(jlpt.locator('input[value=""]')).not.toBeChecked();
+  await page.locator("#gameCount").selectOption("25");
+  const start = page.locator("#gameStart");
+  await start.click();
+  await expect(page.locator("#gamePlay .game-choice")).toHaveCount(4);
+  await expect(page.locator("#gameProgress")).toHaveText("1 / 25");
+  await page.locator("#gameExit").click();
+  await expect(start).toBeFocused();
+  await expect(page).toHaveURL(/\/quiz\/choice\/$/);
+  await page.locator(".quiz-exit").click();
+  await expect(page).toHaveURL(/\/quiz\/$/);
+  await expect(choice).toBeVisible();
+});
+
+test("a quiz link clicked before the study script loads opens the reader", async ({ page }) => {
+  let resume;
+  const paused = new Promise(resolve => { resume = resolve; });
+  await page.route(/\/(src\/main|assets\/main-[^/]+)\.js(?:\?.*)?$/, async route => {
+    await paused;
+    await route.continue();
+  });
+  try {
+    await page.goto("/quiz/", { waitUntil: "commit" });
+    await page.locator("#choose-reading").click({ noWaitAfter: true });
+    await page.waitForURL("**/reading/", { waitUntil: "commit" });
+  } finally { resume(); }
+  await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-1").title);
+});
+
+test("legacy quiz bookmarks open the matching page, and browser Back and Forward restore the gallery", async ({ page }) => {
+  await page.goto("/quiz/#reading-setup");
+  await expect(page).toHaveURL(/\/reading\/$/);
+  await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-1").title);
+  await page.goto("/quiz/#choice-card");
+  await expect(page).toHaveURL(/\/quiz\/choice\/$/);
+  await expect(page.locator("#gameStart")).toBeVisible();
+  await page.locator(".quiz-exit").click();
+  await expect(page.locator("#choose-choice")).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/quiz\/choice\/$/);
+  await expect(page.locator("#gameStart")).toBeVisible();
+  await page.goForward();
+  await expect(page).toHaveURL(/\/quiz\/$/);
+  await expect(page.locator("#choose-choice")).toBeVisible();
+});
+
+test.describe("mobile quiz selector", () => {
+  test.use({ viewport: { width: 375, height: 812 }, hasTouch: true });
+
+  test("touch opens the reader directly and the textbook tab opens its own page", async ({ page }) => {
+    await page.goto("/quiz/");
+    const nav = page.getByRole("navigation", { name: "콘텐츠 전환" });
+    await expect(nav.getByRole("link")).toHaveText(["한자 도감", "한자 퀴즈", "한자 교재"]);
+    await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 퀴즈");
+    const shelf = page.locator(".quiz-shelf");
+    await expect(shelf.getByRole("link")).toHaveCount(2);
+    const upcoming = shelf.locator(".quiz-upcoming:last-child");
+    await expect(upcoming).toContainText("준비 중");
+    await upcoming.tap();
+    await expect(page).toHaveURL(/\/quiz\/$/);
+    await expect(page.locator("#gameStart")).toBeHidden();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+    await page.locator("#choose-reading").tap();
+    await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-1").title);
+    await nav.getByRole("link", { name: "한자 교재" }).tap();
+    await expect(page).toHaveURL(/\/book\/$/);
+    await expect(page.getByRole("main")).toHaveText("준비중");
+    for (const meta of ['meta[name="description"]', 'meta[property="og:description"]']) {
+      await expect(page.locator(meta)).toHaveAttribute("content", "준비중");
+    }
+    await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 교재");
+    await nav.getByRole("link", { name: "한자 도감" }).tap();
+    await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 도감");
+  });
+});
+
+for (const width of [390, 1440]) test(`switching study tabs keeps the catalog layout at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 844 });
+  await page.addInitScript(() => localStorage.setItem("manabo-theme-v1", "dark"));
+  let reference;
+  for (const path of ["/kanji/", "/quiz/", "/book/"]) {
+    await page.goto(path);
+    const panel = path === "/quiz/" ? "#gameView" : ".info-page";
+    const boxes = await page.evaluate(selector => {
+      const elements = [
+        document.querySelector(".brand-icon"), document.querySelector(".site-info-menu summary"),
+        ...document.querySelectorAll(".site-tab"), document.querySelector(selector),
+      ];
+      return elements.map(element => {
+        const { left, top, width } = element.getBoundingClientRect();
+        return [Math.round(left), Math.round(top), Math.round(width)];
+      });
+    }, panel);
+    reference ??= boxes;
+    expect(boxes).toEqual(reference);
   }
-  await expect(cards.last()).toContainText("준비 중");
-  await expect(cards.last().locator("a, button, input, select, [tabindex]")).toHaveCount(0);
-  await nav.getByRole("link", { name: "한자 교재" }).click();
-  await expect(page).toHaveURL(/\/textbook\/$/);
-  await expect(page.getByRole("main")).toHaveText("준비중");
-  for (const meta of ['meta[name="description"]', 'meta[property="og:description"]']) {
-    await expect(page.locator(meta)).toHaveAttribute("content", "준비중");
-  }
-  await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 교재");
-  await nav.getByRole("link", { name: "한자 도감" }).click();
-  await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 도감");
 });

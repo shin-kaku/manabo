@@ -3,20 +3,27 @@
 .study-directory h1 { margin-bottom: 1.3rem; }
 .directory-controls { display: grid; gap: 16px; }
 .directory-controls label { display: grid; gap: 5px; color: var(--muted); font-size: .83rem; font-weight: 600; }
-.directory-controls input, .directory-controls select { min-width: 0; width: 100%; min-height: 46px; padding: 9px 12px; border: 1px solid var(--line-dark); border-radius: 7px; color: var(--ink); background: var(--paper); font: inherit; font-size: 1rem; font-weight: 400; line-height: 1.45; }
+.directory-controls input, .directory-controls select { min-width: 0; width: 100%; min-height: 46px; padding-block: 9px; padding-inline-start: 12px; border: 1px solid var(--line-dark); border-radius: var(--control-radius); color: var(--ink); background-color: var(--paper); font: inherit; font-size: 1rem; font-weight: 400; line-height: 1.45; }
+.directory-controls input { appearance: none; padding-inline-end: 12px; }
 .directory-controls input:focus-visible, .directory-controls select:focus-visible, .study-directory a:focus-visible, .study-directory button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.directory-filters { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+.directory-filters { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)) minmax(10.75rem, 1fr); gap: 12px; }
 .directory-summary { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--line); font-size: .92rem; }
 .directory-summary [role=status] { font-variant-numeric: tabular-nums; }
 .study-directory .directory-grid { margin-top: 12px; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 5.5rem), 1fr)); }
-.study-directory .directory-grid a { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; padding: 10px 4px 8px; text-align: center; }
+.study-directory .directory-grid a { border-radius: var(--control-radius-xl); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; padding: 10px 4px 8px; text-align: center; }
 .study-directory .directory-grid a:hover { color: var(--ink); }
 .directory-grid a > [lang="ja"] { font-family: "Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; font-size: 1.5rem; line-height: 1.2; }
 .directory-grid small { display: block; width: 100%; font-size: .8125rem; line-height: 1.35; color: var(--muted); white-space: pre-line; word-break: keep-all; overflow-wrap: anywhere; }
-.directory-more, [data-directory-retry] { display: block; margin: 24px auto 0; padding: 9px 24px; border: 1px solid var(--line-dark); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; cursor: pointer; }
+.directory-more, [data-directory-retry] { display: block; margin: 24px auto 0; padding: 9px 24px; border: 1px solid var(--line-dark); border-radius: var(--control-radius); background: var(--paper); color: var(--ink); font: inherit; cursor: pointer; }
 .study-directory [hidden] { display: none; }
-@media (max-width: 540px) {
+@media (max-width: 800px) {
   .directory-filters { gap: 8px 10px; grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .directory-filters select { padding: 8px 3px; }
+}
+@media (max-width: 540px) {
+  .directory-filters { grid-template-columns: minmax(0,1fr) minmax(10rem,1fr); }
+  .directory-filters select { padding-block: 8px; padding-inline-start: 5px; }
   .study-directory .directory-grid { grid-template-columns: repeat(auto-fill,minmax(min(100%,4.4rem),1fr)); gap: 6px; }
+}
+@media (max-width: 340px) {
+  .directory-filters { grid-template-columns: minmax(0,1fr); }
 }

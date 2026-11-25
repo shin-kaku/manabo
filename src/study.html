@@ -26,7 +26,6 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#bc002d" />
     <link rel="icon" href="/favicon.svg?v=stick-accent-20261007" type="image/svg+xml" />
-    <link rel="preload" href="/data/kanji.json" as="fetch" crossorigin />
     <link rel="stylesheet" href="/src/styles.css" />
     <style>
       @media (scripting: none) {
@@ -42,9 +41,9 @@
   </script>
 </head>
   <body>
-    <div class="wrap">
+    <div class="wrap info-wrap">
       <header class="site-header">
-        <h1><a class="brand-link" href="/"><img class="brand-icon" src="/favicon.svg?v=stick-accent-20261007" alt="" width="36" height="36" /><span class="brand-text"><span class="brand-name">마나보</span><span class="brand-subtitle">그림으로 배우는 일본어 한자</span></span></a></h1>
+        <a class="brand-link" href="/"><img class="brand-icon" src="/favicon.svg?v=stick-accent-20261007" alt="" width="36" height="36" /><span class="brand-text"><span class="brand-name">마나보</span><span class="brand-subtitle">그림으로 배우는 일본어 한자</span></span></a>
       
         <div class="header-actions">
         <details class="site-info-menu">
@@ -72,7 +71,7 @@
         <button id="learningRetry" type="button" hidden>다시 시도</button>
       </div>
       <section id="storyView" class="story-view" hidden>
-        <a class="story-exit" href="/quiz/#reading-setup"><span aria-hidden="true">←</span> 독해 나가기</a>
+        <a class="story-exit" href="/quiz/"><span aria-hidden="true">←</span> 독해 나가기</a>
         <div class="story-layout">
           <aside class="story-sidebar" aria-label="스토리 분류">
             <div class="story-group">
@@ -88,120 +87,135 @@
             <div class="story-meta">
               <p class="story-guide">한국어 문장에 섞인 일본어 한자로 뜻을 복습하고, <strong class="learning-action">모르는 한자를 눌러</strong> 뜻과 정보를 확인해 보세요.</p>
             </div>
-            <h2 id="storyTitle" class="story-title" tabindex="-1"></h2>
+            <h1 id="storyTitle" class="story-title" tabindex="-1"></h1>
             <div id="storyCopy" class="story-copy"></div>
-            <a class="story-exit" href="/quiz/#reading-setup"><span aria-hidden="true">←</span> 독해 나가기</a>
+            <a class="story-exit" href="/quiz/"><span aria-hidden="true">←</span> 독해 나가기</a>
           </article>
         </div>
       </section>
 
-      <section id="gameView" class="game-view" hidden>
-        <section id="choice-card" class="game-shell" aria-labelledby="choiceTitle">
-          <p class="game-description">
-            <strong class="learning-action">JLPT·학년별로 범위를 정하고</strong> 한자의 뜻과 음을 골라 보세요.
-          </p>
-          <h2 id="choiceTitle" class="game-title">사지선다</h2>
+      <section id="gameView" class="game-view content-panel" hidden>
+        <div id="quizOptions" class="quiz-options">
+          <h1 class="quiz-heading">한자 퀴즈</h1>
+          <div class="quiz-shelf">
+            <div class="quiz-modes">
+              <a class="quiz-tile" href="/quiz/choice/" id="choose-choice" aria-labelledby="choice-name">
+                <picture class="quiz-cover">
+                  <source data-dark-preview media="not all" srcset="/images/quiz-preview-choice-dark.webp">
+                  <img src="/images/quiz-preview-choice.webp" alt="나무 그림과 木의 네 가지 보기에서 나무 목을 고른 화면" width="960" height="540" decoding="async">
+                </picture>
+                <span class="quiz-tile-caption">
+                  <strong id="choice-name">사지선다</strong>
+                  <span class="quiz-tile-description">한자의 뜻과 음 고르기</span>
+                </span>
+              </a>
+              <a class="quiz-tile" href="/reading/" id="choose-reading" aria-labelledby="reading-name">
+                <picture class="quiz-cover">
+                  <source data-dark-preview media="not all" srcset="/images/quiz-preview-reading-dark.webp">
+                  <img src="/images/quiz-preview-reading.webp" alt="본문의 川에 마우스를 올려 내 천의 뜻과 자세히 보기 버튼이 나타난 화면" width="920" height="516" decoding="async">
+                </picture>
+                <span class="quiz-tile-caption">
+                  <strong id="reading-name">한자음 독해</strong>
+                  <span class="quiz-tile-description">문장 속 한자를 우리말로 읽기</span>
+                </span>
+              </a>
+            </div>
+            <div class="quiz-upcoming">
+              <strong>일본어 한자 게임</strong>
+              <span>준비 중</span>
+            </div>
+          </div>
+        </div>
+        <section id="choice-card" class="quiz-mode-panel" hidden>
+          <a class="story-exit quiz-exit" href="/quiz/"><span aria-hidden="true">←</span> 퀴즈 선택으로</a>
+          <div class="quiz-setup">
+            <h1 id="choiceTitle" class="quiz-heading" tabindex="-1">사지선다</h1>
+            <div id="gameSetup" class="game-settings">
+              <fieldset id="gameJlpt" class="quiz-level-group">
+                <legend>JLPT</legend>
+                <div class="quiz-levels">
+                  <label class="quiz-level">
+                    <input type="radio" name="gameJlpt" value="" checked>
+                    <span>전체</span>
+                  </label>
+                </div>
+              </fieldset>
+              <fieldset id="gameGrade" class="quiz-level-group">
+                <legend>학년</legend>
+                <div class="quiz-levels">
+                  <label class="quiz-level">
+                    <input type="radio" name="gameGrade" value="" checked>
+                    <span>전체</span>
+                  </label>
+                </div>
+              </fieldset>
+              <div class="quiz-start-controls">
+                <div class="game-setting">
+                  <label for="gameCount">문제 수</label>
+                  <span class="select-field">
+                    <select id="gameCount" class="control">
+                      <option value="10">10문제</option>
+                      <option value="25">25문제</option>
+                      <option value="50">50문제</option>
+                    </select>
+                  </span>
+                </div>
+                <button id="gameStart" class="game-start" type="button" disabled>사지선다 시작하기</button>
+              </div>
+            </div>
 
-          <div id="gameSetup" class="game-settings">
-            <div class="game-setting">
-              <label for="gameJlpt">JLPT</label>
-              <select id="gameJlpt" class="control">
-                <option value="">JLPT 전체</option>
-              </select>
-            </div>
-            <div class="game-setting">
-              <label for="gameGrade">학년</label>
-              <select id="gameGrade" class="control">
-                <option value="">학년 전체</option>
-              </select>
-            </div>
-            <div class="game-setting">
-              <label for="gameCount">문제 수</label>
-              <select id="gameCount" class="control">
-                <option value="10">10문제</option>
-                <option value="25">25문제</option>
-                <option value="50">50문제</option>
-              </select>
-            </div>
-            <button id="gameStart" class="game-start" type="button">
-              문제 풀기
+            <p id="gameSetupError" class="game-feedback" role="alert" hidden>조건에 맞는 한자가 부족합니다. 다른 학년이나 JLPT를 선택해 주세요.</p>
+          </div>
+        </section>
+        <section id="gamePlay" class="game-play" aria-labelledby="playTitle" hidden>
+          <div class="game-play-heading">
+            <h1 id="playTitle" class="game-title">사지선다</h1>
+            <button id="gameExit" class="game-settings-button" type="button">설정으로</button>
+          </div>
+          <div class="game-progress-meta">
+            <span id="gameProgress">1 / 10</span>
+            <span>점수 <b id="gameScore">0</b></span>
+          </div>
+          <div class="game-progress-track" aria-hidden="true">
+            <div id="gameProgressBar" class="game-progress-bar"></div>
+          </div>
+          <div id="gameQuestion" class="game-question">
+            <div
+              id="gameQuestionLabel"
+              class="game-question-label"
+              hidden
+            ></div>
+            <div id="gameGlyph" class="game-glyph"></div>
+            <button id="gamePicture" class="game-picture" type="button">
+              그림 보기
             </button>
           </div>
-
-          <p id="gameSetupError" class="game-feedback" role="alert" hidden>조건에 맞는 한자가 부족합니다. 다른 학년이나 JLPT를 선택해 주세요.</p>
-          <div id="gamePlay" class="game-play" hidden>
-            <div class="game-progress-meta">
-              <span id="gameProgress">1 / 10</span>
-              <span>점수 <b id="gameScore">0</b></span>
+          <div id="gameChoices" class="game-choices"></div>
+          <div
+            id="gameFeedback"
+            class="game-feedback"
+            aria-live="polite"
+          ></div>
+          <div id="gameMistakes" class="game-mistakes" hidden>
+            <div class="info-section-heading game-mistakes-heading">
+              <div id="gameMistakesTitle" class="game-mistakes-title"></div>
+              <p id="gameMistakesGuide" class="detail-link-guide">한자를 눌러 정보를 확인하세요.</p>
             </div>
-            <div class="game-progress-track" aria-hidden="true">
-              <div id="gameProgressBar" class="game-progress-bar"></div>
-            </div>
-            <div id="gameQuestion" class="game-question">
-              <div
-                id="gameQuestionLabel"
-                class="game-question-label"
-                hidden
-              ></div>
-              <div id="gameGlyph" class="game-glyph"></div>
-              <button id="gamePicture" class="game-picture" type="button">
-                그림 보기
-              </button>
-            </div>
-            <div id="gameChoices" class="game-choices"></div>
-            <div
-              id="gameFeedback"
-              class="game-feedback"
-              aria-live="polite"
-            ></div>
-            <div id="gameMistakes" class="game-mistakes" hidden>
-              <div class="info-section-heading game-mistakes-heading">
-                <div id="gameMistakesTitle" class="game-mistakes-title"></div>
-                <p id="gameMistakesGuide" class="detail-link-guide">한자를 눌러 정보를 확인하세요.</p>
-              </div>
-              <div id="gameMistakesList" class="game-mistakes-list"></div>
-            </div>
-            <div class="game-actions">
-              <button
-                id="gameSettingsButton"
-                class="game-settings-button"
-                type="button"
-                hidden
-              >
-                처음으로
-              </button>
-              <button id="gameNext" class="game-next" type="button" hidden>
-                다음 문제
-              </button>
-            </div>
+            <div id="gameMistakesList" class="game-mistakes-list"></div>
           </div>
-        </section>
-
-        <section id="reading-setup" class="game-shell" aria-labelledby="readingSetupTitle">
-          <p class="game-description"><strong class="learning-action">JLPT나 학년을 골라</strong> 한국어 문장 속 한자를 읽어 보세요.</p>
-          <h2 id="readingSetupTitle" class="game-title">한자음 독해 문제</h2>
-          <form id="readingSetup" class="game-settings reading-settings" action="/reading/" method="get">
-            <div class="game-setting">
-              <label for="readingJlpt">JLPT</label>
-              <select id="readingJlpt" name="story" class="control">
-                <option value="">JLPT 선택</option>
-                {{READING_JLPT_OPTIONS}}
-              </select>
-            </div>
-            <div class="game-setting">
-              <label for="readingGrade">학년</label>
-              <select id="readingGrade" name="story" class="control">
-                <option value="">학년 선택</option>
-                {{READING_GRADE_OPTIONS}}
-              </select>
-            </div>
-            <button id="readingStart" class="game-start" type="submit">독해 시작하기</button>
-          </form>
-        </section>
-
-        <section class="game-shell upcoming-game" aria-labelledby="upcomingTitle">
-          <h2 id="upcomingTitle" class="game-title">일본어 한자 게임</h2>
-          <p>준비 중</p>
+          <div class="game-actions">
+            <button
+              id="gameSettingsButton"
+              class="game-settings-button"
+              type="button"
+              hidden
+            >
+              처음으로
+            </button>
+            <button id="gameNext" class="game-next" type="button" hidden>
+              다음 문제
+            </button>
+          </div>
         </section>
       </section>
       <footer class="site-footer">

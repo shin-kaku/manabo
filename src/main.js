@@ -1,3 +1,4 @@
+import { populateQuizLevels } from "./quiz-levels.js";
 import { studySeo } from "./seo.js";
 import { loadMedia, mediaCandidates } from "./media.js";
 import { displayLabel, fillPopoverMeta, placeKanjiPopover } from "./kanji-popover.js";
@@ -8,14 +9,14 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         storyView: document.getElementById("storyView"),
         gameView: document.getElementById("gameView"),
         navGame: document.getElementById("navGame"),
-        readingSetup: document.getElementById("readingSetup"),
-        readingJlpt: document.getElementById("readingJlpt"),
-        readingGrade: document.getElementById("readingGrade"),
+        choiceSetup: document.getElementById("choice-card"),
+        choiceLink: document.getElementById("choose-choice"),
+        readingLink: document.getElementById("choose-reading"),
         storyCopy: document.getElementById("storyCopy"),
         storyTitle: document.getElementById("storyTitle"),
         gradeStoryLevels: document.getElementById("gradeStoryLevels"),
         jlptStoryLevels: document.getElementById("jlptStoryLevels"),
-        gameSetup: document.getElementById("gameSetup"),
+        quizOptions: document.getElementById("quizOptions"),
         gameGrade: document.getElementById("gameGrade"),
         gameJlpt: document.getElementById("gameJlpt"),
         gameCount: document.getElementById("gameCount"),
@@ -88,12 +89,19 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       }
       async function activateSection(section) {
         const version = ++activation;
+        const screen = section === "story" ? els.storyView : els.gameView;
+        screen.prepend(learningStatus);
+        if (section === "game") {
+          learningStatus.hidden = true;
+          screen.setAttribute("aria-busy", "false");
+          document.documentElement.dataset.dataSource = "static";
+          return true;
+        }
         learningStatus.hidden = false;
         learningStatus.setAttribute("role", "status");
         learningMessage.textContent = "학습 데이터를 불러오는 중입니다.";
         learningRetry.hidden = true;
         els.gameStart.disabled = !kanjiReady;
-        const screen = section === "story" ? els.storyView : els.gameView;
         screen.setAttribute("aria-busy", "true");
         try {
           await Promise.all([ensureKanji(), ...(section === "story" ? [ensureStories()] : [])]);
@@ -102,7 +110,6 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
           document.documentElement.dataset.dataSource = "saved";
           els.gameStart.disabled = false;
           if (section === "story") {
-            // A native form submission before startup can include both range controls.
             const requestedStory = new URLSearchParams(location.search).getAll("story").filter(Boolean).at(-1);
             activeStoryId = STORIES.find((story) => story.id === requestedStory)?.id ||
               STORIES.find((story) => story.id === defaultStoryId)?.id || STORIES[0].id;
@@ -117,7 +124,7 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
           learningRetry.hidden = false;
           return false;
         } finally {
-          screen.setAttribute("aria-busy", "false");
+          if (version === activation) screen.setAttribute("aria-busy", "false");
         }
       }
       function sortGrade(a, b) {
@@ -136,9 +143,6 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         return rank(a) - rank(b) || a.localeCompare(b, "ko");
       }
       function populateFilters() {
-        for (const [select, label] of [[els.gameGrade, "학년 전체"], [els.gameJlpt, "JLPT 전체"]]) {
-          select.replaceChildren(new Option(label, ""));
-        }
         const grades = [
           ...new Set(
             DATA.map((d) => text(d["학년"])).filter(Boolean),
@@ -151,10 +155,8 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
             nb = Number((b.match(/N(\d)/) || [])[1] || 99);
           return nb - na || a.localeCompare(b); // N5 -> N1
         });
-        grades.filter((v) => v !== "참고").forEach((v) =>
-          els.gameGrade.add(new Option(storyDisplayLabel(v), v)),
-        );
-        jlpts.forEach((v) => els.gameJlpt.add(new Option(displayLabel(v), v)));
+        populateQuizLevels(els.gameGrade, grades.filter(value => value !== "참고"), storyDisplayLabel);
+        populateQuizLevels(els.gameJlpt, jlpts, displayLabel);
       }
 
       const popover = {
@@ -315,17 +317,10 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         });
         return b;
       }
-      const sectionPaths = { story: "/reading/", game: "/quiz/" };
-      const sectionFromPath = () =>
-        Object.entries(sectionPaths).find(([, path]) => path.replace(/\/$/, "") === location.pathname.replace(/\/$/, ""))?.[0] || "story";
-      function navigateToSection(section, storyId, hash = "") {
-        const url = new URL(location.href);
-        url.pathname = sectionPaths[section];
-        url.hash = hash;
-        if (storyId) url.searchParams.set("story", storyId);
-        else url.searchParams.delete("story");
-        if (url.href !== location.href) history.pushState(null, "", url);
-        return bootstrap();
+      const sectionPaths = { story: "/reading/", game: "/quiz/", choice: "/quiz/choice/" };
+      function sectionFromPath(pathname) {
+        const path = pathname.replace(/\/index\.html$/, "/").replace(/\/?$/, "/");
+        return Object.keys(sectionPaths).find(section => sectionPaths[section] === path);
       }
       function setSection(section) {
         if (section === "story" && !document.getElementById("storyFont")) {
@@ -340,7 +335,6 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         hideKanjiPopover();
         closeImageViewer();
         const story = section === "story";
-        const game = section === "game";
         const seo = studySeo[section];
         document.title = seo.title;
         document.querySelector('meta[name="description"]').content = seo.description;
@@ -349,11 +343,11 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         document.querySelector('link[rel="canonical"]').href = seo.canonical;
         document.querySelector('meta[property="og:url"]').content = seo.canonical;
         els.storyView.hidden = !story;
-        els.gameView.hidden = !game;
-        const card = game && ["#reading-setup", "#choice-card"].includes(location.hash)
-          ? document.getElementById(location.hash.slice(1)) : null;
-        if (card) card.scrollIntoView({ block: "start", behavior: "instant" });
-        else window.scrollTo({ top: 0, behavior: "instant" });
+        els.gameView.hidden = story;
+        if (!els.gamePlay.hidden) resetGame();
+        els.quizOptions.hidden = section !== "game";
+        els.choiceSetup.hidden = section !== "choice";
+        window.scrollTo({ top: 0, behavior: "instant" });
         return activateSection(section);
       }
       function selectStory(id, scroll = true) {
@@ -402,8 +396,6 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       function renderStory() {
         const story = STORIES.find((s) => s.id === activeStoryId);
         const version = story?.versions?.[0];
-        els.readingJlpt.value = story?.category === "JLPT" ? story.id : "";
-        els.readingGrade.value = story?.category === "학년별" ? story.id : "";
         renderStoryNavigation();
         els.storyTitle.textContent = story?.title || "";
         if (!version || !text(version.body)) {
@@ -441,8 +433,8 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         return copy;
       }
       function getGamePool() {
-        const grade = els.gameGrade.value,
-          jlpt = els.gameJlpt.value;
+        const grade = els.gameGrade.querySelector("input:checked").value,
+          jlpt = els.gameJlpt.querySelector("input:checked").value;
         return DATA.filter((d) => {
           const meaning = text(d["훈, 음"]);
           return (
@@ -554,7 +546,7 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       function resetGame() {
         Object.assign(gameState, { pool: [], questions: [], wrong: [], index: 0, score: 0, answered: false, finished: false });
         els.gamePlay.hidden = true;
-        els.gameSetup.hidden = false;
+        els.choiceSetup.hidden = false;
         els.gameQuestion.classList.remove("result");
         els.gameQuestionLabel.hidden = true;
         els.gameQuestionLabel.textContent = "";
@@ -578,7 +570,7 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
           count = Math.min(Number(els.gameCount.value) || 10, pool.length);
         if (pool.length < 4 || new Set(pool.map((row) => text(row["훈, 음"]))).size < 4) {
           document.getElementById("gameSetupError").hidden = false;
-          els.gameGrade.focus();
+          els.gameGrade.querySelector("input:checked").focus();
           return;
         }
         gameState.pool = pool;
@@ -586,7 +578,7 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         gameState.wrong = [];
         gameState.index = 0;
         gameState.score = 0;
-        els.gameSetup.hidden = true;
+        els.choiceSetup.hidden = true;
         els.gamePlay.hidden = false;
         renderGameQuestion();
       }
@@ -596,25 +588,23 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
       }
       window.addEventListener("popstate", () => { bootstrap(); });
       window.addEventListener("hashchange", (event) => { if (event.newURL === location.href) bootstrap(); });
-      for (const link of [els.navGame, ...els.storyView.querySelectorAll(".story-exit")]) {
-        link.addEventListener("click", event => {
+      for (const link of [els.navGame, els.choiceLink, els.readingLink, ...document.querySelectorAll(".story-exit")]) {
+        link.addEventListener("click", async event => {
           if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
           event.preventDefault();
-          navigateToSection("game", undefined, link.hash);
-          if (link.hash) document.getElementById("readingStart").focus({ preventScroll: true });
+          const previous = sectionFromPath(location.pathname);
+          const target = sectionFromPath(link.pathname);
+          const url = new URL(location.href);
+          url.pathname = link.pathname;
+          url.hash = "";
+          url.searchParams.delete("story");
+          if (url.href !== location.href) history.pushState(null, "", url);
+          if (!await bootstrap()) return;
+          const destinationTitle = target === "story" ? els.storyTitle : document.getElementById("choiceTitle");
+          const sourceCard = previous === "choice" ? els.choiceLink : els.readingLink;
+          (target === "game" ? sourceCard : destinationTitle).focus({ preventScroll: true });
         });
       }
-      els.readingSetup.addEventListener("change", event => {
-        const select = event.target;
-        const other = select === els.readingJlpt ? els.readingGrade : els.readingJlpt;
-        if (select.value) other.value = "";
-        else if (!other.value) els.readingSetup.reset();
-      });
-      els.readingSetup.addEventListener("submit", async event => {
-        event.preventDefault();
-        const storyId = els.readingGrade.value || els.readingJlpt.value || defaultStoryId;
-        if (await navigateToSection("story", storyId)) els.storyTitle.focus({ preventScroll: true });
-      });
       els.gameStart.addEventListener("click", startGame);
       els.gamePicture.addEventListener("click", () => {
         const question = gameState.questions[gameState.index];
@@ -630,6 +620,7 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
         if (gameState.index >= gameState.questions.length) showGameResult();
         else renderGameQuestion();
       });
+      document.getElementById("gameExit").addEventListener("click", returnToGameSettings);
       els.gameSettingsButton.addEventListener("click", returnToGameSettings);
       popover.go.addEventListener("click", () => {
         if (popoverKanji) location.assign(studyDetailHref(popoverKanji, location.search));
@@ -721,7 +712,16 @@ import { characterDetailPath, studyDetailHref } from "./study-path.js";
           location.replace(studyDetailHref(requestedKanji, location.search));
           return;
         }
-        return setSection(sectionFromPath());
+        let section = sectionFromPath(location.pathname);
+        if (section === "game" && ["#choice-card", "#reading-setup"].includes(location.hash)) {
+          section = location.hash === "#choice-card" ? "choice" : "story";
+          const url = new URL(location.href);
+          url.pathname = sectionPaths[section];
+          url.hash = "";
+          history.replaceState(null, "", url);
+          handledLocation = url.href;
+        }
+        return setSection(section);
       }
       learningRetry.addEventListener("click", () => bootstrap({ force: true }));
       bootstrap();
