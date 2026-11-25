@@ -42,6 +42,7 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
       let STORIES = [];
       const defaultStoryId = "story-1";
       let activeStoryId = "";
+      let storyFontStyles;
       const savedReading = history.state?.readingScroll;
       let pendingReading = isHistoryReturn() && Number.isFinite(savedReading?.y) ? savedReading : null;
       const readingScroll = trackHistoryScroll(() => {
@@ -126,6 +127,16 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
             renderStory();
             if (pendingReading) {
               const y = pendingReading.story === activeStoryId ? pendingReading.y : 0;
+              if (y > 0) {
+                // Restoring a pixel offset and anchoring to fallback-font text can conflict.
+                els.storyView.style.overflowAnchor = "none";
+                storyFontStyles.then(async () => {
+                  // Apply the stylesheet and lay out the story before waiting for its fonts.
+                  els.storyCopy.getBoundingClientRect();
+                  await document.fonts.ready;
+                  els.storyView.style.removeProperty("overflow-anchor");
+                });
+              }
               window.scrollTo({ top: y, behavior: "instant" });
               pendingReading = null;
             }
@@ -345,13 +356,17 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
         return Object.keys(sectionPaths).find(section => sectionPaths[section] === path);
       }
       function setSection(section) {
-        if (section === "story" && !document.getElementById("storyFont")) {
+        els.storyView.style.removeProperty("overflow-anchor");
+        if (section === "story" && !storyFontStyles) {
           const font = document.createElement("link");
           font.id = "storyFont";
           font.rel = "stylesheet";
           font.href = "https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap";
           font.media = "print";
-          font.addEventListener("load", () => { font.media = "all"; });
+          storyFontStyles = new Promise(resolve => {
+            font.addEventListener("load", () => { font.media = "all"; resolve(); }, { once: true });
+            font.addEventListener("error", resolve, { once: true });
+          });
           document.head.append(font);
         }
         hideKanjiPopover();
@@ -380,6 +395,7 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
         if (!STORIES.some((s) => s.id === id)) return;
         const restoreLevelFocus = els.gradeStoryLevels.contains(document.activeElement) || els.jlptStoryLevels.contains(document.activeElement);
         readingScroll.cancel();
+        els.storyView.style.removeProperty("overflow-anchor");
         activeStoryId = id;
         const url = new URL(location.href);
         url.searchParams.set("story", id);

@@ -62,6 +62,38 @@ test("back from a kanji detail and reload keep the reader on the same passage", 
   await expect.poll(() => page.evaluate(y => Math.abs(scrollY - y), shifted)).toBeLessThan(5);
 });
 
+test("cold reader restoration survives a late change in the passage layout", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  let releaseStylesheet;
+  const held = new Promise(resolve => { releaseStylesheet = resolve; });
+  let stylesheetRequests = 0;
+  await page.route("https://fonts.googleapis.com/css2**", async route => {
+    if (++stylesheetRequests > 1) await held;
+    // Reproduce the change in height above the word without depending on an external font.
+    await route.fulfill({ contentType: "text/css", body: "#storyCopy p:first-child { margin-bottom: 200px; }" });
+  });
+
+  const word = page.locator('#storyCopy [data-target-kanji="勝"]');
+  const first = page.locator("#storyCopy p").first();
+  await page.goto("/reading/?story=story-2");
+  await expect(first).toHaveCSS("margin-bottom", "200px");
+  await word.evaluate(el => el.scrollIntoView({ block: "center", behavior: "instant" }));
+  const before = await word.evaluate(el => ({ y: scrollY, top: el.getBoundingClientRect().top }));
+  await expect.poll(() => page.evaluate(() => history.state?.readingScroll?.y)).toBe(before.y);
+  await page.reload({ waitUntil: "commit" });
+  try {
+    await expect(word).toBeAttached();
+    await expect.poll(() => stylesheetRequests).toBe(2);
+    await expect(first).not.toHaveCSS("margin-bottom", "200px");
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  } finally {
+    releaseStylesheet();
+  }
+  await expect(first).toHaveCSS("margin-bottom", "200px");
+  await expect.poll(() => word.evaluate(el => el.getBoundingClientRect().top)).toBeCloseTo(before.top, 0);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(before.y);
+});
+
 test("a new reader entry or different story starts at the beginning", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/reading/?story=story-2");
