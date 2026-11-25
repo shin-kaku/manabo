@@ -35,6 +35,59 @@ test("keyboard story selection retains focus on the selected level", async ({ pa
   await expect(page.locator("#jlptStoryLevels button").nth(1)).toBeFocused();
 });
 
+test("back from a kanji detail and reload keep the reader on the same passage", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/reading/?story=story-2");
+  const title = stories.find(story => story.id === "story-2").title;
+  const word = page.locator('#storyCopy [data-target-kanji="勝"]');
+  await expect(word).toHaveCount(1);
+  await word.evaluate(button => button.scrollIntoView({ block: "center", behavior: "instant" }));
+  await word.click();
+  const before = await page.evaluate(() => scrollY);
+  expect(before).toBeGreaterThan(1000);
+  await page.locator("#popoverGo").click();
+  await expect(page.locator("[data-entry-kanji]")).toHaveAttribute("data-entry-kanji", "勝");
+  await page.goBack();
+  await expect(page.locator("#storyTitle")).toHaveText(title);
+  await expect(word).toBeInViewport();
+  await expect.poll(() => page.evaluate(y => Math.abs(scrollY - y), before)).toBeLessThan(5);
+
+  const shifted = await page.evaluate(() => {
+    window.scrollBy({ top: 100, behavior: "instant" });
+    return scrollY;
+  });
+  await expect.poll(() => page.evaluate(() => history.state?.readingScroll?.y)).toBe(shifted);
+  await page.reload();
+  await expect(word).toBeInViewport();
+  await expect.poll(() => page.evaluate(y => Math.abs(scrollY - y), shifted)).toBeLessThan(5);
+});
+
+test("a new reader entry or different story starts at the beginning", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/reading/?story=story-2");
+  await expect(page.locator("#storyCopy p").first()).toBeVisible();
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+  await page.locator('#storyCopy [data-target-kanji="勝"]').evaluate(button => button.scrollIntoView());
+
+  const level = page.locator('#jlptStoryLevels button:not([aria-current="true"])').first();
+  await level.click();
+  await expect(page.locator("#storyCopy p").first()).toBeInViewport();
+  await page.locator("#storyView .story-exit").last().click();
+  await expect(page.locator("#choose-reading")).toBeFocused();
+  await page.locator("#choose-reading").click();
+  await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-1").title);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+
+  await page.addInitScript(() => {
+    if (location.pathname === "/reading/") {
+      history.replaceState({ ...history.state, readingScroll: { story: "story-2", y: 4000 } }, "");
+    }
+  });
+  await page.reload();
+  await expect(page.locator("#storyCopy p").first()).toBeVisible();
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+});
+
 test("the quiz hub opens the reader and its JLPT and grade stories", async ({ page }) => {
   await page.goto("/quiz/");
   await page.locator("#choose-reading").click();

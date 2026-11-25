@@ -1,5 +1,6 @@
 import { characterDetailPath, studyDetailHref } from "./study-path.js";
 import { getStudyIndex } from "./study-index.js";
+import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
 import { defaultDirectorySort, directoryFields, directoryHref, directoryMeaning, directoryPageSize, directoryRows, filterDirectory } from "./material-directory-data.js";
 
 const directory = document.querySelector("[data-study-directory]");
@@ -13,6 +14,21 @@ const reset = directory.querySelector("[data-directory-reset]");
 const orders = new Map();
 let requested = 0;
 let lastRendered;
+let pendingScroll = isHistoryReturn() && Number.isFinite(history.state?.directoryScroll)
+  ? history.state.directoryScroll : null;
+// Suppress native restoration against the first 96 links only when leaving the document.
+// Within the directory, back/forward through filter entries keeps the browser's default.
+window.addEventListener("pagehide", () => { history.scrollRestoration = "manual"; });
+window.addEventListener("pageshow", () => requestAnimationFrame(() => {
+  history.scrollRestoration = "auto";
+}));
+const scrollHistory = trackHistoryScroll(() => {
+  if (pendingScroll !== null) return;
+  const y = Math.max(0, Math.round(window.scrollY));
+  if (history.state?.directoryScroll !== y) {
+    history.replaceState({ ...history.state, directoryScroll: y }, "");
+  }
+});
 
 function syncSortWithGrade() {
   const { grade, sort } = form.elements;
@@ -50,13 +66,13 @@ function visibleLimit() {
   return Number.isInteger(limit) && limit >= directoryPageSize ? limit : directoryPageSize;
 }
 
-function remember(params, limit, push = false) {
+function remember(params, limit, push = false, scroll = history.state?.directoryScroll ?? 0) {
   const url = new URL(location.href);
   for (const name of directoryFields) {
     if (params.has(name)) url.searchParams.set(name, params.get(name));
     else url.searchParams.delete(name);
   }
-  const state = { ...history.state, directoryCount: limit };
+  const state = { ...history.state, directoryCount: limit, directoryScroll: scroll };
   if (push && url.href !== location.href) history.pushState(state, "", url);
   else history.replaceState(state, "", url);
 }
@@ -101,6 +117,11 @@ async function render(limit, append = false) {
     if (append && links.length) links[0].focus({ preventScroll: true });
     document.documentElement.classList.remove("directory-filter-pending");
     lastRendered = signature;
+    if (pendingScroll !== null) {
+      // Only the hydrated grid is tall enough to reach a later page of results.
+      window.scrollTo({ top: pendingScroll, behavior: "instant" });
+      pendingScroll = null;
+    }
   } catch {
     if (ticket !== requested) return;
     document.documentElement.classList.remove("directory-filter-pending");
@@ -115,9 +136,12 @@ async function render(limit, append = false) {
 }
 
 function applyFilters(push = false) {
+  scrollHistory.cancel();
+  pendingScroll = null;
   syncSortWithGrade();
-  remember(readControls(), directoryPageSize, push);
+  remember(readControls(), directoryPageSize, push, 0);
   render(directoryPageSize);
+  window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 form.addEventListener("submit", event => { event.preventDefault(); applyFilters(); });
@@ -129,13 +153,26 @@ reset.addEventListener("click", event => {
   form.reset();
   applyFilters(true);
 });
+grid.addEventListener("click", event => {
+  if (event.target.closest("a") && !event.defaultPrevented && event.button === 0 &&
+      !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+    scrollHistory.flush();
+    history.scrollRestoration = "manual";
+  }
+});
 more.addEventListener("click", () => {
+  pendingScroll = null;
   const limit = visibleLimit() + directoryPageSize;
   remember(readControls(), limit);
   render(limit, true);
 });
 retry.addEventListener("click", () => render(visibleLimit()));
-function restoreDirectory() {
+function restoreDirectory(event) {
+  if (event) {
+    // Same-document filter changes must not replay a position from the initial navigation.
+    scrollHistory.cancel();
+    pendingScroll = null;
+  }
   const ch = new URLSearchParams(location.hash.slice(1)).get("kanji");
   if (characterDetailPath(ch)) {
     location.replace(studyDetailHref(ch, location.search));
@@ -145,7 +182,10 @@ function restoreDirectory() {
   const hasEarlyInput = form.querySelector("[data-early-edit]");
   restoreControls();
   const sortChanged = syncSortWithGrade();
-  if (hasEarlyInput || sortChanged) remember(readControls(), directoryPageSize);
+  if (hasEarlyInput || sortChanged) {
+    pendingScroll = null;
+    remember(readControls(), directoryPageSize, false, 0);
+  }
   render(visibleLimit());
 }
 form.removeAttribute("oninput");
