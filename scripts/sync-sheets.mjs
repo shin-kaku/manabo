@@ -38,6 +38,16 @@ const KANJI_FIELDS = [
   "발음",
   "예시단어",
 ];
+// Sheet headers on the left, published JSON keys on the right. A renamed header
+// must be updated here deliberately; other aliases are not accepted.
+const SHEET_COLUMNS = {
+  "이미지(TCG)": "이미지 1",
+  "이미지(ML)": "이미지 2",
+  "획(인쇄용)": "획순 이미지",
+  "획(모션)": "움직이는 획순",
+  "음, 훈": "발음",
+  "예시 단어": "예시단어",
+};
 const STORY_FIELDS = ["id", "category", "level", "title"];
 const STORY_VERSION_FIELDS = ["label", "body"];
 // Preserve the catalog's existing minimum and maximum 10% reduction policy.
@@ -89,6 +99,20 @@ async function readPreviousRows(path, prepare, label) {
   } catch (error) {
     throw new Error(`${label} 기존 파일 검증 실패: ${error instanceof SyntaxError ? "올바른 JSON이 아닙니다." : error.message}`);
   }
+}
+
+export function mapSheetColumns(rows) {
+  if (!Array.isArray(rows)) return rows; // prepareKanji reports the invalid input.
+  return rows.map((row, index) => {
+    if (!row || typeof row !== "object" || Array.isArray(row)) return row;
+    for (const [column, field] of Object.entries(SHEET_COLUMNS)) {
+      if (Object.hasOwn(row, field)) {
+        throw new Error(`한자 ${index + 1}번 항목: 시트 열 이름이 '${column}'이어야 하는데 이전 이름 '${field}'이 있습니다.`);
+      }
+    }
+    return Object.fromEntries(Object.entries(row).map(([key, value]) =>
+      [Object.hasOwn(SHEET_COLUMNS, key) ? SHEET_COLUMNS[key] : key, value]));
+  });
 }
 
 export function prepareKanji(rows, previousCount = 0) {
@@ -323,7 +347,7 @@ async function main() {
   let corrections = [];
   const correctionsPath = resolve(projectRoot, "scripts/data-corrections.json");
   if (await pathExists(correctionsPath)) corrections = JSON.parse(await readFile(correctionsPath, "utf8"));
-  const kanji = mergeKanji(previous, prepareKanji(payload.kanji, previousCount), corrections);
+  const kanji = mergeKanji(previous, prepareKanji(mapSheetColumns(payload.kanji), previousCount), corrections);
   const stories = prepareStories(payload.stories);
   protectStoryIds(previousStories, stories, allowedRemovals);
   await replaceDataFiles(kanji, stories);

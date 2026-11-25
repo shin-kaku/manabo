@@ -4,10 +4,17 @@ import { copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } fr
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { prepareKanji, prepareStories, protectStoryIds, replaceDataFiles } from "./sync-sheets.mjs";
+import { mapSheetColumns, prepareKanji, prepareStories, protectStoryIds, replaceDataFiles } from "./sync-sheets.mjs";
 
 const kanjiFile = new URL("../public/data/kanji.json", import.meta.url);
 const rows = JSON.parse(await readFile(kanjiFile, "utf8"));
+// Written independently of the implementation to pin the live sheet headers.
+const sheetNames = {
+  "이미지 1": "이미지(TCG)", "이미지 2": "이미지(ML)", "획순 이미지": "획(인쇄용)",
+  "움직이는 획순": "획(모션)", "발음": "음, 훈", "예시단어": "예시 단어",
+};
+const toSheetRows = (items) => items.map((row) =>
+  Object.fromEntries(Object.entries(row).map(([key, value]) => [sheetNames[key] ?? key, value])));
 const stories = JSON.parse(await readFile(new URL("../public/data/stories.json", import.meta.url), "utf8"));
 
 test("published catalog and reference entries remain valid; private fields are excluded", () => {
@@ -64,7 +71,7 @@ async function fixture(t, incoming, options = {}) {
   await copyFile(new URL("./sync-sheets.mjs", import.meta.url), script);
   if (options.kanjiBefore !== null) await writeFile(join(data, "kanji.json"), options.kanjiBefore ?? await readFile(kanjiFile));
   if (options.storiesBefore !== null) await writeFile(join(data, "stories.json"), options.storiesBefore ?? `${JSON.stringify(stories)}\n`);
-  await writeFile(join(root, "payload.json"), JSON.stringify({ ok: true, kanji: incoming, stories: options.stories ?? stories }));
+  await writeFile(join(root, "payload.json"), JSON.stringify({ ok: true, kanji: options.raw ? incoming : toSheetRows(incoming), stories: options.stories ?? stories }));
   const preload = join(root, "fetch-fixture.mjs");
   await writeFile(preload, `import { readFile } from 'node:fs/promises';
 globalThis.fetch = async () => new Response(await readFile(new URL('./payload.json', import.meta.url)), { status: 200 });\n`);
@@ -98,6 +105,27 @@ test("valid CLI sync replaces both files and omits private fields", async (t) =>
   assert.deepEqual(JSON.parse(await readFile(join(data, "kanji.json"), "utf8")), prepareKanji(incoming));
   assert.deepEqual(JSON.parse(await readFile(join(data, "stories.json"), "utf8")), stories);
   assert.deepEqual((await readdir(data)).sort(), ["kanji.json", "stories.json"]);
+});
+
+test("sheet columns map one-to-one onto published keys without altering values or inputs", () => {
+  const sheet = toSheetRows(rows);
+  const before = structuredClone(sheet);
+  assert.deepEqual(mapSheetColumns(sheet), rows);
+  assert.deepEqual(sheet, before);
+});
+
+test("old or mixed sheet column names preserve both files", async (t) => {
+  await assertRejected(t, rows, { raw: true }, /이전 이름/);
+  for (const [field, column] of Object.entries(sheetNames)) {
+    const mixed = toSheetRows(rows);
+    mixed[0] = { ...mixed[0], [field]: mixed[0][column] };
+    await assertRejected(t, mixed, { raw: true }, /이전 이름/);
+  }
+});
+
+test("an unknown renamed sheet column preserves both files", async (t) => {
+  const renamed = toSheetRows(rows).map(({ "이미지(TCG)": value, ...row }) => ({ ...row, "이미지(게임)": value }));
+  await assertRejected(t, renamed, { raw: true }, /이미지 1: 키/);
 });
 
 async function assertRejected(t, incoming = rows, options = {}, pattern = /동기화 실패/) {
