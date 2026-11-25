@@ -361,6 +361,7 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
           const font = document.createElement("link");
           font.id = "storyFont";
           font.rel = "stylesheet";
+          font.media = "all";
           font.href = "https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap";
           storyFontStyles = new Promise(resolve => {
             font.addEventListener("load", resolve, { once: true });
