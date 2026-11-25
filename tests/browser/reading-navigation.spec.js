@@ -66,9 +66,13 @@ test("cold reader restoration survives a late change in the passage layout", asy
   await page.setViewportSize({ width: 390, height: 844 });
   let releaseStylesheet;
   const held = new Promise(resolve => { releaseStylesheet = resolve; });
-  let stylesheetRequests = 0;
+  let holdStylesheet = false;
+  let requestHeld = false;
   await page.route("https://fonts.googleapis.com/css2**", async route => {
-    if (++stylesheetRequests > 1) await held;
+    if (holdStylesheet) {
+      requestHeld = true;
+      await held;
+    }
     // Reproduce the change in height above the word without depending on an external font.
     await route.fulfill({ contentType: "text/css", body: "#storyCopy p:first-child { margin-bottom: 200px; }" });
   });
@@ -80,10 +84,11 @@ test("cold reader restoration survives a late change in the passage layout", asy
   await word.evaluate(el => el.scrollIntoView({ block: "center", behavior: "instant" }));
   const before = await word.evaluate(el => ({ y: scrollY, top: el.getBoundingClientRect().top }));
   await expect.poll(() => page.evaluate(() => history.state?.readingScroll?.y)).toBe(before.y);
+  holdStylesheet = true;
   await page.reload({ waitUntil: "commit" });
   try {
     await expect(word).toBeAttached();
-    await expect.poll(() => stylesheetRequests).toBe(2);
+    await expect.poll(() => requestHeld).toBe(true);
     await expect(first).not.toHaveCSS("margin-bottom", "200px");
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   } finally {

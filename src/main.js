@@ -362,9 +362,8 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
           font.id = "storyFont";
           font.rel = "stylesheet";
           font.href = "https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap";
-          font.media = "print";
           storyFontStyles = new Promise(resolve => {
-            font.addEventListener("load", () => { font.media = "all"; resolve(); }, { once: true });
+            font.addEventListener("load", resolve, { once: true });
             font.addEventListener("error", resolve, { once: true });
           });
           document.head.append(font);
