@@ -1072,7 +1072,7 @@
         letter-spacing: -0.045em;
         margin: 0;
       }
-      .story-guide, .study-directory .directory-guide {
+      .story-guide, .study-directory .directory-guide, .quiz-guide {
         margin: 0;
         font-size: 13px;
         line-height: 1.6;
@@ -1119,6 +1119,7 @@
         line-height: 1.3;
         letter-spacing: -.045em;
       }
+      .quiz-guide + .quiz-heading { margin-top: 14px; }
       .quiz-shelf {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));

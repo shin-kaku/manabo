@@ -85,7 +85,7 @@ test("quiz screenshots follow the selected site theme", async ({ page }) => {
       await page.locator("[data-theme-toggle]").click();
       await page.keyboard.press("Escape");
     }
-    for (const [mode, label] of [["choice", "사지선다"], ["reading", "한자음 독해"]]) {
+    for (const [mode, label] of [["choice", "사지선다"], ["reading", "독해"]]) {
       const image = page.locator(".quiz-shelf").getByRole("link", { name: label, exact: true }).locator("picture img");
       await expect(image).toBeVisible();
       await expect.poll(() => image.evaluate(img =>

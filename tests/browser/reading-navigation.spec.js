@@ -73,7 +73,7 @@ test("the quiz gallery links to a dedicated choice setup and skips the unrelease
   await page.goto("/quiz/");
   const shelf = page.locator(".quiz-shelf");
   const choice = shelf.getByRole("link", { name: "사지선다", exact: true });
-  const reading = shelf.getByRole("link", { name: "한자음 독해", exact: true });
+  const reading = shelf.getByRole("link", { name: "독해", exact: true });
   await expect(shelf.getByRole("link")).toHaveCount(2);
   await expect(choice).toHaveAttribute("href", "/quiz/choice/");
   await expect(reading).toHaveAttribute("href", "/reading/");
@@ -81,7 +81,7 @@ test("the quiz gallery links to a dedicated choice setup and skips the unrelease
   await expect(reading.locator("picture img")).toBeVisible();
   const upcoming = shelf.locator(".quiz-upcoming:last-child");
   await expect(upcoming).toBeVisible();
-  await expect(upcoming).toContainText("일본어 한자 게임");
+  await expect(upcoming).toContainText("한자 게임");
   await expect(upcoming).toContainText("준비 중");
   expect(await upcoming.evaluate(card => card.tabIndex)).toBe(-1);
   await expect(upcoming.locator("a, button, img")).toHaveCount(0);

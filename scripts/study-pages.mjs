@@ -13,11 +13,12 @@ export const studyPages = [
 
 const studyFallback = {
   story: `<a href="/quiz/">← 독해 나가기</a>
-<h2>한자음 독해</h2>
+<h2>독해</h2>
 <p>“집 앞의 큰 木 아래에 앉아 本을 펼쳤다.” 이 문장에서 木은 나무이고, 本은 손에 든 책입니다. 한국어 문맥에 맞춰 뜻을 짐작한 다음 소리 내어 문장을 읽어 보세요.</p>
 <p><a href="/materials/#reading-materials">학년·JLPT별 창작 독해 고르기</a></p>`,
-  game: `<h1>한자 퀴즈</h1>
-<ul><li><a href="/quiz/choice/">사지선다</a></li><li><a href="/reading/">한자음 독해</a></li><li>일본어 한자 게임 · 준비 중</li></ul>`,
+  game: `<p class="quiz-guide"><strong class="learning-action">퀴즈를 골라</strong> 한자의 뜻과 음을 맞히거나 문장 속 한자를 우리말로 읽어 보세요.</p>
+<h1>한자 퀴즈</h1>
+<ul><li><a href="/quiz/choice/">사지선다</a></li><li><a href="/reading/">독해</a></li><li>한자 게임 · 준비 중</li></ul>`,
   choice: `<a href="/quiz/">← 한자 퀴즈</a>
 <h1>사지선다</h1>
 <p>‘나무 목’과 ‘눈 목’ 가운데 <span lang="ja">目</span>의 훈음은 어느 쪽일까요?</p>
