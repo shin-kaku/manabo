@@ -5,7 +5,7 @@ import { driveClient } from "./drive-media.mjs";
 import { restoreAsset } from "./restore-media.mjs";
 import { collectSources, emptyCatalog, hash, mapLimit, optimize, RECIPE, saveVariants, verifiedAsset } from "./media-core.mjs";
 
-export async function syncMedia({ rows, previous = emptyCatalog(), directory, metadata, readSource, recoverAsset, enabledKinds = ["image1", "image2", "stroke"], local = false, onProgress = () => {} }) {
+export async function syncMedia({ rows, previous = emptyCatalog(), directory, metadata, readSource, recoverAsset, enabledKinds = ["image1", "image2", "stroke"], local = false, skipImage2Recovery = false, onProgress = () => {} }) {
   if (!enabledKinds.length || enabledKinds.some(kind => !["image1", "image2", "stroke"].includes(kind))) throw new Error("enabledKinds 설정 오류");
   const sources = collectSources(rows, enabledKinds);
   const next = emptyCatalog();
@@ -17,7 +17,7 @@ export async function syncMedia({ rows, previous = emptyCatalog(), directory, me
     if (!meta || !/^[a-f0-9]{32}$/.test(meta.md5Checksum || "")) throw new Error(`${source.kind}:${source.id}: Drive 체크섬 또는 읽기 권한이 없습니다.`);
     if (Number(meta.size) > 30 * 1024 * 1024) throw new Error(`${source.id}: 원본 용량 제한 초과`);
     let entry;
-    if (old?.sourceMd5 === meta.md5Checksum && old.recipe === RECIPE && recoverAsset) {
+    if (old?.sourceMd5 === meta.md5Checksum && old.recipe === RECIPE && recoverAsset && !(skipImage2Recovery && source.kind === "image2")) {
       for (const url of new Set([old.card.url, old.detail.url])) {
         if (!await verifiedAsset(directory, url)) {
           // A cache miss or a prior interrupted manifest commit can be repaired
@@ -53,14 +53,17 @@ export async function syncMedia({ rows, previous = emptyCatalog(), directory, me
 
 async function main() {
   const args = process.argv.slice(2);
-  if (args.some(arg => !arg.startsWith("--local=")) || args.length > 1) throw new Error("옵션: --local=원본-manifest.json");
+  if (args.some(arg => !arg.startsWith("--local=") && arg !== "--skip-image2-recovery") ||
+      args.filter(arg => arg.startsWith("--local=")).length > 1 || new Set(args).size !== args.length) {
+    throw new Error("옵션: --local=원본-manifest.json, --skip-image2-recovery");
+  }
   const directory = resolve("public");
   const path = resolve(directory, "data/media.json");
   const rows = JSON.parse(await readFile(resolve(directory, "data/kanji.json"), "utf8"));
   const { enabledKinds, sourceFolderIds = [] } = JSON.parse(await readFile(new URL("./media-config.json", import.meta.url), "utf8"));
   let previous = emptyCatalog();
   try { previous = JSON.parse(await readFile(path, "utf8")); } catch (error) { if (error.code !== "ENOENT") throw error; }
-  const local = args[0]?.slice("--local=".length);
+  const local = args.find(arg => arg.startsWith("--local="))?.slice("--local=".length);
   let metadata, readSource;
   if (local) {
     const manifest = JSON.parse(await readFile(local, "utf8"));
@@ -72,6 +75,7 @@ async function main() {
     readSource = id => client.download(id);
   }
   const result = await syncMedia({ rows, previous, directory, metadata, readSource, enabledKinds, local: Boolean(local),
+    skipImage2Recovery: args.includes("--skip-image2-recovery"),
     recoverAsset: local ? undefined : url => restoreAsset(directory, url),
     onProgress: (done, total, changed, reused) => { if (done % 100 === 0) console.log(`${done}/${total}: 변환 ${changed}, 재사용 ${reused}`); },
   });

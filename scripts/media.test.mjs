@@ -177,3 +177,25 @@ test("all five SVG trials retain numbered strokes, native themes and reduced mot
     assert.match(xml, /<path\b[^>]*\bclass="still"[^>]*\bd="[^"]+"/);
   }
 });
+
+test("first image2 publication regenerates assets without requesting unpublished files", async t => {
+  const sourceDir = await mkdtemp(join(tmpdir(), "manabo-ml-source-"));
+  const deployDir = await mkdtemp(join(tmpdir(), "manabo-ml-deploy-"));
+  t.after(async () => {
+    await rm(sourceDir, { recursive: true, force: true });
+    await rm(deployDir, { recursive: true, force: true });
+  });
+  const bytes = await sharp({ create: { width: 32, height: 32, channels: 3, background: "white" } }).png().toBuffer();
+  const rows = [{ "이미지 2": sourceUrl("two") }];
+  const metadata = new Map([["two", { md5Checksum: hash(bytes, "md5"), size: bytes.length }]]);
+  const first = await syncMedia({ rows, directory: sourceDir, metadata, enabledKinds: ["image2"], readSource: async () => bytes });
+  let attemptedRecovery = 0;
+  const result = await syncMedia({
+    rows, previous: first.catalog, directory: deployDir, metadata, enabledKinds: ["image2"],
+    skipImage2Recovery: true, readSource: async () => bytes,
+    recoverAsset: async () => { attemptedRecovery++; throw Error("not published"); },
+  });
+  assert.equal(attemptedRecovery, 0);
+  assert.equal(result.changed, 1);
+  assert.deepEqual(result.catalog, first.catalog);
+});

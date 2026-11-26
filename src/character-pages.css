@@ -46,6 +46,9 @@
 .entry-pair figure { display: grid; grid-template-rows: 1fr auto; align-items: center; justify-items: center; padding: clamp(6px, 2vw, 15px); border: 1px solid var(--line); border-radius: 12px; }
 .entry-pair picture { width: 82%; }
 .entry-pair figcaption { margin-top: 6px; }
+.entry-art-switch { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+.entry-art-switch button { min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--control-radius); background: var(--paper); color: var(--ink); cursor: pointer; }
+.entry-art-switch button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent, #fff); border-color: var(--accent); }
 .entry-readings { display: grid; grid-template-columns: auto 1fr; column-gap: 16px; margin: 0; }
 .entry-readings dt { color: var(--muted); }
 .entry-readings dd { margin: 0; }

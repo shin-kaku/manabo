@@ -6,7 +6,7 @@ import { driveFileId } from "../../src/image-sources.js";
 const rows = JSON.parse(await readFile(new URL("../../public/data/kanji.json", import.meta.url)));
 const media = JSON.parse(await readFile(new URL("../../public/data/media.json", import.meta.url)));
 const row = rows.find(row => row.한자 === "車");
-const artPath = media.items.image1[driveFileId(row["이미지 1"])].detail.url;
+const artPath = media.items.image2[driveFileId(row["이미지 2"])].detail.url;
 const strokePath = media.items.stroke[driveFileId(row["움직이는 획순"])].detail.url;
 const svg = await readFile(new URL("../../public/strokes/車.svg", import.meta.url));
 const art = await sharp({ create: { width: 960, height: 960, channels: 3, background: "white" } }).webp().toBuffer();

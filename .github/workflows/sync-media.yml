@@ -53,7 +53,7 @@ jobs:
         run: npm run sync-media
       - name: Reuse published media for code-only deployments
         if: github.event_name == 'push'
-        run: npm run media:restore
+        run: npm run media:restore || npm run sync-media -- --skip-image2-recovery
       - name: Verify and cache generated media before browser checks
         run: node scripts/check-media.mjs public
       - uses: actions/cache/save@v4
@@ -90,6 +90,9 @@ jobs:
           if-no-files-found: warn
       - if: steps.content.outputs.changed == 'true'
         run: npm run build
+      - name: Verify the built learning game
+        if: steps.content.outputs.changed == 'true'
+        run: npm run test:browser:production
       - name: Retain bundles used by previously published pages
         if: steps.content.outputs.changed == 'true'
         run: npm run release:assets

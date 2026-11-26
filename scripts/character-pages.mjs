@@ -28,13 +28,14 @@ function stroke(row, media) {
 
 function art(row, media, compact) {
   const [card] = mediaCandidates(row, "image1", "card", media);
-  const [detail, ...fallbacks] = mediaCandidates(row, "image1", "detail", media);
-  if (![card, detail].every(url => url?.startsWith("/media/image1/"))) throw Error("암기 그림 누락: " + row["한자"]);
-  const size = compact ? 480 : 960;
-  const src = e(compact ? card : detail);
-  const img = `<img class="entry-art" data-media-fallbacks="${e(JSON.stringify(fallbacks))}" width="${size}" height="${size}" src="${src}" alt="${e(row["한자"])}의 모양과 뜻을 연결한 암기 그림">`;
-  if (compact) return img;
-  return `<a class="entry-zoom" data-entry-zoom href="${src}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a>`;
+  const tcg = mediaCandidates(row, "image1", "detail", media);
+  if (![card, tcg[0]].every(url => url?.startsWith("/media/image1/"))) throw Error("암기 그림 누락: " + row["한자"]);
+  if (compact) return `<img class="entry-art" data-media-fallbacks="${e(JSON.stringify(tcg.slice(1)))}" width="480" height="480" src="${e(card)}" alt="${e(row["한자"])}의 모양과 뜻을 연결한 암기 그림">`;
+  const ml = mediaCandidates(row, "image2", "detail", media);
+  const selected = ml.length ? ml : tcg;
+  const img = `<img class="entry-art" data-media-fallbacks="${e(JSON.stringify(selected.slice(1)))}" width="960" height="960" src="${e(selected[0])}" alt="${e(row["한자"])}의 모양과 뜻을 연결한 암기 그림">`;
+  const buttons = ml.length ? `<div class="entry-art-switch" role="group" aria-label="암기 그림 선택" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}"><button type="button" data-art-kind="ml" aria-pressed="true">ML</button><button type="button" data-art-kind="tcg" aria-pressed="false">TCG</button></div>` : "";
+  return `<a class="entry-zoom" data-entry-zoom href="${e(selected[0])}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a>${buttons}`;
 }
 
 function linkedText(text, known, current = "") {

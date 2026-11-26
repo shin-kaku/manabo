@@ -1,11 +1,13 @@
 {
   "enabledKinds": [
     "image1",
+    "image2",
     "stroke"
   ],
   "sourceFolderIds": [
     "1zLcv-ZaPqxzdR9vvrICiPIiFBwjgI2k5",
-    "1Vwup_kZJlO9HzDBnFFAIc0sfE3NKSXpk"
+    "1Vwup_kZJlO9HzDBnFFAIc0sfE3NKSXpk",
+    "1824CWRfM14zPVZnPq1Uet035eji6DnwH"
   ],
-  "note": "stroke는 R 움직이는 획순과 Q 기존 획순도를 함께 동기화합니다. image2는 준비 후 활성화합니다."
+  "note": "image1과 image2는 TCG·ML 이미지이며, stroke는 R 움직이는 획순과 Q 기존 획순도를 함께 동기화합니다."
 }
