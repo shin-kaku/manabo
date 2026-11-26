@@ -494,11 +494,17 @@ const START="門";
 const D=new Map(RAW.map(([k,h,p,i,c,g,o,y,w,meta])=>[k,{k,h,p,i,c,g,o,y,w,meta,up:[]}]));
 // 게임에서만 잇는 연결: 풀이에 부품이 없어 갈 수 없던 글자들 (data/overrides.json의 links)
 const LINK=/*LINK*/;
+const SHAPE=/*SHAPE*/;
 // 검수에서 부품을 바꾸거나 뺀 글자: 카드에 풀이와 다르다고 표시한다 (overrides.json에서 label이 true인 글자)
 const FIXED=new Set(/*FIXED*/);
 for(const[k,v]of Object.entries(LINK)){const d=D.get(k);d.x=[...v];d.c=[...d.c,...d.x]}
-// 시트에 없는 부품도 길목으로 쓴다(카드는 글자와 쓰이는 한자만)
+// 시트에 없는 부품도 모양 부품을 가질 수 있으므로 먼저 길목을 만든다.
 for(const d of [...D.values()])for(const c of d.c)if(!D.has(c))D.set(c,{k:c,h:"시트에 없는 부품",p:"",i:"",c:[],g:99,o:9999,y:"",w:"",ext:true,up:[]});
+for (const [glyph, parts] of Object.entries(SHAPE)) {
+  const d = D.get(glyph);
+  d.sh = [...parts];
+  d.c.push(...d.sh.filter(part => !d.c.includes(part)));
+}
 for(const d of D.values())for(const c of new Set(d.c))D.get(c).up.push(d.k);
 const order=(a,b)=>D.get(a).g-D.get(b).g||D.get(a).o-D.get(b).o;
 for(const d of D.values())d.up.sort(order);
@@ -788,14 +794,19 @@ function card(k, trigger = null) {
   face.dataset.ink = ink;
   face.toggleAttribute('data-part', !!d.ext);
   let details = '', label = [];
+  function addComponents(title, parts) {
+    label.push(title);
+    details += componentInfo(title, parts);
+  }
+  if (FIXED.has(k)) {
+    const corrected = d.c.filter(part => !d.x?.includes(part) && !d.sh?.includes(part));
+    addComponents('게임에서 쓰는 부품 (풀이와 다름)', corrected);
+  }
+  if (d.x) addComponents('게임에서 이은 부품', d.x);
+  if (d.sh) addComponents('모양에서 찾은 부품', d.sh);
   if (d.ext) {
-    details = componentInfo('쓰이는 한자', d.up); label.push('쓰이는 한자');
+    addComponents('쓰이는 한자', d.up);
   } else {
-    if (FIXED.has(k)) {
-      label.push('게임에서 쓰는 부품 (풀이와 다름)');
-      details += componentInfo('게임에서 쓰는 부품 (풀이와 다름)', d.c);
-    }
-    if (d.x) { label.push('게임에서 이은 부품'); details += componentInfo('게임에서 이은 부품', d.x); }
     const readings = soundHTML(d.y), words = wordsHTML(d.w);
     if (readings) label.push('발음');
     if (words) label.push('예시 단어');

@@ -71,6 +71,9 @@ def choice_settings(html):
 def study_menu(path="/learn/"):
     # Choice, reading and the shelf share the same document on in-page navigation.
     html = (SITE / path.lstrip("/") / "index.html").read_text(encoding="utf-8")
+    # The site build can already have installed both the game tile and choice controls.
+    if 'id="starpath-name"' in html and 'id="choiceRangeSummary"' in html:
+        return html.encode("utf-8")
     html, count = UPCOMING.subn(MODE, html)
     if count != 1:
         raise ValueError("현재 빌드에서 한자 게임 준비 중 카드를 찾을 수 없습니다.")
