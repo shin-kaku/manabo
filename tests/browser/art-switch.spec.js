@@ -9,12 +9,15 @@ test("detail defaults to ML and switches between both illustrations", async ({ p
   await expect(ml).toHaveAttribute("aria-pressed", "true");
   const mlSource = await art.getAttribute("src");
   expect(mlSource).toMatch(/^\/media\/image2\//);
+  await expect.poll(() => art.evaluate(img => img.complete && new URL(img.currentSrc).pathname)).toContain("/media/image2/");
   await tcg.click();
   await expect(tcg).toHaveAttribute("aria-pressed", "true");
   await expect(art).toHaveAttribute("src", /\/media\/image1\//);
   await expect(zoom).toHaveAttribute("href", /\/media\/image1\//);
+  await expect.poll(() => art.evaluate(img => img.complete && new URL(img.currentSrc).pathname)).toContain("/media/image1/");
   await ml.click();
   await expect(ml).toHaveAttribute("aria-pressed", "true");
   await expect(art).toHaveAttribute("src", mlSource);
   await expect(zoom).toHaveAttribute("href", mlSource);
+  await expect.poll(() => art.evaluate(img => img.complete && new URL(img.currentSrc).pathname)).toContain("/media/image2/");
 });
