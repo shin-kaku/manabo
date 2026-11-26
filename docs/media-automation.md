@@ -31,14 +31,17 @@ SVG 원문과 애니메이션은 그대로 배포됩니다. 애니메이션 원�
 
 2026-11-06에 전용 Google 프로젝트 `manabo-media-sync-20261106`와 Drive API,
 프로젝트 IAM 역할이 없는 서비스 계정을 연결했습니다. `Kanji_1_TCG` 폴더에는 Viewer만 부여했습니다.
-GitHub `shin-kaku/manabo`는 PUBLIC이며 다음 4개 Secrets 등록을 확인했습니다.
+GitHub `shin-kaku/manabo`는 PUBLIC이며 다음 4개 Secrets를 사용합니다.
 
-- `MANABO_SHEETS_API_URL`
+- `MANABO_SHEETS_SPREADSHEET_ID`
 - `GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON`
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
 Cloudflare 토큰은 기존 계정의 Workers Scripts 편집 + Account Settings 읽기에 한정했습니다.
+Google Sheets API는 서비스 계정의 읽기 권한으로 도감 DB와 독해 DB를 직접 읽습니다.
+이 계정은 스프레드시트 전체에 뷰어 권한이 있지만 동기화 코드는 위 두 시트만 읽습니다.
+시트의 열 구조가 바뀌면 동기화를 중단하므로 구조와 변환 코드를 확인해야 합니다.
 기존 Cloudflare Git 자동 빌드는 끄고 GitHub 워크플로를 배포 경로로 사용합니다.
 `MEDIA_SYNC_ENABLED=true`로 활성화했습니다.
 새 환경에서 최초 이미지가 없는 경우 수동 실행(`force_deploy=true`)으로 Google 원본에서 생성합니다.

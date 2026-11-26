@@ -69,6 +69,7 @@ async function fixture(t, incoming, options = {}) {
   await mkdir(join(root, "scripts"), { recursive: true });
   await mkdir(data, { recursive: true });
   await copyFile(new URL("./sync-sheets.mjs", import.meta.url), script);
+  await copyFile(new URL("./sheets-source.mjs", import.meta.url), join(root, "scripts/sheets-source.mjs"));
   if (options.kanjiBefore !== null) await writeFile(join(data, "kanji.json"), options.kanjiBefore ?? await readFile(kanjiFile));
   if (options.storiesBefore !== null) await writeFile(join(data, "stories.json"), options.storiesBefore ?? `${JSON.stringify(stories)}\n`);
   await writeFile(join(root, "payload.json"), JSON.stringify({ ok: true, kanji: options.raw ? incoming : toSheetRows(incoming), stories: options.stories ?? stories }));
@@ -76,7 +77,7 @@ async function fixture(t, incoming, options = {}) {
   await writeFile(preload, `import { readFile } from 'node:fs/promises';
 globalThis.fetch = async () => new Response(await readFile(new URL('./payload.json', import.meta.url)), { status: 200 });\n`);
   const run = (args = []) => execFileSync(process.execPath, ["--import", preload, script, ...args], {
-    env: { ...process.env, MANABO_SHEETS_API_URL: "https://example.invalid/fixture" },
+    env: { ...process.env, MANABO_SHEETS_SPREADSHEET_ID: "", MANABO_SHEETS_API_URL: "https://example.invalid/fixture" },
     encoding: "utf8", stdio: "pipe",
   });
   return { data, run };

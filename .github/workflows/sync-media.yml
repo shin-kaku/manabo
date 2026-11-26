@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
-      MANABO_SHEETS_API_URL: ${{ secrets.MANABO_SHEETS_API_URL }}
+      MANABO_SHEETS_SPREADSHEET_ID: ${{ secrets.MANABO_SHEETS_SPREADSHEET_ID }}
       GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -39,7 +39,7 @@ jobs:
           node-version: 24
           cache: npm
       - name: Verify required connections (never print credentials)
-        run: node -e 'for (const name of ["MANABO_SHEETS_API_URL", "GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]) if (!process.env[name]) throw Error(`Missing secret ${name}`)'
+        run: node -e 'for (const name of ["MANABO_SHEETS_SPREADSHEET_ID", "GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]) if (!process.env[name]) throw Error(`Missing secret ${name}`)'
       - run: npm ci
       - uses: actions/cache/restore@v4
         id: media-cache

@@ -12,6 +12,7 @@ import {
 import { constants } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readAuthenticatedSheets } from "./sheets-source.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const envPath = resolve(projectRoot, ".env.local");
@@ -318,28 +319,30 @@ async function main() {
   }
   const allowedRemovals = args.map((arg) => arg.slice("--allow-story-removal=".length));
   if (await pathExists(envPath)) process.loadEnvFile(envPath);
+  const spreadsheetId = String(process.env.MANABO_SHEETS_SPREADSHEET_ID ?? "").trim();
   const url = String(process.env.MANABO_SHEETS_API_URL ?? "").trim();
-  if (!url) {
-    throw new Error(
-      ".env.local에 MANABO_SHEETS_API_URL을 설정한 뒤 다시 실행하세요.",
-    );
-  }
+  if (!spreadsheetId && !url) throw new Error("시트 인증 설정이 필요합니다.");
 
   const previous = await readPreviousRows(kanjiPath, prepareKanji, "한자");
   const previousCount = previous?.length ?? 0;
   const previousStories = await readPreviousRows(storiesPath, prepareStories, "독해");
 
-  const response = await fetch(url, {
-    headers: { accept: "application/json" },
-    redirect: "follow",
-    signal: AbortSignal.timeout(60000),
-  });
-  if (!response.ok) {
-    throw new Error(`Apps Script 요청 실패: HTTP ${response.status}`);
-  }
   let payload;
-  try { payload = await response.json(); }
-  catch { throw new Error("Apps Script JSON 응답 해석에 실패했습니다."); }
+  if (spreadsheetId) {
+    payload = await readAuthenticatedSheets({
+      credentials: process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON,
+      spreadsheetId,
+    });
+  } else {
+    const response = await fetch(url, {
+      headers: { accept: "application/json" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(60000),
+    });
+    if (!response.ok) throw new Error(`Apps Script 요청 실패: HTTP ${response.status}`);
+    try { payload = await response.json(); }
+    catch { throw new Error("Apps Script JSON 응답 해석에 실패했습니다."); }
+  }
   if (!payload || typeof payload !== "object" || payload.ok === false) {
     throw new Error("Apps Script 응답이 올바르지 않습니다.");
   }
