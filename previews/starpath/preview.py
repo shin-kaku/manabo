@@ -16,14 +16,14 @@ GAME = HERE / "dist/starpath.html"
 COVER = "/images/quiz-preview-starpath.webp"
 DARK_COVER = "/images/quiz-preview-starpath-dark.webp"
 GAME_TITLE = "한자 별길"
-GAME_DESCRIPTION = "부수 한자와 관련 한자의 계보를 따라 떠나는 별자리 여행"
+GAME_DESCRIPTION = "木 카드를 열고 林·森 찾아가기"
 CHOICE_GUIDE = '<p id="choiceGuide" class="quiz-guide">한자를 보고 네 가지 보기에서 <strong class="learning-action">알맞은 뜻과 음을 골라</strong> 보세요.</p>'
 STUDY_PATHS = {"/learn/", "/learn/choice/", "/reading/"}
 UPCOMING = re.compile(r'<div class="quiz-upcoming">\s*<strong>한자 게임</strong>\s*<span>준비 중</span>\s*</div>')
 MODE = f'''<a class="quiz-tile" href="/learn/game/" aria-labelledby="starpath-name" aria-describedby="starpath-description">
   <picture class="quiz-cover">
     <source data-dark-preview media="not all" srcset="{DARK_COVER}">
-    <img src="{COVER}" alt="문 문(門) 둘레에 관계 한자가 펼쳐진 한자 별길 화면" width="960" height="540" loading="lazy" decoding="async">
+    <img src="{COVER}" alt="木에서 林과 森으로 이어지는 관계 지도와 펼친 카드의 나무 그림" width="960" height="540" loading="lazy" decoding="async">
   </picture>
   <span class="quiz-tile-caption">
     <strong id="starpath-name">{GAME_TITLE}</strong>
