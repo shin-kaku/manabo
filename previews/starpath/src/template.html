@@ -309,17 +309,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .standalone > .starpath { height: 100vh; height: 100dvh; padding: clamp(8px,2vw,24px); }
     html:root:has(.info-wrap > .starpath):not(:has(#reveal[open])) { overflow-y: auto; }
     .wrap.info-wrap:has(> .starpath) {
-      display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto;
-      height: 100vh; height: 100dvh; min-height: 350px; padding-bottom: 8px;
+      display: grid; grid-template-rows: auto auto auto minmax(300px, 1fr) auto;
+      min-height: 100vh; min-height: 100dvh; padding-bottom: 8px;
     }
     .info-wrap:has(> .starpath) > .site-footer { margin-top: clamp(28px, 6vh, 56px); padding-top: 6px; }
     .info-wrap:has(> .starpath) .footer-links { margin-bottom: 4px; }
-    .game-footer-menu { position: relative; }
+    .game-footer-menu { display: none; position: relative; }
     .game-footer-menu summary { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; cursor: pointer; }
     .game-footer-menu summary::-webkit-details-marker { display: none; }
     .game-footer-menu summary::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 1px 0 0 1px; transform: translateY(2px) rotate(45deg); }
     .game-footer-menu[open] summary::after { transform: translateY(-2px) rotate(225deg); }
     .game-footer-menu > div { position: absolute; z-index: 4; inset: auto 0 100%; max-width: 420px; margin-inline: auto; padding: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius,12px); box-shadow: 0 3px 14px rgb(0 0 0 / .10); }
+    @media (max-width: 680px), (max-height: 660px) {
+      .game-footer-full { display: none; }
+      .game-footer-menu { display: block; }
+    }
     .starpath, .starpath .frame, .starpath .gallery, .starpath .board { min-height: 0; min-width: 0; }
     .starpath .frame { height: 100%; max-width: none; padding: 0; }
     .starpath .gallery { display: grid; height: 100%; grid-template-columns: clamp(182px,21vw,216px) minmax(0,1fr); grid-template-rows: minmax(0,1fr); gap: clamp(12px,2vw,28px); }
@@ -368,9 +372,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       @keyframes map-arrival { from { opacity: 0; } }
     }
     @media (max-width: 680px) and (min-height: 521px), (max-width: 480px) {
-      .wrap.info-wrap:has(> .starpath) { min-height: 470px; }
+      .wrap.info-wrap:has(> .starpath) { grid-template-rows: auto auto auto minmax(min-content, 1fr) auto; }
       .info-wrap:has(> .starpath) > .site-footer { margin-top: clamp(18px, 4vh, 32px); }
-      .starpath .gallery { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); gap: 6px; }
+      .starpath { min-height: min-content; }
+      .starpath .gallery { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(300px,1fr); gap: 6px; }
       .star-sidebar { padding: 10px 12px; }
       .star-search { display: flex; align-items: center; gap: 10px; }
       .star-search label { flex: none; margin: 0; }
@@ -389,13 +394,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       .info-wrap:has(> .starpath) > .site-footer { margin-top: clamp(14px, 3.5vh, 24px); line-height: 1.4; }
     }
     @media (min-width: 481px) and (max-height: 520px) {
-      .wrap.info-wrap:has(> .starpath) { min-height: 300px; grid-template-rows: auto auto auto minmax(0,1fr); }
-      .info-wrap:has(> .starpath) > #choiceBack { grid-area: 3 / 1; width: auto; justify-self: start; }
-      .info-wrap > .starpath { grid-area: 4 / 1; }
-      .info-wrap:has(> .starpath) > .site-footer { grid-area: 3 / 1; z-index: 3; align-self: center; justify-self: end; margin: 0; padding: 0; border: 0; }
-      .game-footer-menu > div { inset: 100% 0 auto auto; width: min(320px,80vw); }
-      .game-footer-menu summary::after { transform: translateY(-2px) rotate(225deg); }
-      .game-footer-menu[open] summary::after { transform: translateY(2px) rotate(45deg); }
+      .wrap.info-wrap:has(> .starpath) { grid-template-rows: auto auto auto minmax(300px,1fr) auto; }
       .star-sidebar { padding: 7px 10px; font-size: 13px; }
       .star-search label { margin-bottom: 2px; }
       .board-key { margin-top: 5px; padding-top: 5px; }
@@ -509,26 +508,6 @@ let cur=START,moving=false;
 const still=matchMedia("(prefers-reduced-motion:reduce)");
 // 기기 글꼴에 없는 글자(네모로 깨짐)는 "부품"이라고 적는다
 const board = document.getElementById('pick');
-// Retain the shared footer links without spending the phone's map area on navigation.
-const siteFooter = document.querySelector('.info-wrap > .site-footer');
-if (siteFooter) {
-  const compactFooter = matchMedia('(max-width:680px), (max-height:660px)');
-  const menu = document.createElement('details'), summary = document.createElement('summary'), links = document.createElement('div');
-  menu.className = 'game-footer-menu';
-  summary.textContent = '사이트 정보';
-  menu.append(summary, links);
-  function updateFooter() {
-    if (compactFooter.matches && !menu.isConnected) {
-      links.append(...siteFooter.childNodes);
-      siteFooter.append(menu);
-    } else if (!compactFooter.matches && menu.isConnected) {
-      siteFooter.replaceChildren(...links.childNodes);
-      menu.open = false;
-    }
-  }
-  updateFooter();
-  compactFooter.addEventListener('change', updateFooter);
-}
 const setTrails = createTrails(board, map, dlg, still);
 const miss=new Map();let boxes;
 function px(t){const c=document.createElement("canvas");c.width=c.height=60;const x=c.getContext("2d");x.font='600 40px "Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif CJK JP",serif';x.textBaseline="top";x.fillText(t,5,5);return c.toDataURL()}

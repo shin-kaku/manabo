@@ -100,6 +100,9 @@ def game_page():
     navigation = fragment(study, r'<div class="wrap info-wrap">.*?</nav></div>')
     back = fragment(study, r'<div id="choiceBack" class="story-view">.*?</div>')
     footer = fragment(study, r'<footer class="site-footer">.*?</footer>')
+    footer_contents = footer.removeprefix('<footer class="site-footer">').removesuffix('</footer>')
+    footer = (f'<footer class="site-footer"><div class="game-footer-full">{footer_contents}</div>'
+              f'<details class="game-footer-menu"><summary>사이트 정보</summary><div>{footer_contents}</div></details></footer>')
     game = game.replace('<link rel="icon" href="data:,">', "\n".join([theme, consent_init, styles, controls, icon]), 1)
     game = game.replace('<body class="standalone">', f"<body>{navigation}\n{back}", 1)
     return game.replace("</body>", f"{footer}</div></body>", 1).encode("utf-8")

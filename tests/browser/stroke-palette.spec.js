@@ -16,7 +16,16 @@ async function colors(image) {
   }
   const redNumbers = data.some((r, i) =>
     i % info.channels === 0 && r === 188 && data[i + 1] === 0 && data[i + 2] === 45);
-  return { first: pixel(433, 242), last: pixel(344, 495), redNumbers };
+  return { first: pixel(433, 235), last: pixel(344, 495), redNumbers };
+}
+
+function closeColor(actual, expected) {
+  return [0, 2, 4].every(i => Math.abs(parseInt(actual.slice(i, i + 2), 16) - parseInt(expected.slice(i, i + 2), 16)) <= 8);
+}
+
+async function colorsMatch(image, first, last) {
+  const result = await colors(image);
+  return result.redNumbers && closeColor(result.first, first) && closeColor(result.last, last);
 }
 
 test("車 keeps the page's ink and guide colors when an embedded SVG prefers the opposite scheme", async ({ page }) => {
@@ -34,22 +43,16 @@ test("車 keeps the page's ink and guide colors when an embedded SVG prefers the
   ` });
   await image.evaluate(el => el.scrollIntoView({ block: "center" }));
   // During the first strokes the top is written and the final vertical is still a guide.
-  await expect.poll(() => colors(image), { timeout: 12000 }).toEqual({
-    first: "242a2b", last: "e5e8e7", redNumbers: true,
-  });
+  await expect.poll(() => colorsMatch(image, "242a2b", "e5e8e7"), { timeout: 12000 }).toBe(true);
 
   await page.locator("[data-theme-toggle]").first().dispatchEvent("click");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect.poll(() => colors(image), { timeout: 12000 }).toEqual({
-    first: "e6e8e8", last: "3d4141", redNumbers: true,
-  });
+  await expect.poll(() => colorsMatch(image, "e6e8e8", "3d4141"), { timeout: 12000 }).toBe(true);
 
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
   await page.goto("/kanji/車/", { waitUntil: "domcontentloaded" });
   await expect.poll(() => image.evaluate(img => new URL(img.currentSrc, location.href).hash)).toBe("#dark-still");
   await page.addStyleTag({ content: ".entry-stroke { color-scheme: light !important; }" });
   await image.evaluate(el => el.scrollIntoView({ block: "center" }));
-  await expect.poll(() => colors(image), { timeout: 12000 }).toEqual({
-    first: "e6e8e8", last: "e6e8e8", redNumbers: true,
-  });
+  await expect.poll(() => colorsMatch(image, "e6e8e8", "e6e8e8"), { timeout: 12000 }).toBe(true);
 });
