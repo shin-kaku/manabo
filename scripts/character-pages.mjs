@@ -46,8 +46,8 @@ function art(row, media, compact) {
   const tcgSrcset = srcset("image1", "이미지 1");
   const selectedSrcset = ml.length ? mlSrcset : tcgSrcset;
   const img = `<img class="entry-art" data-media-fallbacks="${e(JSON.stringify(selected.slice(1)))}" width="960" height="960" src="${e(selected[0])}"${selectedSrcset ? ` srcset="${e(selectedSrcset)}" sizes="(max-width: 640px) calc((100vw - 96px) / 2), 255px"` : ""} alt="${e(row["한자"])}의 모양과 뜻을 연결한 암기 그림">`;
-  const buttons = ml.length ? `<div class="entry-art-switch" role="group" aria-label="암기 그림 선택" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}" data-ml-srcset="${e(mlSrcset)}" data-tcg-srcset="${e(tcgSrcset)}"><button type="button" data-art-kind="ml" aria-pressed="true">ML</button><button type="button" data-art-kind="tcg" aria-pressed="false">TCG</button></div>` : "";
-  return `<a class="entry-zoom" data-entry-zoom href="${e(selected[0])}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a>${buttons}`;
+  const toggle = ml.length ? `<button class="entry-art-switch" type="button" role="switch" aria-checked="false" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}" data-ml-srcset="${e(mlSrcset)}" data-tcg-srcset="${e(tcgSrcset)}"><span>그림체 변경</span><span class="entry-art-switch-track" aria-hidden="true"><span></span></span></button>` : "";
+  return `<a class="entry-zoom" data-entry-zoom href="${e(selected[0])}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a>${toggle}`;
 }
 
 function linkedText(text, known, current = "") {

@@ -38,21 +38,19 @@ new MutationObserver(updateStrokeImages).observe(document.documentElement, {
 const entry = document.querySelector("[data-entry-kanji]");
 if (entry) setupEntryNavigation(entry);
 
-for (const group of document.querySelectorAll(".entry-art-switch")) {
-  group.addEventListener("click", event => {
-    const button = event.target.closest("button[data-art-kind]");
-    if (!button) return;
-    const [url, ...fallbacks] = JSON.parse(group.dataset[button.dataset.artKind]);
-    const figure = group.closest("figure");
+for (const toggle of document.querySelectorAll(".entry-art-switch")) {
+  toggle.addEventListener("click", () => {
+    const checked = toggle.getAttribute("aria-checked") !== "true";
+    const kind = checked ? "tcg" : "ml";
+    const [url, ...fallbacks] = JSON.parse(toggle.dataset[kind]);
+    const figure = toggle.closest("figure");
     const img = figure.querySelector(".entry-art");
     img.dispatchEvent(new CustomEvent("art-change", { detail: fallbacks }));
     figure.querySelector("[data-entry-zoom]").href = url;
-    const srcset = group.dataset[`${button.dataset.artKind}Srcset`];
+    const srcset = toggle.dataset[`${kind}Srcset`];
     if (srcset) img.srcset = srcset;
     else img.removeAttribute("srcset");
     img.src = url;
-    for (const option of group.querySelectorAll("button")) {
-      option.setAttribute("aria-pressed", String(option === button));
-    }
+    toggle.setAttribute("aria-checked", String(checked));
   });
 }

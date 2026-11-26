@@ -46,9 +46,13 @@
 .entry-pair figure { display: grid; grid-template-rows: 1fr auto; align-items: center; justify-items: center; padding: clamp(6px, 2vw, 15px); border: 1px solid var(--line); border-radius: 12px; }
 .entry-pair picture { width: 82%; }
 .entry-pair figcaption { margin-top: 6px; }
-.entry-art-switch { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
-.entry-art-switch button { min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--control-radius); background: var(--paper); color: var(--ink); cursor: pointer; }
-.entry-art-switch button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent, #fff); border-color: var(--accent); }
+.entry-art-switch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; margin-top: 4px; padding: 4px 6px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: .875rem; cursor: pointer; }
+.entry-art-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--control-radius); }
+.entry-art-switch-track { display: inline-flex; flex: 0 0 36px; align-items: center; width: 36px; height: 20px; padding: 2px; box-sizing: border-box; border-radius: 999px; background: var(--line-dark); transition: background-color .15s ease; }
+.entry-art-switch-track span { display: block; width: 16px; height: 16px; border-radius: 50%; background: white; box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: transform .15s ease; }
+.entry-art-switch[aria-checked="true"] .entry-art-switch-track { background: var(--accent); }
+.entry-art-switch[aria-checked="true"] .entry-art-switch-track span { transform: translateX(16px); }
+@media (prefers-reduced-motion: reduce) { .entry-art-switch-track, .entry-art-switch-track span { transition: none; } }
 .entry-readings { display: grid; grid-template-columns: auto 1fr; column-gap: 16px; margin: 0; }
 .entry-readings dt { color: var(--muted); }
 .entry-readings dd { margin: 0; }
@@ -63,6 +67,7 @@
 .entry-word-groups { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,210px),1fr)); row-gap: 24px; column-gap: clamp(24px, 4vw, 48px); }
 @media (max-width: 360px) {
   .info-page:has([data-entry-kanji]) { padding-inline: 12px; }
+  .entry-art-switch { gap: 6px; padding-inline: 2px; font-size: .8125rem; white-space: nowrap; }
 }
 .entry-page h3 { font-size: 1rem; }
 .entry-word-groups h3 { margin: 0 0 4px; }
