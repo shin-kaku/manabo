@@ -2,7 +2,9 @@
 
 import argparse
 import io
+import os
 import re
+import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -91,15 +93,18 @@ def fragment(html, pattern):
     return match.group()
 
 
-def game_page():
+def game_page(dev=False):
     study = (SITE / "learn/choice/index.html").read_text(encoding="utf-8")
-    game = GAME.read_text(encoding="utf-8")
+    game_path = Path(os.environ["MANABO_STARPATH_DEV_GAME"]) if dev else GAME
+    game = game_path.read_text(encoding="utf-8")
     # Use just the study shell and its shared stylesheet and controls.
     # The choice and reading apps do not need to run on the map.
-    theme = fragment(study, r"<script>[^<]*manabo-theme-v1[^<]*</script>")
+    theme = "" if dev else fragment(study, r"<script>[^<]*manabo-theme-v1[^<]*</script>")
     consent_init = fragment(study, r'<script[^>]*>[^<]*window\.clarity\s*=[^<]*</script>')
-    styles = fragment(study, r'<link [^>]*href="/assets/site-info-[^"]+\.css"[^>]*>')
-    controls = fragment(study, r'<script [^>]*src="/assets/site-info-[^"]+\.js"[^>]*></script>')
+    styles = ('<link rel="stylesheet" href="/src/styles.css"><link rel="stylesheet" href="/src/site-info.css">'
+              if dev else fragment(study, r'<link [^>]*href="/assets/site-info-[^"]+\.css"[^>]*>'))
+    controls = ('<script type="module" src="/src/site-info.js"></script>'
+                if dev else fragment(study, r'<script [^>]*src="/assets/site-info-[^"]+\.js"[^>]*></script>'))
     icon = fragment(study, r'<link rel="icon" [^>]*>')
     navigation = fragment(study, r'<div class="wrap info-wrap">.*?</nav></div>')
     back = fragment(study, r'<div id="choiceBack" class="story-view">.*?</div>')
@@ -150,7 +155,13 @@ class Preview(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=49190)
-    port = parser.parse_args().port
+    parser.add_argument("--render-dev", choices=["/learn/", "/learn/choice/", "/reading/", "/learn/game/"])
+    args = parser.parse_args()
+    if args.render_dev:
+        SITE = HERE.parents[1]
+        sys.stdout.buffer.write(game_page(dev=True) if args.render_dev == "/learn/game/" else study_menu(args.render_dev))
+        sys.exit(0)
+    port = args.port
     study_menu()
     game_page()
     with ThreadingHTTPServer(("127.0.0.1", port), Preview) as server:

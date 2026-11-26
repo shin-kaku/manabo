@@ -11,6 +11,7 @@ test("keyboard focus follows quiz questions, results and settings", async ({ pag
   await page.route("**/data/kanji.json", route => route.fulfill({ json: pool }));
   await page.goto("/learn/choice/");
   await expect(page.locator("#learningStatus")).toBeHidden();
+  await page.locator("#choiceGradePicker summary").click();
   await page.locator('#gameGrade input[value="초등학교 1학년"]').check();
   await page.locator("#gameStart").focus();
   await page.keyboard.press("Enter");
@@ -29,6 +30,7 @@ test("keyboard focus follows quiz questions, results and settings", async ({ pag
   await expect(page.locator("#gameSettingsButton")).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("#gameStart")).toBeFocused();
+  await page.locator("#choiceGradePicker summary").click();
   await page.locator('#gameGrade input[value="초등학교 2학년"]').check();
   await page.locator("#gameStart").focus();
   await page.keyboard.press("Enter");

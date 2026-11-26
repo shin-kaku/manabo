@@ -159,22 +159,19 @@ test("exiting a bookmarked story at either end restores the reader link in the h
   }
 });
 
-test("the quiz gallery links to a dedicated choice setup and skips the unreleased game", async ({ page }) => {
+test("the quiz gallery links to choice, reading and Starpath", async ({ page }) => {
   await page.goto("/learn/");
   const shelf = page.locator(".quiz-shelf");
   const choice = shelf.getByRole("link", { name: "사지선다", exact: true });
   const reading = shelf.getByRole("link", { name: "독해", exact: true });
-  await expect(shelf.getByRole("link")).toHaveCount(2);
+  await expect(shelf.getByRole("link")).toHaveCount(3);
   await expect(choice).toHaveAttribute("href", "/learn/choice/");
   await expect(reading).toHaveAttribute("href", "/reading/");
   await expect(choice.locator("picture img")).toBeVisible();
   await expect(reading.locator("picture img")).toBeVisible();
-  const upcoming = shelf.locator(".quiz-upcoming:last-child");
-  await expect(upcoming).toBeVisible();
-  await expect(upcoming).toContainText("한자 게임");
-  await expect(upcoming).toContainText("준비 중");
-  expect(await upcoming.evaluate(card => card.tabIndex)).toBe(-1);
-  await expect(upcoming.locator("a, button, img")).toHaveCount(0);
+  const starpath = shelf.getByRole("link", { name: "한자 별길", exact: true });
+  await expect(starpath).toHaveAttribute("href", "/learn/game/");
+  await expect(starpath.locator("picture img")).toBeVisible();
   await expect(page.locator("#choice-card")).toBeHidden();
   await choice.press("Enter");
   await expect(page).toHaveURL(/\/learn\/choice\/$/);
@@ -185,6 +182,7 @@ test("the quiz gallery links to a dedicated choice setup and skips the unrelease
   await expect(jlpt.locator('input[value=""]')).toBeChecked();
   await expect(grade.locator('input[value=""]')).toBeChecked();
   const n5 = jlpt.locator('input[value="JLPT N5"]');
+  await jlpt.locator("summary").click();
   await n5.check();
   await expect(n5).toBeChecked();
   await expect(jlpt.locator('input[value=""]')).not.toBeChecked();
@@ -244,11 +242,8 @@ test.describe("mobile quiz selector", () => {
     await expect(nav.getByRole("link")).toHaveText(["한자 도감", "한자 학습", "한자 교재"]);
     await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 학습");
     const shelf = page.locator(".quiz-shelf");
-    await expect(shelf.getByRole("link")).toHaveCount(2);
-    const upcoming = shelf.locator(".quiz-upcoming:last-child");
-    await expect(upcoming).toContainText("준비 중");
-    await upcoming.tap();
-    await expect(page).toHaveURL(/\/learn\/$/);
+    await expect(shelf.getByRole("link")).toHaveCount(3);
+    await expect(shelf.getByRole("link", { name: "한자 별길", exact: true })).toHaveAttribute("href", "/learn/game/");
     await expect(page.locator("#gameStart")).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
     await page.locator("#choose-reading").tap();

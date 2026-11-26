@@ -221,12 +221,14 @@ test("quiz completion, insufficient pool, and valid restart never retain stale r
   await mockData(page, { kanji: smallPool });
   await page.goto("/learn/choice/");
   await ready(page);
+  await page.locator("#choiceGradePicker summary").click();
   await page.locator('#gameGrade input[value="초등학교 1학년"]').check();
   await page.locator("#gameStart").click();
   await expect(page.locator("#gameProgress")).toHaveText("1 / 4");
   for (let i = 0; i < 4; i++) { await page.locator(".game-choice").first().click(); await page.locator("#gameNext").click(); }
   await expect(page.locator("#gameQuestionLabel")).toHaveText("사지선다 완료");
   await page.locator("#gameSettingsButton").click();
+  await page.locator("#choiceGradePicker summary").click();
   await page.locator('#gameGrade input[value="초등학교 2학년"]').check();
   await page.locator("#gameStart").click();
   await expect(page.locator("#gameSetupError")).toBeVisible();

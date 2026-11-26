@@ -1,12 +1,16 @@
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { studyNavigation } from "./scripts/study-nav.mjs";
 import { studyPages, studyTemplatePath, writeStudyPages } from "./scripts/study-pages.mjs";
 import { writeKanjiListData } from "./scripts/kanji-list-data.mjs";
 
 const generator = fileURLToPath(new URL("./scripts/material-pages.mjs", import.meta.url));
+const starpathBuilder = fileURLToPath(new URL("./previews/starpath/scripts/build.mjs", import.meta.url));
+const starpathPreview = fileURLToPath(new URL("./previews/starpath/preview.py", import.meta.url));
 function generateMaterials() {
   // A fresh Node process reads the newly generated route index on every data change.
   return JSON.parse(execFileSync(process.execPath, [generator], { encoding: "utf8" }));
@@ -42,6 +46,29 @@ export default defineConfig({
   }, {
     name: "study-pages",
     configureServer(server) {
+      const devGame = join(tmpdir(), `manabo-starpath-dev-${process.pid}.html`);
+      server.httpServer?.once("close", () => rmSync(devGame, { force: true }));
+      const studyPaths = new Set(["/learn/", "/learn/choice/", "/reading/", "/learn/game/"]);
+      server.middlewares.use(async (req, res, next) => {
+        const path = new URL(req.url, "http://localhost").pathname;
+        const cover = path.match(/^\/images\/(quiz-preview-starpath(?:-dark)?\.webp)$/);
+        if (cover) {
+          res.setHeader("Content-Type", "image/webp");
+          res.end(readFileSync(new URL(`./previews/starpath/${cover[1]}`, import.meta.url)));
+          return;
+        }
+        const normalized = path.endsWith("/index.html") ? path.slice(0, -10) : path.endsWith("/") ? path : `${path}/`;
+        if (!studyPaths.has(normalized)) return next();
+        try {
+          if (normalized === "/learn/game/") execFileSync(process.execPath, [starpathBuilder, "--out", devGame], { stdio: "pipe" });
+          const html = execFileSync("python3", [starpathPreview, "--render-dev", normalized], {
+            encoding: "utf8", maxBuffer: 4 * 1024 * 1024, env: { ...process.env, MANABO_STARPATH_DEV_GAME: devGame },
+          });
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          res.setHeader("Cache-Control", "no-store");
+          res.end(await server.transformIndexHtml(req.url, html));
+        } catch (error) { next(error); }
+      });
       server.watcher.on("change", (path) => {
         if (/\/public\/data\/(kanji|media)\.json$/.test(path)) writeKanjiListData();
         if (path === studyTemplatePath) writeStudyPages();
@@ -49,6 +76,9 @@ export default defineConfig({
             /\/src\/(materials\.html|(?:entry-art-zoom|material-directory-data|study-path|reading-groups|kanji-components|media|image-sources)\.js)$/.test(path) ||
             /\/scripts\/(material-directory|material-pages|character-pages|html)\.mjs$/.test(path) ||
             /\/public\/data\/(kanji|stories|media)\.json$/.test(path)) generateMaterials();
+        if (/\/previews\/starpath\/(?:src\/template\.html|data\/(?:shapes|overrides)\.json|scripts\/build\.mjs|choice-setup\.(?:css|js)|preview\.py)$/.test(path)) {
+          server.ws.send({ type: "full-reload" });
+        }
       });
     },
   }, {
