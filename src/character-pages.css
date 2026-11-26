@@ -46,7 +46,8 @@
 .entry-pair figure { display: grid; grid-template-rows: 1fr auto; align-items: center; justify-items: center; padding: clamp(6px, 2vw, 15px); border: 1px solid var(--line); border-radius: 12px; }
 .entry-pair picture { width: 82%; }
 .entry-pair figcaption { margin-top: 6px; }
-.entry-art-switch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; margin-top: 4px; padding: 4px 6px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: .875rem; cursor: pointer; }
+.entry-pair .entry-art-caption { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+.entry-art-switch { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
 .entry-art-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--control-radius); }
 .entry-art-switch-track { display: inline-flex; flex: 0 0 36px; align-items: center; width: 36px; height: 20px; padding: 2px; box-sizing: border-box; border-radius: 999px; background: var(--line-dark); transition: background-color .15s ease; }
 .entry-art-switch-track span { display: block; width: 16px; height: 16px; border-radius: 50%; background: white; box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: transform .15s ease; }
@@ -63,11 +64,22 @@
   .entry-header .entry-meta a { min-height: 40px; font-size: .8125rem; }
   .entry-meta .grade-full { display: none; }
   .entry-meta .grade-short { display: inline; }
+  .entry-pair .entry-art-caption { font-size: .7rem; }
+  .entry-art-switch { gap: 2px; }
+  .entry-art-switch-track { flex-basis: 28px; width: 28px; height: 16px; }
+  .entry-art-switch-track span { width: 12px; height: 12px; }
+  .entry-art-switch[aria-checked="true"] .entry-art-switch-track span { transform: translateX(12px); }
 }
 .entry-word-groups { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,210px),1fr)); row-gap: 24px; column-gap: clamp(24px, 4vw, 48px); }
 @media (max-width: 360px) {
   .info-page:has([data-entry-kanji]) { padding-inline: 12px; }
-  .entry-art-switch { gap: 6px; padding-inline: 2px; font-size: .8125rem; white-space: nowrap; }
+}
+@media (max-width: 389px) {
+  .entry-pair figure:first-child { padding-inline: 2px; }
+  .entry-pair .entry-art-caption { font-size: .65rem; letter-spacing: -.045em; }
+  .entry-art-switch { gap: 0; }
+  .entry-art-switch-track { flex-basis: 24px; width: 24px; }
+  .entry-art-switch[aria-checked="true"] .entry-art-switch-track span { transform: translateX(8px); }
 }
 .entry-page h3 { font-size: 1rem; }
 .entry-word-groups h3 { margin: 0 0 4px; }

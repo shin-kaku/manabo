@@ -22,15 +22,20 @@ test("the style switch defaults to ML and changes to TCG and back", async ({ pag
   await expect.poll(() => art.evaluate(img => img.complete && new URL(img.currentSrc).pathname)).toContain("/media/image2/");
 });
 
-test("the style switch stays inside its card on a narrow phone", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 844 });
+for (const width of [320, 375, 390]) test(`the caption and switch fit on one line at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 844 });
   await page.goto("/kanji/木/");
   const toggle = page.getByRole("switch", { name: "그림체 변경" });
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-checked", "true");
-  const card = await page.locator(".entry-art-switch").locator("..").boundingBox();
+  const card = await page.locator(".entry-art-switch").locator("xpath=ancestor::figure").boundingBox();
   const button = await toggle.boundingBox();
   expect(button.x).toBeGreaterThanOrEqual(card.x);
   expect(button.x + button.width).toBeLessThanOrEqual(card.x + card.width);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  const caption = page.locator(".entry-art-caption");
+  const captionBox = await caption.boundingBox();
+  expect(captionBox.x).toBeGreaterThanOrEqual(card.x);
+  expect(captionBox.x + captionBox.width).toBeLessThanOrEqual(card.x + card.width);
+  expect(await caption.innerText()).toContain("암기 그림");
 });

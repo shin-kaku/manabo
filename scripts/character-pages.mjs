@@ -47,7 +47,7 @@ function art(row, media, compact) {
   const selectedSrcset = ml.length ? mlSrcset : tcgSrcset;
   const img = `<img class="entry-art" data-media-fallbacks="${e(JSON.stringify(selected.slice(1)))}" width="960" height="960" src="${e(selected[0])}"${selectedSrcset ? ` srcset="${e(selectedSrcset)}" sizes="(max-width: 640px) calc((100vw - 96px) / 2), 255px"` : ""} alt="${e(row["한자"])}의 모양과 뜻을 연결한 암기 그림">`;
   const toggle = ml.length ? `<button class="entry-art-switch" type="button" role="switch" aria-checked="false" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}" data-ml-srcset="${e(mlSrcset)}" data-tcg-srcset="${e(tcgSrcset)}"><span>그림체 변경</span><span class="entry-art-switch-track" aria-hidden="true"><span></span></span></button>` : "";
-  return `<a class="entry-zoom" data-entry-zoom href="${e(selected[0])}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a>${toggle}`;
+  return `<a class="entry-zoom" data-entry-zoom href="${e(selected[0])}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a><figcaption class="entry-art-caption"><span>암기 그림</span>${toggle ? `<span aria-hidden="true">・</span>${toggle}` : ""}</figcaption>`;
 }
 
 function linkedText(text, known, current = "") {
@@ -115,7 +115,7 @@ function characterEntry(row, media, block, known) {
     path: characterPath(ch).slice(1,-1), title, description: `${title}의 ${row["획"]}획 획순을 따라 쓰고 ${topics.join(" · ")}를 확인하세요.`,
     back: '<a data-previous-kanji hidden>← 이전 한자</a>',
     body: `<article class="entry-page" data-entry-kanji="${e(ch)}"><div class="entry-header"><h1><strong lang="ja">${e(ch)}</strong> <span class="entry-meaning">${e(ko)}</span></h1><nav class="entry-meta" aria-label="학습 범위">${categoryLinks(row)}</nav></div>
-      <div class="entry-pair"><figure>${art(row, media, false)}<figcaption>암기 그림</figcaption></figure><figure>${stroke(row, media)}<figcaption>획순 · ${e(row["획"])}획</figcaption></figure></div>
+      <div class="entry-pair"><figure>${art(row, media, false)}</figure><figure>${stroke(row, media)}<figcaption>획순 · ${e(row["획"])}획</figcaption></figure></div>
       <section class="entry-section"><h2>암기 풀이</h2><p>${linkText(row["풀이"])}</p></section>
       ${readings && `<section class="entry-section"><h2>일본어 읽기</h2><dl class="entry-readings">${readings}</dl></section>`}
       ${exampleGroups && `<section class="entry-section">
