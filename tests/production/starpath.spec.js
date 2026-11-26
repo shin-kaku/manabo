@@ -16,6 +16,30 @@ for (const glyph of ["木", "難", "𠂢"]) {
   });
 }
 
+test("shape links open the matching kanji and show its shape components", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  const response = await page.request.get("/data/kanji.json");
+  await expect(response).toBeOK();
+  const entries = await response.json();
+  await page.goto("/learn/");
+  await page.locator('[data-analytics-choice="denied"]').click();
+  for (const [part, glyph, components] of [
+    ["灬", "魚", "⺈ 田 灬"],
+    ["黒", "黙", "黒"],
+  ]) {
+    await page.goto("/learn/game/#" + encodeURIComponent(part));
+    await page.locator(`#map .rel[data-k="${glyph}"]`).click();
+    await page.locator(`#map .cur[data-k="${glyph}"]`).click();
+    const entry = entries.find(row => row["한자"] === glyph);
+    await expect(page.locator("#explanation")).toHaveText(entry["풀이"]);
+    await page.locator("#extra summary").click();
+    const shapes = page.locator("#extra-content section").filter({
+      has: page.getByRole("heading", { name: "모양에서 찾은 부품", exact: true }),
+    });
+    await expect(shapes.locator(".uses")).toHaveText(components);
+  }
+});
+
 for (const width of [390, 1280]) {
   test(`the published study menu opens a working Starpath game at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });

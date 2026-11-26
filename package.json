@@ -8,7 +8,7 @@
     "prebuild": "node scripts/restore-media.mjs",
     "build": "vite build && node previews/starpath/scripts/build.mjs && python3 scripts/publish-starpath.py && node scripts/check-media.mjs",
     "preview": "vite preview",
-    "prepreview:study": "npm run build && node previews/starpath/scripts/build.mjs",
+    "prepreview:study": "npm run build",
     "preview:study": "python3 previews/starpath/preview.py",
     "sync-data": "node scripts/sync-sheets.mjs",
     "sync-media": "node scripts/sync-media.mjs",

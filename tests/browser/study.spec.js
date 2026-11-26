@@ -181,7 +181,7 @@ test("a keyboard-opened lookup can be dismissed and followed to the previous kan
   const detail = page.locator("[data-entry-kanji]");
   await expect(detail).toHaveAttribute("data-entry-kanji", "木");
   await expect(page.locator("[data-previous-kanji]")).toBeHidden();
-  const anchor = page.locator('.entry-page [data-study-kanji="林"]').first();
+  const anchor = page.locator('.entry-words [data-study-kanji="大"]').first();
   const popover = page.locator("dialog.study-lookup");
   // Before the lookup module loads, the server-rendered link opens the character directly.
   await expect(popover).toBeAttached();
@@ -193,7 +193,7 @@ test("a keyboard-opened lookup can be dismissed and followed to the previous kan
   await expect(anchor).toBeFocused();
   await anchor.press("Enter");
   await popover.locator(".popover-go").press("Enter");
-  await expect(detail).toHaveAttribute("data-entry-kanji", "林");
+  await expect(detail).toHaveAttribute("data-entry-kanji", "大");
   expect(new URL(page.url()).searchParams.get("q")).toBe("木");
   await page.reload();
   await page.getByRole("link", { name: "이전 한자 木" }).press("Enter");

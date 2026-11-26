@@ -24,6 +24,13 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Unit tests
         run: npm run test:unit
+      - uses: actions/cache@v4
+        with:
+          path: public/media
+          key: media-v1-${{ hashFiles('public/data/media.json') }}
+          restore-keys: media-v1-
+      - name: Restore published media for browser tests
+        run: npm run media:restore
       - name: Browser tests
         id: browser-tests
         run: npm run test:browser
@@ -37,9 +44,6 @@ jobs:
             test-results/
           retention-days: 3
           if-no-files-found: warn
-      - uses: actions/cache@v4
-        with:
-          path: public/media
-          key: media-v1-${{ hashFiles('public/data/media.json') }}
-          restore-keys: media-v1-
       - run: npm run build
+      - name: Test the built Starpath pages
+        run: npm run test:browser:production
