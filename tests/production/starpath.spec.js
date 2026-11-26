@@ -7,7 +7,7 @@ for (const glyph of ["木", "難", "𠂢"]) {
     await expect(section.getByRole("heading", { name: "관련 한자" })).toBeVisible();
     await expect(section.locator("[data-study-kanji]")).toHaveCount(0);
     await expect(section).toContainText(`${glyph}에서 시작해 같은 부수로 이어진 한자들을 하나씩 따라가 보세요. 한 글자를 알면 다음 글자가 보여요.`);
-    await expect(section).toContainText("다음에는 [한자 학습] > [한자 별길]에서 바로 찾아갈 수 있어요.");
+    await expect(section.locator(".entry-starpath-guide")).toHaveText("홈페이지 상단, [한자 학습] - [한자 별길]로 바로 찾아갈 수 있어요.");
     const link = section.getByRole("link", { name: `${glyph}의 별자리 펼쳐 보기 (새 창)` });
     await expect(link).toHaveAttribute("target", "_blank");
     const [game] = await Promise.all([page.waitForEvent("popup"), link.click()]);

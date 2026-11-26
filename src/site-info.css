@@ -201,7 +201,8 @@
   line-height: 1.9;
   overflow-wrap: anywhere;
 }
-.info-page h1 { font-size: 30px; line-height: 1.4; margin: 14px 0; }
+.info-page h1, .quiz-options > .quiz-heading { font-size: 30px; line-height: 1.4; }
+.info-page h1 { margin: 14px 0; }
 .info-page h2 { font-size: 20px; line-height: 1.5; margin: 32px 0 12px; }
 .info-page p { margin: 12px 0; }
 .info-page ul { padding-left: 24px; }
@@ -231,7 +232,7 @@
   .brand-icon { width: 34px; height: 34px; }
   .info-page, .game-view.content-panel { margin-top: 24px; padding: 24px 20px; }
   .info-page { font-size: 15px; }
-  .info-page h1 { font-size: 26px; }
+  .info-page h1, .quiz-options > .quiz-heading { font-size: 26px; }
   .info-page h2 { font-size: 18px; }
   .info-lead { font-size: 16px; }
   .site-footer { margin-top: 36px; }

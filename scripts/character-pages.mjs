@@ -78,7 +78,7 @@ function relatedGame(ch) {
   return `<section class="entry-section entry-related"><h2>관련 한자</h2>
     <a class="entry-starpath-link" href="/learn/game/#${encodeURIComponent(ch)}" target="_blank" rel="noopener noreferrer"><span><span lang="ja">${e(ch)}</span>의 별자리 펼쳐 보기</span> <span aria-hidden="true">↗</span><span class="entry-new-window"> (새 창)</span></a>
     <p><span lang="ja">${e(ch)}</span>에서 시작해 같은 부수로 이어진 한자들을 하나씩 따라가 보세요. 한 글자를 알면 다음 글자가 보여요.</p>
-    <p class="entry-starpath-guide">다음에는 [한자 학습] &gt; [한자 별길]에서 바로 찾아갈 수 있어요.</p></section>`;
+    <p class="entry-starpath-guide">홈페이지 상단, [한자 학습] - [한자 별길]로 바로 찾아갈 수 있어요.</p></section>`;
 }
 
 function categoryLinks(row) {
