@@ -45,7 +45,7 @@ function art(row, media, compact) {
   const tcgSrcset = srcset("image1", "이미지 1");
   const selectedSrcset = ml.length ? mlSrcset : tcgSrcset;
   const img = `<img class="entry-art" data-media-fallbacks="${e(JSON.stringify(selected.slice(1)))}" width="960" height="960" src="${e(selected[0])}"${selectedSrcset ? ` srcset="${e(selectedSrcset)}" sizes="(max-width: 640px) calc((100vw - 96px) / 2), 255px"` : ""} alt="${e(row["한자"])}의 모양과 뜻을 연결한 암기 그림">`;
-  const toggle = ml.length ? `<button class="entry-art-switch" type="button" role="switch" aria-label="그림 B 선택" aria-checked="false" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}" data-ml-srcset="${e(mlSrcset)}" data-tcg-srcset="${e(tcgSrcset)}"><span class="entry-art-label-a">그림A</span><span class="entry-art-switch-track" aria-hidden="true"><span></span></span><span class="entry-art-label-b">그림B</span></button>` : "";
+  const toggle = ml.length ? `<button class="entry-art-switch" type="button" role="switch" aria-label="애니 그림 보기" aria-checked="false" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}" data-ml-srcset="${e(mlSrcset)}" data-tcg-srcset="${e(tcgSrcset)}"><span class="entry-art-label-a">심플</span><span class="entry-art-switch-track" aria-hidden="true"><span></span></span><span class="entry-art-label-b">애니</span></button>` : "";
   return `<a class="entry-zoom" data-entry-zoom href="${e(selected[0])}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a><figcaption class="entry-art-caption">${toggle}</figcaption>`;
 }
 
@@ -78,7 +78,7 @@ function relatedGame(ch) {
   return `<section class="entry-section entry-related"><h2>관련 한자</h2>
     <a class="entry-starpath-link" href="/learn/game/#${encodeURIComponent(ch)}" target="_blank" rel="noopener noreferrer"><span><span lang="ja">${e(ch)}</span>의 별자리 펼쳐 보기</span> <span aria-hidden="true">↗</span><span class="entry-new-window"> (새 창)</span></a>
     <p><span lang="ja">${e(ch)}</span>에서 시작해 같은 부수로 이어진 한자들을 하나씩 따라가 보세요. 한 글자를 알면 다음 글자가 보여요.</p>
-    <p class="entry-starpath-guide">다음에는 [한자 학습] &gt; [한자 별길]에서 바로 찾아갈 수 있어요.</p></section>`;
+    <p class="entry-starpath-guide">홈페이지 상단, [한자 학습] - [한자 별길]로 바로 찾아갈 수 있어요.</p></section>`;
 }
 
 function categoryLinks(row) {

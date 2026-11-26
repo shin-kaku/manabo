@@ -4,8 +4,8 @@ test("the style switch defaults to ML and changes to TCG and back", async ({ pag
   await page.goto("/kanji/木/");
   const art = page.locator(".entry-art");
   const zoom = page.locator("[data-entry-zoom]");
-  const toggle = page.getByRole("switch", { name: "그림 B 선택" });
-  await expect(toggle).toHaveText("그림A그림B");
+  const toggle = page.getByRole("switch", { name: "애니 그림 보기" });
+  await expect(toggle).toHaveText("심플애니");
   await expect(toggle).toHaveAttribute("aria-checked", "false");
   const mlSource = await art.getAttribute("src");
   expect(mlSource).toMatch(/^\/media\/image2\//);
@@ -29,7 +29,7 @@ test("the style switch defaults to ML and changes to TCG and back", async ({ pag
 for (const width of [320, 375, 390]) test(`the caption and switch fit on one line at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 844 });
   await page.goto("/kanji/木/");
-  const toggle = page.getByRole("switch", { name: "그림 B 선택" });
+  const toggle = page.getByRole("switch", { name: "애니 그림 보기" });
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-checked", "true");
   const card = await page.locator(".entry-art-switch").locator("xpath=ancestor::figure").boundingBox();
@@ -41,5 +41,5 @@ for (const width of [320, 375, 390]) test(`the caption and switch fit on one lin
   const captionBox = await caption.boundingBox();
   expect(captionBox.x).toBeGreaterThanOrEqual(card.x);
   expect(captionBox.x + captionBox.width).toBeLessThanOrEqual(card.x + card.width);
-  await expect(caption).toHaveText("그림A그림B");
+  await expect(caption).toHaveText("심플애니");
 });

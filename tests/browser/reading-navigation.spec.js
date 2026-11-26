@@ -166,6 +166,7 @@ test("the quiz gallery links to choice, reading and Starpath", async ({ page }) 
   const reading = shelf.getByRole("link", { name: "독해", exact: true });
   await expect(shelf.getByRole("link")).toHaveCount(3);
   await expect(choice).toHaveAttribute("href", "/learn/choice/");
+  await expect(choice).toHaveAccessibleDescription("보는 순간 뜻과 음이 떠오를 때까지, 기억을 꺼내는 훈련");
   await expect(reading).toHaveAttribute("href", "/reading/");
   await expect(choice.locator("picture img")).toBeVisible();
   await expect(reading.locator("picture img")).toBeVisible();
@@ -260,25 +261,28 @@ test.describe("mobile quiz selector", () => {
   });
 });
 
-for (const width of [390, 1440]) test(`switching study tabs keeps the catalog layout at ${width}px`, async ({ page }) => {
+for (const width of [390, 820, 1440]) test(`switching study tabs keeps the catalog layout at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 844 });
   await page.addInitScript(() => localStorage.setItem("manabo-theme-v1", "dark"));
   let reference;
   for (const path of ["/kanji/", "/learn/", "/book/"]) {
     await page.goto(path);
-    const panel = path === "/learn/" ? "#gameView" : ".info-page";
-    const boxes = await page.evaluate(selector => {
+    const panelSelector = path === "/learn/" ? "#gameView" : ".info-page";
+    const layout = await page.evaluate(selector => {
+      const panel = document.querySelector(selector);
       const elements = [
         document.querySelector(".brand-icon"), document.querySelector(".site-info-menu summary"),
-        ...document.querySelectorAll(".site-tab"), document.querySelector(selector),
+        ...document.querySelectorAll(".site-tab"), panel,
       ];
-      return elements.map(element => {
+      const boxes = elements.map(element => {
         const { left, top, width } = element.getBoundingClientRect();
         return [Math.round(left), Math.round(top), Math.round(width)];
       });
-    }, panel);
-    reference ??= boxes;
-    expect(boxes).toEqual(reference);
+      const { fontSize, lineHeight } = getComputedStyle(panel.querySelector("h1"));
+      return { boxes, fontSize, lineHeight };
+    }, panelSelector);
+    reference ??= layout;
+    expect(layout).toEqual(reference);
   }
 });
 
