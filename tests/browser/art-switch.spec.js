@@ -4,16 +4,20 @@ test("the style switch defaults to ML and changes to TCG and back", async ({ pag
   await page.goto("/kanji/木/");
   const art = page.locator(".entry-art");
   const zoom = page.locator("[data-entry-zoom]");
-  const toggle = page.getByRole("switch", { name: "그림체 변경" });
+  const toggle = page.getByRole("switch", { name: "그림 B 선택" });
+  await expect(toggle).toHaveText("그림A그림B");
   await expect(toggle).toHaveAttribute("aria-checked", "false");
   const mlSource = await art.getAttribute("src");
   expect(mlSource).toMatch(/^\/media\/image2\//);
   await expect.poll(() => art.evaluate(img => img.complete && new URL(img.currentSrc).pathname)).toContain("/media/image2/");
+  await expect.poll(() => art.evaluate(img => Number(img.style.getPropertyValue("--entry-line-scale")))).toBeGreaterThan(1);
+  expect(await art.evaluate(img => Number(img.style.getPropertyValue("--entry-line-scale")))).toBeLessThanOrEqual(1.3);
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-checked", "true");
   await expect(art).toHaveAttribute("src", /\/media\/image1\//);
   await expect(zoom).toHaveAttribute("href", /\/media\/image1\//);
   await expect.poll(() => art.evaluate(img => img.complete && new URL(img.currentSrc).pathname)).toContain("/media/image1/");
+  await expect(art).toHaveCSS("transform", "none");
   await toggle.focus();
   await page.keyboard.press("Space");
   await expect(toggle).toHaveAttribute("aria-checked", "false");
@@ -25,7 +29,7 @@ test("the style switch defaults to ML and changes to TCG and back", async ({ pag
 for (const width of [320, 375, 390]) test(`the caption and switch fit on one line at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 844 });
   await page.goto("/kanji/木/");
-  const toggle = page.getByRole("switch", { name: "그림체 변경" });
+  const toggle = page.getByRole("switch", { name: "그림 B 선택" });
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-checked", "true");
   const card = await page.locator(".entry-art-switch").locator("xpath=ancestor::figure").boundingBox();
@@ -37,5 +41,5 @@ for (const width of [320, 375, 390]) test(`the caption and switch fit on one lin
   const captionBox = await caption.boundingBox();
   expect(captionBox.x).toBeGreaterThanOrEqual(card.x);
   expect(captionBox.x + captionBox.width).toBeLessThanOrEqual(card.x + card.width);
-  expect(await caption.innerText()).toContain("암기 그림");
+  await expect(caption).toHaveText("그림A그림B");
 });

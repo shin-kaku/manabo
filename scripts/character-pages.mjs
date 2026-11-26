@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { mnemonicComponents } from "../src/kanji-components.js";
 import { examplePattern, parseExamples, parseReadings } from "../src/reading-groups.js";
 import { characterDetailPath, studyDetailHref, studyDirectory } from "../src/study-path.js";
 import { mediaCandidates, strokeMediaEntry } from "../src/media.js";
@@ -46,8 +45,8 @@ function art(row, media, compact) {
   const tcgSrcset = srcset("image1", "이미지 1");
   const selectedSrcset = ml.length ? mlSrcset : tcgSrcset;
   const img = `<img class="entry-art" data-media-fallbacks="${e(JSON.stringify(selected.slice(1)))}" width="960" height="960" src="${e(selected[0])}"${selectedSrcset ? ` srcset="${e(selectedSrcset)}" sizes="(max-width: 640px) calc((100vw - 96px) / 2), 255px"` : ""} alt="${e(row["한자"])}의 모양과 뜻을 연결한 암기 그림">`;
-  const toggle = ml.length ? `<button class="entry-art-switch" type="button" role="switch" aria-checked="false" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}" data-ml-srcset="${e(mlSrcset)}" data-tcg-srcset="${e(tcgSrcset)}"><span>그림체 변경</span><span class="entry-art-switch-track" aria-hidden="true"><span></span></span></button>` : "";
-  return `<a class="entry-zoom" data-entry-zoom href="${e(selected[0])}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a><figcaption class="entry-art-caption"><span>암기 그림</span>${toggle ? `<span aria-hidden="true">・</span>${toggle}` : ""}</figcaption>`;
+  const toggle = ml.length ? `<button class="entry-art-switch" type="button" role="switch" aria-label="그림 B 선택" aria-checked="false" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}" data-ml-srcset="${e(mlSrcset)}" data-tcg-srcset="${e(tcgSrcset)}"><span class="entry-art-label-a">그림A</span><span class="entry-art-switch-track" aria-hidden="true"><span></span></span><span class="entry-art-label-b">그림B</span></button>` : "";
+  return `<a class="entry-zoom" data-entry-zoom href="${e(selected[0])}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a><figcaption class="entry-art-caption">${toggle}</figcaption>`;
 }
 
 function linkedText(text, known, current = "") {
@@ -75,14 +74,11 @@ function words(row, block, linkText) {
   }).join("");
 }
 
-function relatedGroups(row, block, linkText) {
-  const groups = mnemonicComponents(row["풀이"]).map(component => {
-    const chars = [...new Set([component, ...block.related[component]])].filter(ch => ch !== row["한자"]);
-    if (!chars.length) return "";
-    const items = chars.map(ch => `<li>${linkText(ch)}</li>`).join("");
-    return `<section class="entry-related-group"><h3 lang="ja">${e(component)}</h3><ul lang="ja">${items}</ul></section>`;
-  }).join("");
-  return groups && `<section class="entry-section entry-related"><h2>관련 한자</h2><div>${groups}</div></section>`;
+function relatedGame(ch) {
+  return `<section class="entry-section entry-related"><h2>관련 한자</h2>
+    <a class="entry-starpath-link" href="/learn/game/#${encodeURIComponent(ch)}" target="_blank" rel="noopener noreferrer"><span><span lang="ja">${e(ch)}</span>의 별자리 펼쳐 보기</span> <span aria-hidden="true">↗</span><span class="entry-new-window"> (새 창)</span></a>
+    <p><span lang="ja">${e(ch)}</span>에서 시작해 같은 부수로 이어진 한자들을 하나씩 따라가 보세요. 한 글자를 알면 다음 글자가 보여요.</p>
+    <p class="entry-starpath-guide">다음에는 [한자 학습] &gt; [한자 별길]에서 바로 찾아갈 수 있어요.</p></section>`;
 }
 
 function categoryLinks(row) {
@@ -122,7 +118,7 @@ function characterEntry(row, media, block, known) {
         <div class="entry-word-header"><h2>예시 단어</h2><p class="study-link-hint">모르는 한자는 눌러 뜻을 확인하세요.</p></div>
         <div class="entry-word-groups">${exampleGroups}</div>${note}
       </section>`}
-      ${relatedGroups(row, block, linkText)}</article>`,
+      ${relatedGame(ch)}</article>`,
   };
 }
 

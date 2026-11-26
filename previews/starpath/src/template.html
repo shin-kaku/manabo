@@ -119,7 +119,7 @@
       margin:9px 0 0;font-family:var(--ko),"Manabo Card Radical";
       font-size:clamp(14px,3.6vw,16px);line-height:1.5;word-break:keep-all;overflow-wrap:anywhere;
     }
-    .detail-link{display:inline-flex;min-height:44px;padding-inline-end:12px;align-items:center;gap:7px;color:var(--accent);font:600 14px/1.4 var(--ko);text-decoration:none}
+    .detail-link{display:inline-flex;min-height:44px;padding-inline-end:12px;align-items:center;gap:7px;color:#fff;font:600 14px/1.4 var(--ko);text-decoration:none}
     .detail-link:is(:hover,:focus-visible){text-decoration:underline;text-underline-offset:3px}
     .detail-link::after{content:"";width:6px;height:6px;border:solid currentColor;border-width:1.5px 1.5px 0 0;transform:rotate(45deg)}
     @media(prefers-reduced-motion:reduce){
@@ -686,6 +686,7 @@ const mediaBase = inStudy ? '/media/image1/' : 'https://kanjimanabo.com/media/im
 const dictionary = inStudy ? '/kanji/' : 'https://kanjimanabo.com/kanji/';
 const face = document.getElementById('card'), artwork = document.getElementById('artwork');
 const extra = document.getElementById('extra'), extraBody = document.getElementById('extra-content');
+const mobileCard = matchMedia('(max-width: 680px), (max-height: 520px) and (pointer: coarse)');
 const detailsLink = document.getElementById('detail-link'), landing = document.getElementById('landing');
 const turn = document.getElementById('turn'), closeButton = document.getElementById('close');
 const lightInk = new Set([...'問間開閉閑聞門']);
@@ -746,6 +747,32 @@ function componentInfo(title, parts) {
   return '<section><h3>' + title + '</h3><p class="uses" lang="ja">' + (parts.map(show).join(' ') || '없음') + '</p></section>';
 }
 
+function renderExtra(d) {
+  let details = '', label = [];
+  if (d.ext) {
+    details = componentInfo('쓰이는 한자', d.up); label.push('쓰이는 한자');
+  } else {
+    if (FIXED.has(d.k)) {
+      label.push('게임에서 쓰는 부품 (풀이와 다름)');
+      details += componentInfo('게임에서 쓰는 부품 (풀이와 다름)', d.c);
+    }
+    if (d.x) { label.push('게임에서 이은 부품'); details += componentInfo('게임에서 이은 부품', d.x); }
+    if (!mobileCard.matches) {
+      const readings = soundHTML(d.y), words = wordsHTML(d.w);
+      if (readings) label.push('발음');
+      if (words) label.push('예시 단어');
+      details += readings + words;
+    }
+  }
+  extra.querySelector('summary').textContent = label.join(' · ');
+  extraBody.innerHTML = details;
+  extra.open = !!d.ext;
+  extra.hidden = !details;
+}
+mobileCard.addEventListener('change', () => {
+  if (dlg.open && activeCard) renderExtra(D.get(activeCard));
+});
+
 function card(k, trigger = null) {
   const d = D.get(k);
   if (!d) return;
@@ -766,24 +793,7 @@ function card(k, trigger = null) {
   const ink = darkInk.has(k) ? 'dark' : lightInk.has(k) ? 'light' : 'auto';
   face.dataset.ink = ink;
   face.toggleAttribute('data-part', !!d.ext);
-  let details = '', label = [];
-  if (d.ext) {
-    details = componentInfo('쓰이는 한자', d.up); label.push('쓰이는 한자');
-  } else {
-    if (FIXED.has(k)) {
-      label.push('게임에서 쓰는 부품 (풀이와 다름)');
-      details += componentInfo('게임에서 쓰는 부품 (풀이와 다름)', d.c);
-    }
-    if (d.x) { label.push('게임에서 이은 부품'); details += componentInfo('게임에서 이은 부품', d.x); }
-    const readings = soundHTML(d.y), words = wordsHTML(d.w);
-    if (readings) label.push('발음');
-    if (words) label.push('예시 단어');
-    details += readings + words;
-  }
-  extra.querySelector('summary').textContent = label.join(' · ');
-  extraBody.innerHTML = details;
-  extra.open = !!d.ext;
-  extra.hidden = !details;
+  renderExtra(d);
   if (!dlg.open) dlg.showModal();
   dlg.scrollTop = 0;
   showArtwork(d, ink);
@@ -1307,6 +1317,7 @@ function createTrails(board, map, dialog, reducedMotion) {
   const card = document.getElementById('card');
   const dialog = document.getElementById('reveal');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const mobileCard = matchMedia('(max-width: 680px), (max-height: 520px) and (pointer: coarse)');
   let frame = 0;
   let bounds;
   let pointer;
@@ -1324,7 +1335,7 @@ function createTrails(board, map, dialog, reducedMotion) {
   }
 
   function illuminate(nextX, nextY) {
-    if (dialog.dataset.phase !== 'open') return;
+    if (mobileCard.matches || dialog.dataset.phase !== 'open') return;
     x = Math.max(0, Math.min(1, nextX));
     y = Math.max(0, Math.min(1, nextY));
     if (frame) return;
@@ -1347,6 +1358,7 @@ function createTrails(board, map, dialog, reducedMotion) {
   }
 
   function point(event) {
+    if (mobileCard.matches) return;
     pointer = {x: event.clientX, y: event.clientY};
     lightAtPointer();
   }
@@ -1363,6 +1375,7 @@ function createTrails(board, map, dialog, reducedMotion) {
   card.addEventListener('blur', rest);
   dialog.addEventListener('close', rest);
   card.addEventListener('keydown', event => {
+    if (mobileCard.matches) return;
     const directions = { ArrowLeft: [-.15, 0], ArrowRight: [.15, 0], ArrowUp: [0, -.15], ArrowDown: [0, .15] };
     const direction = directions[event.key];
     if (!direction) return;
@@ -1370,6 +1383,7 @@ function createTrails(board, map, dialog, reducedMotion) {
     illuminate(x + direction[0], y + direction[1]);
   });
   reduceMotion.addEventListener('change', rest);
+  mobileCard.addEventListener('change', rest);
 })();
 </script>
 </body>

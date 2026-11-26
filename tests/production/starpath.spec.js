@@ -1,5 +1,21 @@
 import { test, expect } from "@playwright/test";
 
+for (const glyph of ["木", "難", "𠂢"]) {
+  test(`the ${glyph} detail page opens its own Starpath in a new tab`, async ({ page }) => {
+    await page.goto(`/kanji/${encodeURIComponent(glyph)}/`);
+    const section = page.locator(".entry-related");
+    await expect(section.getByRole("heading", { name: "관련 한자" })).toBeVisible();
+    await expect(section.locator("[data-study-kanji]")).toHaveCount(0);
+    await expect(section).toContainText(`${glyph}에서 시작해 같은 부수로 이어진 한자들을 하나씩 따라가 보세요. 한 글자를 알면 다음 글자가 보여요.`);
+    await expect(section).toContainText("다음에는 [한자 학습] > [한자 별길]에서 바로 찾아갈 수 있어요.");
+    const link = section.getByRole("link", { name: `${glyph}의 별자리 펼쳐 보기 (새 창)` });
+    await expect(link).toHaveAttribute("target", "_blank");
+    const [game] = await Promise.all([page.waitForEvent("popup"), link.click()]);
+    await expect(game.locator("#map .cur")).toHaveAttribute("data-k", glyph);
+    await expect(page.locator("[data-entry-kanji]")).toHaveAttribute("data-entry-kanji", glyph);
+  });
+}
+
 for (const width of [390, 1280]) {
   test(`the published study menu opens a working Starpath game at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
@@ -65,5 +81,42 @@ test("compact footer does not depend on game JavaScript finishing", async ({ bro
   await expect(footer).toBeVisible();
   await footer.locator("summary").click();
   await expect(footer.getByRole("link", { name: "문의하기" })).toBeVisible();
+  await context.close();
+});
+
+test("phone cards hide readings and disable hologram interaction, including after resize", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 844 });
+  await page.goto("/learn/game/");
+  await page.locator("#map .cur").click();
+  const card = page.locator("#card");
+  const extra = page.locator("#extra");
+  await expect(page.locator("#reveal")).toHaveAttribute("data-phase", "open");
+  await expect(extra.locator("summary")).toContainText("발음");
+  await expect(extra.locator("summary")).toContainText("예시 단어");
+  await expect(page.locator("#detail-link")).toHaveCSS("color", "rgb(255, 255, 255)");
+  await page.locator("#landing").dispatchEvent("pointermove", { clientX: 500, clientY: 400, pointerType: "mouse" });
+  await expect(card).toHaveAttribute("data-active", "");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(extra.locator("summary")).not.toContainText(/발음|예시 단어/);
+  await expect(extra.locator("h3").filter({ hasText: /발음|예시 단어/ })).toHaveCount(0);
+  await expect(card).not.toHaveAttribute("data-active", "");
+  await page.locator("#landing").dispatchEvent("pointerdown", { clientX: 150, clientY: 400, pointerType: "touch" });
+  await expect(card).not.toHaveAttribute("data-active", "");
+
+  await page.setViewportSize({ width: 1280, height: 844 });
+  await expect(extra.locator("summary")).toContainText("발음");
+  await expect(extra.locator("summary")).toContainText("예시 단어");
+});
+
+test("a phone in landscape keeps reading details and hologram interaction disabled", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.goto("/learn/game/");
+  await page.locator("#map .cur").click();
+  await expect(page.locator("#reveal")).toHaveAttribute("data-phase", "open");
+  await expect(page.locator("#extra summary")).not.toContainText(/발음|예시 단어/);
+  await page.locator("#landing").dispatchEvent("pointerdown", { clientX: 400, clientY: 150, pointerType: "touch" });
+  await expect(page.locator("#card")).not.toHaveAttribute("data-active", "");
   await context.close();
 });

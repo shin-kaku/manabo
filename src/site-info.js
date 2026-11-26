@@ -1,6 +1,11 @@
 import "./analytics-consent.js";
 import "./theme.js";
 
+// Images can be inserted later by the catalog, dialogs and games.
+document.addEventListener("contextmenu", (event) => {
+  if (event.target instanceof HTMLImageElement) event.preventDefault();
+});
+
 // Set VITE_CONTACT_EMAIL before building to publish the operator's contact address.
 const email = (import.meta.env.VITE_CONTACT_EMAIL || "").trim();
 if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

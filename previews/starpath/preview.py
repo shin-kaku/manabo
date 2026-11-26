@@ -71,6 +71,10 @@ def choice_settings(html):
 def study_menu(path="/learn/"):
     # Choice, reading and the shelf share the same document on in-page navigation.
     html = (SITE / path.lstrip("/") / "index.html").read_text(encoding="utf-8")
+    # Production publishing has already applied these changes to dist. Serve
+    # that finished page directly instead of trying to transform it twice.
+    if 'id="starpath-name"' in html and 'id="choiceRangeSummary"' in html and 'id="choiceGuide"' in html:
+        return html.encode("utf-8")
     html, count = UPCOMING.subn(MODE, html)
     if count != 1:
         raise ValueError("현재 빌드에서 한자 게임 준비 중 카드를 찾을 수 없습니다.")
