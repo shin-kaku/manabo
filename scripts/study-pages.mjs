@@ -18,7 +18,7 @@ const studyFallback = {
 <p><a href="/materials/#reading-materials">학년·JLPT별 창작 독해 고르기</a></p>`,
   game: `<p class="quiz-guide">같은 한자도 <strong class="learning-action">여러 방식</strong>으로 만나면 더 오래 기억에 남아요.</p>
 <h1>한자 학습</h1>
-<ul><li><a href="/learn/choice/">사지선다</a></li><li><a href="/reading/">독해</a> · 한 문장에 급수 한자 전부. 문장 속 한자를 우리말로 막힘없이 읽으면 JLPT 정복</li><li>한자 게임 · 준비 중</li></ul>`,
+<ul><li><a href="/learn/choice/">사지선다</a> · 보는 순간 뜻과 음이 떠오를 때까지, 기억을 꺼내는 훈련</li><li><a href="/reading/">독해</a> · 한 문장에 급수 한자 전부. 문장 속 한자를 우리말로 막힘없이 읽으면 JLPT 정복</li><li>한자 게임 · 준비 중</li></ul>`,
   choice: `<a href="/learn/">← 한자 학습으로</a>
 <h1>사지선다</h1>
 <p>‘나무 목’과 ‘눈 목’ 가운데 <span lang="ja">目</span>의 훈음은 어느 쪽일까요?</p>

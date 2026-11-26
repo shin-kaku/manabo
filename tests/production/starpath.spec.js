@@ -16,7 +16,7 @@ for (const glyph of ["木", "難", "𠂢"]) {
   });
 }
 
-test("shape links open the matching kanji and show its shape components", async ({ page }) => {
+test("component links remain on the map and kanji cards show their original explanation", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   const response = await page.request.get("/data/kanji.json");
   await expect(response).toBeOK();
@@ -24,20 +24,25 @@ test("shape links open the matching kanji and show its shape components", async 
   await page.goto("/learn/");
   await page.locator('[data-analytics-choice="denied"]').click();
   for (const [part, glyph, components] of [
-    ["灬", "魚", "⺈ 田 灬"],
-    ["黒", "黙", "黒"],
+    ["灬", "魚", ["⺈", "田", "灬"]],
+    ["黒", "黙", ["黒"]],
+    ["氵", "汁", ["十", "氵"]],
+    ["𠂉", "年", ["𠂉"]],
   ]) {
     await page.goto("/learn/game/#" + encodeURIComponent(part));
     await page.locator(`#map .rel[data-k="${glyph}"]`).click();
+    for (const component of components) {
+      await expect(page.locator(`#map .part[data-k="${component}"]`)).toBeVisible();
+    }
     await page.locator(`#map .cur[data-k="${glyph}"]`).click();
     const entry = entries.find(row => row["한자"] === glyph);
     await expect(page.locator("#explanation")).toHaveText(entry["풀이"]);
-    await page.locator("#extra summary").click();
-    const shapes = page.locator("#extra-content section").filter({
-      has: page.getByRole("heading", { name: "모양에서 찾은 부품", exact: true }),
-    });
-    await expect(shapes.locator(".uses")).toHaveText(components);
+    await expect(page.locator("#reveal details")).toHaveCount(0);
   }
+  await page.goto("/learn/game/#" + encodeURIComponent("𠂉"));
+  await page.locator('#map .cur[data-k="𠂉"]').click();
+  await expect(page.locator("#meaning")).toHaveText("부품");
+  await expect(page.locator("#reveal details")).toHaveCount(0);
 });
 
 for (const width of [390, 1280]) {
@@ -108,38 +113,35 @@ test("compact footer does not depend on game JavaScript finishing", async ({ bro
   await context.close();
 });
 
-test("phone cards hide readings and disable hologram interaction, including after resize", async ({ page }) => {
+test("cards have no disclosures at any width and only desktop enables the hologram", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 844 });
   await page.goto("/learn/game/");
   await page.locator("#map .cur").click();
   const card = page.locator("#card");
-  const extra = page.locator("#extra");
+  const disclosures = page.locator("#reveal details");
   await expect(page.locator("#reveal")).toHaveAttribute("data-phase", "open");
-  await expect(extra.locator("summary")).toContainText("발음");
-  await expect(extra.locator("summary")).toContainText("예시 단어");
+  await expect(disclosures).toHaveCount(0);
   await expect(page.locator("#detail-link")).toHaveCSS("color", "rgb(255, 255, 255)");
   await page.locator("#landing").dispatchEvent("pointermove", { clientX: 500, clientY: 400, pointerType: "mouse" });
   await expect(card).toHaveAttribute("data-active", "");
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(extra.locator("summary")).not.toContainText(/발음|예시 단어/);
-  await expect(extra.locator("h3").filter({ hasText: /발음|예시 단어/ })).toHaveCount(0);
+  await expect(disclosures).toHaveCount(0);
   await expect(card).not.toHaveAttribute("data-active", "");
   await page.locator("#landing").dispatchEvent("pointerdown", { clientX: 150, clientY: 400, pointerType: "touch" });
   await expect(card).not.toHaveAttribute("data-active", "");
 
   await page.setViewportSize({ width: 1280, height: 844 });
-  await expect(extra.locator("summary")).toContainText("발음");
-  await expect(extra.locator("summary")).toContainText("예시 단어");
+  await expect(disclosures).toHaveCount(0);
 });
 
-test("a phone in landscape keeps reading details and hologram interaction disabled", async ({ browser }) => {
+test("a phone in landscape has no card disclosures or hologram interaction", async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
   const page = await context.newPage();
   await page.goto("/learn/game/");
   await page.locator("#map .cur").click();
   await expect(page.locator("#reveal")).toHaveAttribute("data-phase", "open");
-  await expect(page.locator("#extra summary")).not.toContainText(/발음|예시 단어/);
+  await expect(page.locator("#reveal details")).toHaveCount(0);
   await page.locator("#landing").dispatchEvent("pointerdown", { clientX: 400, clientY: 150, pointerType: "touch" });
   await expect(page.locator("#card")).not.toHaveAttribute("data-active", "");
   await context.close();

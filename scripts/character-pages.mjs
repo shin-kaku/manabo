@@ -45,7 +45,7 @@ function art(row, media, compact) {
   const tcgSrcset = srcset("image1", "이미지 1");
   const selectedSrcset = ml.length ? mlSrcset : tcgSrcset;
   const img = `<img class="entry-art" data-media-fallbacks="${e(JSON.stringify(selected.slice(1)))}" width="960" height="960" src="${e(selected[0])}"${selectedSrcset ? ` srcset="${e(selectedSrcset)}" sizes="(max-width: 640px) calc((100vw - 96px) / 2), 255px"` : ""} alt="${e(row["한자"])}의 모양과 뜻을 연결한 암기 그림">`;
-  const toggle = ml.length ? `<button class="entry-art-switch" type="button" role="switch" aria-label="그림 B 선택" aria-checked="false" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}" data-ml-srcset="${e(mlSrcset)}" data-tcg-srcset="${e(tcgSrcset)}"><span class="entry-art-label-a">그림A</span><span class="entry-art-switch-track" aria-hidden="true"><span></span></span><span class="entry-art-label-b">그림B</span></button>` : "";
+  const toggle = ml.length ? `<button class="entry-art-switch" type="button" role="switch" aria-label="애니 그림 보기" aria-checked="false" data-ml="${e(JSON.stringify(ml))}" data-tcg="${e(JSON.stringify(tcg))}" data-ml-srcset="${e(mlSrcset)}" data-tcg-srcset="${e(tcgSrcset)}"><span class="entry-art-label-a">심플</span><span class="entry-art-switch-track" aria-hidden="true"><span></span></span><span class="entry-art-label-b">애니</span></button>` : "";
   return `<a class="entry-zoom" data-entry-zoom href="${e(selected[0])}" aria-label="${e(row["한자"])} 암기 이미지 크게 보기">${img}</a><figcaption class="entry-art-caption">${toggle}</figcaption>`;
 }
 

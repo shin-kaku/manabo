@@ -166,6 +166,7 @@ test("the quiz gallery links to choice, reading and Starpath", async ({ page }) 
   const reading = shelf.getByRole("link", { name: "독해", exact: true });
   await expect(shelf.getByRole("link")).toHaveCount(3);
   await expect(choice).toHaveAttribute("href", "/learn/choice/");
+  await expect(choice).toHaveAccessibleDescription("보는 순간 뜻과 음이 떠오를 때까지, 기억을 꺼내는 훈련");
   await expect(reading).toHaveAttribute("href", "/reading/");
   await expect(choice.locator("picture img")).toBeVisible();
   await expect(reading.locator("picture img")).toBeVisible();

@@ -348,15 +348,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .cell { border-radius: 50%; }
     .cell > span { font: 500 47cqi/1 var(--ja); }
     .n[data-missing] > span { font: 500 24cqi/1 var(--ko); }
-    .extra { margin: 4px auto 0; width: 100%; color: #fff; font: 14px/1.55 var(--ko); }
-    .extra summary { min-height: 44px; padding-block: 10px; cursor: pointer; }
-    .extra section { padding: 10px 0; border-top: 1px solid #666; }
-    .extra h3 { margin: 0 0 4px; font-size: 14px; }
-    .extra p, .extra ul { margin: 0; }
-    .extra .yl, .extra .grp { display: grid; grid-template-columns: 38px 1fr; gap: 8px; align-items: baseline; }
-    .extra ul { list-style: none; padding: 0; }
-    .extra .tag, .extra .rd { color: #d4d4d4; }
-    .extra .uses { font-size: 18px; }
     .starpath [hidden] { display: none !important; }
     .star-card[data-ink="auto"] .caption { color: white; mix-blend-mode: difference; }
     .star-card[data-part] .artwork { display: grid; place-items: start center; padding-top: 16%; background: var(--paper); color: var(--ink); }
@@ -474,10 +465,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
         </div>
       </div>
-      <details class="extra" id="extra" hidden>
-        <summary></summary>
-        <div id="extra-content"></div>
-      </details>
     </div>
   </dialog>
   </div>
@@ -485,20 +472,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 "use strict";
 const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function load(){const st=new Blob([bytes(/*TEXT*/)]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
- const [k,h,p,c,g,o,y,w,meta]=JSON.parse(await new Response(st).text()),im=bytes(/*IMGS*/);
- return k.map((x,i)=>[x,h[i],p[i],Array.from(im.subarray(i*32,i*32+32),b=>b.toString(16).padStart(2,"0")).join(""),[...c[i]],g[i],o[i],y[i],w[i],meta[i]])}
+ const [k,h,p,c,g,o,meta]=JSON.parse(await new Response(st).text()),im=bytes(/*IMGS*/);
+ return k.map((x,i)=>[x,h[i],p[i],Array.from(im.subarray(i*32,i*32+32),b=>b.toString(16).padStart(2,"0")).join(""),[...c[i]],g[i],o[i],meta[i]])}
 load().then(main).catch(()=>{document.getElementById("map").innerHTML='<p style="padding:80px 20px;text-align:center">데이터를 열지 못했어요. 브라우저를 최신 버전으로 업데이트해 주세요.</p>'});
 function main(RAW){
 const START="門";
-const D=new Map(RAW.map(([k,h,p,i,c,g,o,y,w,meta])=>[k,{k,h,p,i,c,g,o,y,w,meta,up:[]}]));
+const D=new Map(RAW.map(([k,h,p,i,c,g,o,meta])=>[k,{k,h,p,i,c,g,o,meta,up:[]}]));
 // 게임에서만 잇는 연결: 풀이에 부품이 없어 갈 수 없던 글자들 (data/overrides.json의 links)
 const LINK=/*LINK*/;
 const SHAPE=/*SHAPE*/;
-// 검수에서 부품을 바꾸거나 뺀 글자: 카드에 풀이와 다르다고 표시한다 (overrides.json에서 label이 true인 글자)
-const FIXED=new Set(/*FIXED*/);
 for(const[k,v]of Object.entries(LINK)){const d=D.get(k);d.x=[...v];d.c=[...d.c,...d.x]}
 // 시트에 없는 부품도 모양 부품을 가질 수 있으므로 먼저 길목을 만든다.
-for(const d of [...D.values()])for(const c of d.c)if(!D.has(c))D.set(c,{k:c,h:"시트에 없는 부품",p:"",i:"",c:[],g:99,o:9999,y:"",w:"",ext:true,up:[]});
+for(const d of [...D.values()])for(const c of d.c)if(!D.has(c))D.set(c,{k:c,h:"시트에 없는 부품",p:"",i:"",c:[],g:99,o:9999,ext:true,up:[]});
 for (const [glyph, parts] of Object.entries(SHAPE)) {
   const d = D.get(glyph);
   d.sh = [...parts];
@@ -679,20 +664,10 @@ map.addEventListener('click', e => {
   if (dragged && e.detail) { e.stopPropagation(); e.preventDefault(); }
   dragged = false;
 }, true);
-const esc=t=>t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
-const MARK={"㉧":"음독","㉭":"훈독","㉫":"특수"},tag=m=>`<span class="tag">${MARK[m]}</span>`;
-function soundHTML(y){if(!y||y==="無し")return "";
- return `<section><h3>발음</h3>${y.split(" | ").map(t=>`<p class="yl">${MARK[t[0]]?tag(t[0]):""}<span lang="ja">${esc(MARK[t[0]]?t.slice(1).trim():t)}</span></p>`).join("")}</section>`}
-function wordsHTML(w){if(!w)return "";let html="",m="";const groups=[];
- for(const raw of w.split("\n")){const t=raw.trim();if(!t||t==="-")continue;if(MARK[t]){m=t;groups.push({m,l:[]});continue}if(!groups.length)groups.push({m:"",l:[]});groups.at(-1).l.push(t)}
- for(const g of groups)if(g.l.length)html+=`<div class="grp">${g.m?tag(g.m):"<span></span>"}<ul>${g.l.map(t=>{const x=t.match(/^(.+?)\(([^()]+)\)\s*(.+)$/);return x?`<li><span class="w" lang="ja">${esc(x[1])}</span> <span class="rd" lang="ja">${esc(x[2])}</span> <span>${esc(x[3])}</span></li>`:`<li>${esc(t)}</li>`}).join("")}</ul></div>`;
- return html?`<section><h3>예시 단어</h3>${html}</section>`:""}
 const inStudy = /^https?:$/.test(location.protocol) && location.pathname.startsWith('/learn/game/');
 const mediaBase = inStudy ? '/media/image1/' : 'https://kanjimanabo.com/media/image1/';
 const dictionary = inStudy ? '/kanji/' : 'https://kanjimanabo.com/kanji/';
 const face = document.getElementById('card'), artwork = document.getElementById('artwork');
-const extra = document.getElementById('extra'), extraBody = document.getElementById('extra-content');
-const mobileCard = matchMedia('(max-width: 680px), (max-height: 520px) and (pointer: coarse)');
 const detailsLink = document.getElementById('detail-link'), landing = document.getElementById('landing');
 const turn = document.getElementById('turn'), closeButton = document.getElementById('close');
 const lightInk = new Set([...'問間開閉閑聞門']);
@@ -749,41 +724,6 @@ function showArtwork(d, ink) {
   });
 }
 
-function componentInfo(title, parts) {
-  return '<section><h3>' + title + '</h3><p class="uses" lang="ja">' + (parts.map(show).join(' ') || '없음') + '</p></section>';
-}
-
-function renderExtra(d) {
-  let details = '', label = [];
-  function addComponents(title, parts) {
-    label.push(title);
-    details += componentInfo(title, parts);
-  }
-  if (FIXED.has(d.k)) {
-    const corrected = d.c.filter(part => !d.x?.includes(part) && !d.sh?.includes(part));
-    addComponents('게임에서 쓰는 부품 (풀이와 다름)', corrected);
-  }
-  if (d.x) addComponents('게임에서 이은 부품', d.x);
-  if (d.sh) addComponents('모양에서 찾은 부품', d.sh);
-  if (d.ext) {
-    addComponents('쓰이는 한자', d.up);
-  } else {
-    if (!mobileCard.matches) {
-      const readings = soundHTML(d.y), words = wordsHTML(d.w);
-      if (readings) label.push('발음');
-      if (words) label.push('예시 단어');
-      details += readings + words;
-    }
-  }
-  extra.querySelector('summary').textContent = label.join(' · ');
-  extraBody.innerHTML = details;
-  extra.open = !!d.ext;
-  extra.hidden = !details;
-}
-mobileCard.addEventListener('change', () => {
-  if (dlg.open && activeCard) renderExtra(D.get(activeCard));
-});
-
 function card(k, trigger = null) {
   const d = D.get(k);
   if (!d) return;
@@ -804,7 +744,6 @@ function card(k, trigger = null) {
   const ink = darkInk.has(k) ? 'dark' : lightInk.has(k) ? 'light' : 'auto';
   face.dataset.ink = ink;
   face.toggleAttribute('data-part', !!d.ext);
-  renderExtra(d);
   if (!dlg.open) dlg.showModal();
   dlg.scrollTop = 0;
   showArtwork(d, ink);
@@ -880,7 +819,7 @@ function resizeMap() {
 new ResizeObserver(resizeMap).observe(map);
 dlg.addEventListener('close', resizeMap);
 if (location.hash === '#test' || window.TEST) {
-  window.T = {D, MARK, card, dlg, draw, set(k) { cur = k; draw(false); }};
+  window.T = {D, card, dlg, draw, set(k) { cur = k; draw(false); }};
 }
 fromHash();
 }

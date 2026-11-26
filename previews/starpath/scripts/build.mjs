@@ -17,15 +17,14 @@ const rows=kanji.map(r=>{const k=r["한자"],ls=String(r["풀이"]).split("\n");
   for(const l of ls.slice(1))for(const x of han(l,k))if(!p.includes(x))p.push(x);
   const id=(String(r["이미지 1"]).match(/\/d\/([\w-]+)/)||String(r["이미지 1"]).match(/id=([\w-]+)/)||[])[1],u=media[id]?.card?.url;
   if(!u)warn.push(`그림 없음: ${k}`);
-  return [k,r["훈, 음"],r["풀이"],u?u.replace("/media/image1/","").replace(".webp",""):"",p,GRADES.indexOf(r["학년"]),+r["문부성"]||9999,r["발음"],r["예시단어"]]});
+  return [k,r["훈, 음"],r["풀이"],u?u.replace("/media/image1/","").replace(".webp",""):"",p,GRADES.indexOf(r["학년"]),+r["문부성"]||9999]});
 const byK=new Map(rows.map(r=>[r[0],r]));
 
 // 2) 게임 보정. 시트 부품이 보정을 만들 때와 다르면(시트가 바뀜) 적용하지 않고 알린다.
-const fixed=[];
 for(const [k,o] of Object.entries(ov.parts)){const r=byK.get(k);
   if(!r){warn.push(`보정 대상이 시트에 없음: ${k}`);continue}
   if(JSON.stringify(r[4])!==JSON.stringify(o.sheet)){warn.push(`시트 부품이 바뀌어 보정을 건너뜀: ${k} 시트=${r[4].join("")} 보정 기준=${o.sheet.join("")} 게임=${o.game.join("")}`);continue}
-  r[4]=[...o.game];if(o.label)fixed.push(k)}
+  r[4]=[...o.game]}
 const links = Object.create(null);
 for (const [glyph, parts] of Object.entries(ov.links)) {
   if (byK.has(glyph)) links[glyph] = parts.join("");
@@ -113,14 +112,14 @@ if (cycle) {
 // 3) 열 단위로 묶어 deflate-raw 압축, 그림 해시(32바이트)는 이진으로 따로.
 const col=i=>rows.map(r=>r[i]);
 const cardMeta = kanji.map(row => [row["등급"], row["학년"]].filter(Boolean).join(" · "));
-const text=JSON.stringify([col(0),col(1),col(2),col(4).map(x=>x.join("")),col(5),col(6),col(7),col(8).map(s=>String(s).split("\n").filter(x=>x!=="-").join("\n")),cardMeta]);
+const text=JSON.stringify([col(0),col(1),col(2),col(4).map(x=>x.join("")),col(5),col(6),cardMeta]);
 const t=zlib.deflateRawSync(text,{level:9,memLevel:9});
 const img=Buffer.concat(rows.map(r=>r[3]?Buffer.from(r[3],"hex"):Buffer.alloc(32)));
 if(img.length!==rows.length*32)throw Error("그림 해시 길이");
 let html=fs.readFileSync(path.join(ROOT,"src","template.html"),"utf8");
-for(const [p,v] of [["/*TEXT*/",JSON.stringify(t.toString("base64"))],["/*IMGS*/",JSON.stringify(img.toString("base64"))],["/*LINK*/",JSON.stringify(links)],["/*SHAPE*/",JSON.stringify(shapes)],["/*FIXED*/",JSON.stringify(fixed)]]){
+for(const [p,v] of [["/*TEXT*/",JSON.stringify(t.toString("base64"))],["/*IMGS*/",JSON.stringify(img.toString("base64"))],["/*LINK*/",JSON.stringify(links)],["/*SHAPE*/",JSON.stringify(shapes)]]){
   if(html.split(p).length!==2)throw Error("템플릿 자리표시 "+p);html=html.split(p).join(v)}
 fs.mkdirSync(path.dirname(OUT),{recursive:true});
 fs.writeFileSync(OUT,html);
-console.log(`글자 ${rows.length} · 보정 ${Object.keys(ov.parts).length} (카드 표시 ${fixed.length}) · 게임 연결 ${Object.keys(links).length} · 모양 부품 ${Object.keys(shapes).length}자 ${shapeCount}건 · ${(Buffer.byteLength(html)/1024|0)}KB → ${OUT}`);
+console.log(`글자 ${rows.length} · 보정 ${Object.keys(ov.parts).length} · 게임 연결 ${Object.keys(links).length} · 모양 부품 ${Object.keys(shapes).length}자 ${shapeCount}건 · ${(Buffer.byteLength(html)/1024|0)}KB → ${OUT}`);
 if (warn.length) reportWarnings();
