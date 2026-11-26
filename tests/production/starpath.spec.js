@@ -5,6 +5,8 @@ test("shape links open the matching kanji and show its shape components", async 
   const response = await page.request.get("/data/kanji.json");
   await expect(response).toBeOK();
   const entries = await response.json();
+  await page.goto("/learn/");
+  await page.locator('[data-analytics-choice="denied"]').click();
   for (const [part, glyph, components] of [
     ["灬", "魚", "⺈ 田 灬"],
     ["黒", "黙", "黒"],
