@@ -24,6 +24,7 @@ for (const img of document.querySelectorAll("img[data-media-fallbacks]")) {
     }
     const zoom = img.closest("[data-entry-zoom]");
     if (zoom) zoom.href = next;
+    img.removeAttribute("srcset");
     img.src = next;
   }
   img.addEventListener("error", useFallback);
@@ -46,6 +47,9 @@ for (const group of document.querySelectorAll(".entry-art-switch")) {
     const img = figure.querySelector(".entry-art");
     img.dispatchEvent(new CustomEvent("art-change", { detail: fallbacks }));
     figure.querySelector("[data-entry-zoom]").href = url;
+    const srcset = group.dataset[`${button.dataset.artKind}Srcset`];
+    if (srcset) img.srcset = srcset;
+    else img.removeAttribute("srcset");
     img.src = url;
     for (const option of group.querySelectorAll("button")) {
       option.setAttribute("aria-pressed", String(option === button));

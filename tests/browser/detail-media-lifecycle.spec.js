@@ -7,6 +7,7 @@ const media = JSON.parse(await readFile(new URL("../../public/data/media.json", 
 const car = rows.find(row => row.한자 === "車");
 const illustrationId = driveFileId(car["이미지 2"]);
 const illustration = media.items.image2[illustrationId].detail.url;
+const illustrationCard = media.items.image2[illustrationId].card.url;
 const animation = media.items.stroke[driveFileId(car["움직이는 획순"])].detail.url;
 const diagram = media.items.stroke[driveFileId(car["획순 이미지"])].detail.url;
 const svg = await readFile(new URL("../../public/strokes/車.svg", import.meta.url));
@@ -16,6 +17,7 @@ for (const reducedMotion of ["reduce", "no-preference"]) {
     await page.emulateMedia({ reducedMotion });
     await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
     await page.route("**" + illustration, route => route.fulfill({ status: 404, body: "" }));
+    await page.route("**" + illustrationCard, route => route.fulfill({ status: 404, body: "" }));
     await page.route("**" + animation + "*", route => route.fulfill({ status: 404, body: "" }));
     await page.route("**" + diagram + "*", route => route.fulfill({ contentType: "image/svg+xml", body: svg }));
     await page.route("https://drive.google.com/thumbnail?**", route => {
