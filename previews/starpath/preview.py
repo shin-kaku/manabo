@@ -16,7 +16,7 @@ GAME = HERE / "dist/starpath.html"
 COVER = "/images/quiz-preview-starpath.webp"
 DARK_COVER = "/images/quiz-preview-starpath-dark.webp"
 GAME_TITLE = "한자 별길"
-GAME_DESCRIPTION = "木 카드를 열고 林·森 찾아가기"
+GAME_DESCRIPTION = "부수 한자와 관련 한자의 계보를 따라 떠나는 별자리 여행"
 CHOICE_GUIDE = '<p id="choiceGuide" class="quiz-guide">한자를 보고 네 가지 보기에서 <strong class="learning-action">알맞은 뜻과 음을 골라</strong> 보세요.</p>'
 STUDY_PATHS = {"/learn/", "/learn/choice/", "/reading/"}
 UPCOMING = re.compile(r'<div class="quiz-upcoming">\s*<strong>한자 게임</strong>\s*<span>준비 중</span>\s*</div>')
