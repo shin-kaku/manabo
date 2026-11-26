@@ -26,6 +26,10 @@ npm run preview
 개발 서버는 Vite가 출력한 로컬 주소로 접속합니다. `build`는 `dist/`에 배포용 파일을 만들고,
 `preview`는 그 산출물을 로컬에서 확인합니다. 이 명령들은 운영 배포를 실행하지 않습니다.
 
+한자 별길과 사지선다의 JLPT·학년 선택 화면을 함께 살펴보려면 Python 3.9 이상을 설치한 환경에서
+`npm run preview:study`를 실행한 뒤 [한자 학습 미리보기](http://127.0.0.1:49190/learn/)를 엽니다.
+이미 사용 중인 포트가 있으면 `npm run preview:study -- --port 49191`처럼 변경할 수 있습니다.
+
 ```sh
 npx playwright install chromium
 npm run test:unit

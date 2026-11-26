@@ -1,0 +1,1395 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>한자 별길 · 마나보</title>
+  <link rel="icon" href="data:,">
+  <script>
+    if (!document.documentElement.hasAttribute('data-theme')) {
+      const scheme = matchMedia('(prefers-color-scheme: dark)');
+      const syncTheme = () => {
+        let saved;
+        try { saved = localStorage.getItem('manabo-theme-v1'); } catch {}
+        document.documentElement.dataset.theme = saved === 'light' || saved === 'dark' ? saved : (scheme.matches ? 'dark' : 'light');
+      };
+      syncTheme();
+      scheme.addEventListener('change', syncTheme);
+      window.addEventListener('storage', syncTheme);
+    }
+  </script>
+  <style>
+    @font-face {
+      font-family: "Manabo Card Radical";
+      src: url("data:font/woff2;base64,d09GMgABAAAAAATsABEAAAAACyQAAASPAAIBBgAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcSAZgP1NUQVQuADARCAqBMIE0ATYCJAMGCwYABCAFjkgHIAwHFyQYBhv6CVFUZ/Yg+Hlg247Se1gbDAwq8w2PRuIP2ATP/9v9u8+d+TYCqjLYCeqy8nxfnU3rn1p2Cng3AfCmOkrikPJslZAJNzCLOPIEbk9kWWa/funs7WR85lxC6UtVN/Hqri8vxUIf/ylV1rTmQSiM7F2dogmFkjiEcwgtUbdCvAP72Zg+ipQSSpEgIi48ApjjiTdSWFzZiCk6gMEAANhGUEgxJgdFdhsztD/JvYb26Pdt7d1lYC+tj9ZP6xLr32X4wGwo4mZd2yfzMAI1Q7UCFd/zpSPxUgTKQkETNcdAXmF+DbmGb6w1hmmgTxNfQACUj3oK+GKMIJgigCMCeKJG9eo9XARQaIBCyTxQpwBQgA44omFeEi0B8AQlqLb3fxMgVRkM2DB+WwB0wBhIBKoAAB0AMNZ1S0tz805WWHZ77uvatO/OncwlW7Y4377fremOdljniu1397s1rrh3r1uN3P2Dzj1MLkqeXjiiaMTA06V2Y/NGV/Sc2nPg2In3eq3b01xq65CbMjq/V0vPQXMmLWlZW1/5xtOv4HrvfNfebrl+RbM8PvaLyQ/N3ZbvvT04L6oQgFwEUGK8Vh8Z2Mkm86+ppn0AeLIvIBrg+YKj93CRL9o5rQEwRgEgoE/7/wKuMRdCTXsgNCIG6S4OaUkEuDV7c5sdt9AQ3QxYBRoLwaxihTUXWCOeG6yTLIqN6Cup5cZWNmGJbOgwxVyxmSxS+Wwu5to9tiBRf8FW4m/kyNYkGieX22aM2vFsESyN+xI6KKsLJkbGZoaKTLSwcCYmNhh0ZJRqnIhE9t2sQdb/oWGJSqRrAPYclYF3LGDeDovBNVFT8IxUGLR9EFuexdqMJ6RGNgRcIF4M3pGYY5HSO5baKhHvdWu2WnVYCg+rBjF+Y17gUHMUI5HR8bcmTmWEsja1A2NZboyNrcrQCinwRpVgB4yTea8vzHePTOk8D5wACCiPxBgoXgjVkvV1OzUgU+lLc+4y1AdFxUGfXotFhAfitTTYJKiD4VzlJupj3x2JgoBndz7cuvPvy4Mz6NjWtgNOtasFOgpRZADc0WxOt0iIagE3mS7S0KSRCbpOwSuyVYJLBtzKZuPpUSmnlo03PMYK9OSF4wTrSyXHYlMfk0PGltnKhApuPi74a0QtwO07+LU3JzflOlf1/C8D8EGIoSOn16Tg3plnN/CbL7hekSSZewf4nYGHz7o5+Xf5x6GBYM60iazEKowQbA2mle6gEzEZHCeZJBtbd9B1CRMGDsVjzlR80NKYjCLHLAVt2XzG0ZEVKanguAgrCuywQEh4ZxwlJw3kxKc9oupE6bGt63D505OEnpSK18OtM58+vXh3B7Ga96Fft1mHMmfH5bUxudg1q3u9oFMrFvlkUhbulbtylVB7at5BprBZVmwqHJdHvNyf33Ef7jyCF41nR0DlI4gGWW8Mja0eSJg9fud92LdD3FbsvMegd/LMm7aoToBTKshkYE8GDUeYNPeXDOGlIi+uPbqLVn/cD+akMopoAGCYSDzN7zwmhsn79NmILfLnvyVoH/BS3WUSIH9w8xn1AgAA") format("woff2");
+      font-weight: 400;
+      font-display: swap;
+      unicode-range: U+25AD7;
+    }
+    body.standalone{
+      --bg:#f1f1f1;--paper:#fff;--ink:#181817;--muted:#707070;--line:#d9d9d9;--accent:#bc002d;
+      color-scheme:light;min-width:0;margin:0;min-height:100svh;background:var(--bg)
+    }
+    :root[data-theme="dark"] body.standalone{
+      --bg:#000;--paper:#141414;--ink:#f5f5f5;--muted:#b3b3b3;--line:#333;color-scheme:dark
+    }
+    .starpath{
+      --node-edge:var(--paper);--key-edge:var(--paper);--key-divider:#c4c6c5;
+      --track-rgb:195 197 196;--end-dot:#a9adac;
+      --glow-edge:#fff;--glow-halo:rgb(255 255 255 / .95);
+      --ko:"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+      --ja:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","Noto Serif CJK JP",serif;
+      --gutter:clamp(16px,5vw,40px);
+      --card-side:min(clamp(260px,58svh,420px),calc(100vw - 2 * var(--gutter)),calc(100svh - 136px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+      font:16px/1.5 var(--ko);color:var(--ink);background:var(--bg)
+    }
+    :root[data-theme="dark"] .starpath{
+      --node-edge:var(--line);--key-edge:#686868;--key-divider:var(--line);
+      --track-rgb:115 122 124;--end-dot:#a6acae;
+      --glow-edge:rgb(255 255 255 / .6);--glow-halo:rgb(255 255 255 / .28)
+    }
+    .starpath,.starpath *{box-sizing:border-box}
+    .starpath :where(button){font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .starpath :focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+    .frame{max-width:890px;margin:auto;padding:0 var(--gutter)}
+    .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0}
+    .tile,.cell,.flip-back{
+      display:grid;place-items:center;aspect-ratio:1;padding:0;container-type:inline-size;
+      border:1px solid var(--node-edge);border-radius:6%;background:var(--paper);color:var(--ink);
+      box-shadow:0 2px 6px rgb(0 0 0 / .07);
+    }
+    .tile span,.flip-back span{font:500 39cqi/1 var(--ja)}
+    .board-node.is-away{visibility:hidden}
+    html:has(#reveal[open]){overflow:hidden}
+    .reveal{
+      position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;
+      margin:0;padding:0;border:0;background:transparent;color:#fffdf8;overflow:visible;
+    }
+    .reveal::backdrop{background:rgb(0 0 0 / .80);animation:scrim-in 260ms ease-out both}
+    .reveal[data-phase="closing"]::backdrop{animation:scrim-out 280ms ease-in both}
+    @keyframes scrim-in{from{opacity:0}to{opacity:1}}
+    @keyframes scrim-out{from{opacity:1}to{opacity:0}}
+    .card-preview{position:relative;flex:none;margin:auto;width:var(--card-side)}
+    .landing{position:relative;aspect-ratio:1}
+    .turn,.flip-back,.stage{position:absolute;inset:0}
+    .turn{transform-style:preserve-3d}
+    .flip-back{visibility:var(--back-face,hidden);transform:rotateY(180deg);border-width:3px}
+    .stage{visibility:var(--front-face,visible);isolation:isolate;container-type:inline-size}
+    .reveal:not([data-phase="open"]) .stage{pointer-events:none;perspective:none}
+    .reveal:not([data-phase="open"]) #card{transform:none;transition:none}
+    .card-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+    .close{transition:opacity 180ms ease}
+    .reveal:not([data-phase="open"]) .detail-link{visibility:hidden}
+    .reveal[data-phase="opening"] .close{animation:scrim-in 180ms 100ms both}
+    .reveal[data-phase="closing"] .close{opacity:0}
+    .close{display:flex;align-items:center;gap:5px;min-height:44px;padding:0 0 0 12px;border:0;background:transparent;color:inherit;font-size:14px}
+    .close span[aria-hidden]{font:300 23px/1 system-ui,sans-serif}
+    .reveal :focus-visible{outline-color:#fff}
+    .star-card{
+      --rim:6.5px;
+      --letter-ink:#fffdf5;
+      position:relative;width:100%;aspect-ratio:1;
+      border:var(--rim) solid #fff;border-radius:calc(2 * var(--rim) + 9px);overflow:hidden;
+      background:#fff;
+      outline-offset:5px;box-shadow:0 14px 30px -20px rgb(0 0 0 / .44);font-family:var(--ko);
+    }
+    .star-card[data-ink="dark"]{
+      --letter-ink:#182326;
+    }
+    @supports (width: 1cqi) {
+      .star-card{--rim:clamp(5px,1.925cqi,8px)}
+    }
+    .artwork{position:absolute;inset:0;isolation:isolate;overflow:hidden;background:#28352e}
+    .star-card[data-ink="dark"] .artwork{background:#f3f0e7}
+    .artwork img{display:block;width:100%;height:100%;object-fit:contain}
+    .artwork img[hidden]{display:none}
+    .art-status{position:absolute;inset:33% 0 auto;text-align:center;font-size:14px;color:var(--letter-ink)}
+    .caption{
+      position:absolute;inset:auto 0 0;
+      padding:0 clamp(15px,4vw,25px) clamp(15px,4vw,25px);
+      color:var(--letter-ink);
+    }
+    .identity{display:flex;align-items:center;gap:13px}
+    .star-glyph{font:500 clamp(42px,10vw,58px)/1 var(--ja)}
+    .meaning{margin:0;font:600 clamp(18px,4.5vw,22px)/1.2 var(--ko);letter-spacing:-.04em}
+    .meta{margin:4px 0 0;font-size:12px;font-weight:500}
+    .explanation{
+      margin:9px 0 0;font-family:var(--ko),"Manabo Card Radical";
+      font-size:clamp(14px,3.6vw,16px);line-height:1.5;word-break:keep-all;overflow-wrap:anywhere;
+    }
+    .detail-link{display:inline-flex;min-height:44px;padding-inline-end:12px;align-items:center;gap:7px;color:var(--accent);font:600 14px/1.4 var(--ko);text-decoration:none}
+    .detail-link:is(:hover,:focus-visible){text-decoration:underline;text-underline-offset:3px}
+    .detail-link::after{content:"";width:6px;height:6px;border:solid currentColor;border-width:1.5px 1.5px 0 0;transform:rotate(45deg)}
+    @media(prefers-reduced-motion:reduce){
+      .reveal::backdrop,.reveal[data-phase="closing"]::backdrop,.reveal[data-phase="opening"] .close{animation:none}
+      .close{transition:none}
+    }
+  </style>
+<style>
+/* Embedded Manabo Card Radical subset license:
+Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+https://openfontlicense.org
+
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded, 
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+*/
+.star-sidebar {
+  position: relative; z-index: 2; align-self: start; min-width: 0;
+  padding: 17px 15px; border: 1px solid var(--line); border-radius: var(--radius, 12px);
+  background: var(--paper); color: var(--ink); box-shadow: 0 2px 6px rgb(0 0 0 / .04);
+  font: 14px/1.5 var(--ko);
+}
+.star-search { position: relative; }
+.star-search label { display: block; margin-bottom: 7px; font-weight: 650; }
+.star-search-field { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; }
+.star-search-field:focus-within { border-color: var(--accent); }
+.star-search-field input {
+  flex: 1; min-width: 0; width: 100%; height: 42px; margin: 0; padding: 0 0 0 11px;
+  border: 0; border-radius: inherit; outline: none; background: transparent; color: var(--ink); font: 16px var(--ko);
+}
+.star-search-field input:focus-visible { outline: none; }
+.star-search-field button { display: grid; place-content: center; flex: none; width: 42px; height: 42px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); }
+.star-search-field button:hover { color: var(--ink); }
+.star-search-icon { position: relative; width: 14px; height: 14px; border: 1.6px solid currentColor; border-radius: 50%; }
+.star-search-icon::after { content: ""; position: absolute; left: 10px; top: 10px; width: 6px; height: 1.6px; background: currentColor; transform-origin: left; transform: rotate(45deg); }
+.star-suggestions {
+  position: absolute; z-index: 1; inset: calc(100% + 5px) 0 auto; overflow-y: auto; overscroll-behavior: contain;
+  max-height: min(240px, 32dvh); padding: 3px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--paper); box-shadow: 0 6px 20px rgb(0 0 0 / .13);
+}
+.star-suggestions ul { list-style: none; margin: 0; padding: 0; }
+.star-suggestions li { display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 4px 8px; border-radius: 5px; cursor: pointer; }
+.star-suggestions li[aria-selected="true"], .star-suggestions li:hover { background: var(--bg); }
+.star-suggestions [lang="ja"] { color: var(--ink); font: 22px/1 var(--ja); }
+.star-suggestions .star-empty { margin: 6px; color: var(--muted); }
+.board-key { margin-top: 15px; border-top: 1px solid var(--line); padding-top: 13px; color: var(--muted); }
+.board-key .location, .board-key li { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.board-key .location { color: var(--ink); font-weight: 600; }
+.board-key ul { list-style: none; padding: 0; margin: 9px 0 0; display: grid; gap: 8px; }
+.board-key i { position: relative; display: inline-block; width: 16px; flex: none; }
+.star-help { margin: 13px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; word-break: keep-all; }
+.standalone .learning-action { color: var(--accent); font-weight: 700; }
+.key-relation { height: 2px; }
+.key-relation::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle at 1px 50%, var(--end-dot) 0 .8px, transparent 1.1px) 0 0 / 4px 2px repeat-x;
+  -webkit-mask-image: linear-gradient(to right, transparent, black);
+  mask-image: linear-gradient(to right, transparent, black);
+}
+.key-relation::after {
+  content: ""; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  width: 5px; height: 5px; border-radius: 50%; background: var(--end-dot);
+}
+.board-key .key-current, .board-key .key-cell {
+  width: 13px; height: 13px; flex: none; border: 1px solid var(--key-edge); background: var(--paper);
+  box-shadow: 0 1px 3px rgb(0 0 0 / .14);
+}
+.key-current { border-radius: 2px; }
+.key-cell { border-radius: 50%; }
+.stage { perspective: 900px; touch-action: pan-y pinch-zoom; }
+#card {
+  --x: 37%;
+  --y: 28%;
+  --turn-x: 0deg;
+  --turn-y: 0deg;
+  transform: rotateX(var(--turn-x)) rotateY(var(--turn-y));
+  transition: transform 180ms ease-out;
+}
+#card[data-active] { transition-duration: 60ms; }
+.artwork::before,
+.artwork::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.artwork::before {
+  background-image:
+    radial-gradient(ellipse 55% 58% at calc(var(--x) - 20%) var(--y), rgb(120 210 220 / .72), transparent 100%),
+    radial-gradient(ellipse 50% 55% at calc(var(--x) + 20%) var(--y), rgb(210 146 202 / .70), transparent 100%);
+  opacity: .38;
+}
+.artwork::after {
+  background: radial-gradient(ellipse at var(--x) var(--y), rgb(255 255 242 / .24), transparent 42%);
+}
+#card[data-active] .artwork::before { opacity: .62; }
+@media (prefers-reduced-motion: reduce) {
+  #card { transform: none; transition: none; }
+}
+    .standalone > .starpath { height: 100vh; height: 100dvh; padding: clamp(8px,2vw,24px); }
+    html:root:has(.info-wrap > .starpath):not(:has(#reveal[open])) { overflow-y: auto; }
+    .wrap.info-wrap:has(> .starpath) {
+      display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+      height: 100vh; height: 100dvh; min-height: 350px; padding-bottom: 8px;
+    }
+    .info-wrap:has(> .starpath) > .site-footer { margin-top: clamp(28px, 6vh, 56px); padding-top: 6px; }
+    .info-wrap:has(> .starpath) .footer-links { margin-bottom: 4px; }
+    .game-footer-menu { position: relative; }
+    .game-footer-menu summary { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; cursor: pointer; }
+    .game-footer-menu summary::-webkit-details-marker { display: none; }
+    .game-footer-menu summary::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 1px 0 0 1px; transform: translateY(2px) rotate(45deg); }
+    .game-footer-menu[open] summary::after { transform: translateY(-2px) rotate(225deg); }
+    .game-footer-menu > div { position: absolute; z-index: 4; inset: auto 0 100%; max-width: 420px; margin-inline: auto; padding: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius,12px); box-shadow: 0 3px 14px rgb(0 0 0 / .10); }
+    .starpath, .starpath .frame, .starpath .gallery, .starpath .board { min-height: 0; min-width: 0; }
+    .starpath .frame { height: 100%; max-width: none; padding: 0; }
+    .starpath .gallery { display: grid; height: 100%; grid-template-columns: clamp(182px,21vw,216px) minmax(0,1fr); grid-template-rows: minmax(0,1fr); gap: clamp(12px,2vw,28px); }
+    .starpath .board { position: relative; width: 100%; isolation: isolate; }
+    #map, .connections { position: absolute; inset: 0; width:100%; height:100%; }
+    #cv { position:relative; width:100%; height:100%; }
+    .connections { pointer-events: none; }
+    .board[data-moving] .connections { opacity: 0; }
+    .n { position: absolute; translate: -50% -50%; display: grid; place-items: center;
+      padding: 0; line-height: 1; container-type: inline-size; color: var(--ink);
+      -webkit-user-select: none; user-select: none; touch-action: manipulation;
+      transition: opacity 180ms ease, box-shadow 180ms ease; }
+    .n:focus-visible { z-index: 1; outline: 2px solid var(--muted); outline-offset: 2px; }
+    .n > span { pointer-events: none; transition: text-shadow 180ms ease; }
+    .n[data-muted] { opacity: .22; }
+    .n[data-lit] > span { text-shadow: 0 0 3px var(--glow-edge), 0 0 8px var(--glow-halo); }
+    .n:is(.tile,.cell)[data-lit] { box-shadow: 0 2px 6px rgb(0 0 0 / .07), 0 0 0 1px var(--glow-edge), 0 0 12px 3px var(--glow-halo); }
+    .rel { border: 0; background: transparent; border-radius: 50%; }
+    .rel.many > span { background: var(--bg); font-size: 67cqi; }
+    .board[data-compact] .rel.many > span { font-size: 83cqi; }
+    .rel > span { font: 500 54cqi/1 var(--ja); }
+    .cell { border-radius: 50%; }
+    .cell > span { font: 500 47cqi/1 var(--ja); }
+    .n[data-missing] > span { font: 500 24cqi/1 var(--ko); }
+    .extra { margin: 4px auto 0; width: 100%; color: #fff; font: 14px/1.55 var(--ko); }
+    .extra summary { min-height: 44px; padding-block: 10px; cursor: pointer; }
+    .extra section { padding: 10px 0; border-top: 1px solid #666; }
+    .extra h3 { margin: 0 0 4px; font-size: 14px; }
+    .extra p, .extra ul { margin: 0; }
+    .extra .yl, .extra .grp { display: grid; grid-template-columns: 38px 1fr; gap: 8px; align-items: baseline; }
+    .extra ul { list-style: none; padding: 0; }
+    .extra .tag, .extra .rd { color: #d4d4d4; }
+    .extra .uses { font-size: 18px; }
+    .starpath [hidden] { display: none !important; }
+    .star-card[data-ink="auto"] .caption { color: white; mix-blend-mode: difference; }
+    .star-card[data-part] .artwork { display: grid; place-items: start center; padding-top: 16%; background: var(--paper); color: var(--ink); }
+    .star-card[data-part] .artwork > span { font: 500 clamp(40px,14vw,80px)/1 var(--ja); }
+    .star-card[data-part] .caption { color: var(--ink); }
+    .card-toolbar:has(.detail-link[hidden]) { justify-content: flex-end; }
+    .reveal[open] { display: flex; flex-direction: column; align-items: center; overflow: auto; padding: max(8px, env(safe-area-inset-top)) 0 max(8px, env(safe-area-inset-bottom)); }
+    .explanation, .meaning { white-space: pre-line; }
+    .caption { max-height: 62%; overflow-y: auto; scrollbar-width: thin; }
+    .go { z-index: 2; transition: left .32s ease, top .32s ease; }
+    @media (prefers-reduced-motion: no-preference) {
+      #cv.arriving :is(.rel, .part) { animation: map-arrival .25s ease-out; }
+      @keyframes map-arrival { from { opacity: 0; } }
+    }
+    @media (max-width: 680px) and (min-height: 521px), (max-width: 480px) {
+      .wrap.info-wrap:has(> .starpath) { min-height: 470px; }
+      .info-wrap:has(> .starpath) > .site-footer { margin-top: clamp(18px, 4vh, 32px); }
+      .starpath .gallery { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); gap: 6px; }
+      .star-sidebar { padding: 10px 12px; }
+      .star-search { display: flex; align-items: center; gap: 10px; }
+      .star-search label { flex: none; margin: 0; }
+      .star-search-field { flex: 1; min-width: 0; }
+      .board-key { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 0; padding: 0; border: 0; font-size: 12px; }
+      .board-key ul { display: flex; gap: 10px; margin: 0; }
+      .board-key li, .board-key .location { gap: 5px; }
+      .star-help { margin-top: 5px; font-size: 12px; line-height: 1.45; }
+    }
+    @media (max-height: 660px), (max-width: 680px) and (max-height: 740px) {
+      .info-wrap:has(> .starpath) > .site-header { padding-block: 4px; min-height: 0; }
+      .info-wrap:has(> .starpath) .site-nav { height: 38px; }
+      .info-wrap:has(> .starpath) .site-tab { min-height: 36px; padding-block: 5px; }
+      .info-wrap:has(> .starpath) > #choiceBack { margin-block: 4px; padding-block: 0; }
+      .info-wrap:has(> .starpath) > #choiceBack .story-exit { margin-bottom: 0; }
+      .info-wrap:has(> .starpath) > .site-footer { margin-top: clamp(14px, 3.5vh, 24px); line-height: 1.4; }
+    }
+    @media (min-width: 481px) and (max-height: 520px) {
+      .wrap.info-wrap:has(> .starpath) { min-height: 300px; grid-template-rows: auto auto auto minmax(0,1fr); }
+      .info-wrap:has(> .starpath) > #choiceBack { grid-area: 3 / 1; width: auto; justify-self: start; }
+      .info-wrap > .starpath { grid-area: 4 / 1; }
+      .info-wrap:has(> .starpath) > .site-footer { grid-area: 3 / 1; z-index: 3; align-self: center; justify-self: end; margin: 0; padding: 0; border: 0; }
+      .game-footer-menu > div { inset: 100% 0 auto auto; width: min(320px,80vw); }
+      .game-footer-menu summary::after { transform: translateY(-2px) rotate(225deg); }
+      .game-footer-menu[open] summary::after { transform: translateY(2px) rotate(45deg); }
+      .star-sidebar { padding: 7px 10px; font-size: 13px; }
+      .star-search label { margin-bottom: 2px; }
+      .board-key { margin-top: 5px; padding-top: 5px; }
+      .board-key ul { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 3px 0; }
+      .board-key li { gap: 4px; }
+      .star-help { margin-top: 5px; font-size: 12px; line-height: 1.4; }
+    }
+    @media (min-width: 481px) and (max-height: 359px) {
+      .star-search label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    }
+    @media (max-height: 460px) {
+      .star-glyph { font-size: clamp(30px,14cqi,48px); }
+      .meaning { font-size: 16px; }
+      .explanation { margin-top: 5px; font-size: 13px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .n, .n > span { transition: none; } }
+
+
+</style>
+</head>
+<body class="standalone">
+<div class="starpath">
+  <div class="frame">
+    <main class="gallery">
+      <h1 class="sr-only">한자 별길</h1>
+      <aside class="star-sidebar" aria-label="한자 검색과 지도 안내">
+        <form class="star-search" role="search">
+          <label for="star-query">한자 검색</label>
+          <div class="star-search-field">
+            <input id="star-query" type="search" role="combobox" aria-controls="star-matches" aria-expanded="false" aria-autocomplete="list" placeholder="한자 또는 훈음" autocomplete="off" enterkeyhint="search">
+            <button type="submit" aria-label="검색한 한자로 이동"><span class="star-search-icon" aria-hidden="true"></span></button>
+          </div>
+          <div class="star-suggestions" hidden>
+            <ul id="star-matches" role="listbox" aria-label="찾은 한자"></ul>
+            <p class="star-empty" role="status" hidden>검색 결과가 없습니다.</p>
+          </div>
+        </form>
+        <div class="board-key">
+          <span class="location"><i class="key-current" aria-hidden="true"></i><span>현재 위치: <span id="map-location" lang="ja" aria-live="polite">門</span></span></span>
+          <ul aria-label="지도 범례">
+            <li><i class="key-relation" aria-hidden="true"></i>관계 한자</li>
+            <li><i class="key-cell" aria-hidden="true"></i>부수 한자</li>
+          </ul>
+        </div>
+        <p class="star-help">관계·부수 한자를 누르면 이동하고, <strong class="learning-action">가운데 한자를 누르면</strong> 카드가 열립니다.</p>
+      </aside>
+      <div id="pick" class="board">
+        <canvas class="connections" aria-hidden="true"></canvas>
+        <div id="map" role="group" aria-label="한자 연결 지도"><div id="cv"></div></div>
+      </div>
+    </main>
+  </div>
+  <dialog id="reveal" class="reveal" aria-labelledby="glyph meaning">
+    <div class="card-preview">
+      <div class="card-toolbar">
+        <a class="detail-link" id="detail-link" target="_blank" rel="noopener noreferrer"
+           aria-labelledby="glyph detail-label" title="새 창에서 열기"><span id="detail-label">한자 상세보기</span></a>
+        <button class="close" id="close" type="button">닫기 <span aria-hidden="true">×</span></button>
+      </div>
+      <div class="landing" id="landing">
+        <div class="turn" id="turn">
+          <div class="flip-back" aria-hidden="true"><span lang="ja" id="back-glyph"></span></div>
+          <div class="stage" id="stage">
+            <article class="star-card" id="card" tabindex="0" aria-labelledby="glyph meaning">
+              <div class="artwork" id="artwork"></div>
+              <div class="caption">
+                <div class="identity">
+                  <span class="star-glyph" id="glyph" lang="ja"></span>
+                  <div>
+                    <h2 class="meaning" id="meaning"></h2>
+                    <p class="meta" id="card-meta"></p>
+                  </div>
+                </div>
+                <p class="explanation" id="explanation"></p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+      <details class="extra" id="extra" hidden>
+        <summary></summary>
+        <div id="extra-content"></div>
+      </details>
+    </div>
+  </dialog>
+  </div>
+<script>
+"use strict";
+const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function load(){const st=new Blob([bytes(/*TEXT*/)]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+ const [k,h,p,c,g,o,y,w,meta]=JSON.parse(await new Response(st).text()),im=bytes(/*IMGS*/);
+ return k.map((x,i)=>[x,h[i],p[i],Array.from(im.subarray(i*32,i*32+32),b=>b.toString(16).padStart(2,"0")).join(""),[...c[i]],g[i],o[i],y[i],w[i],meta[i]])}
+load().then(main).catch(()=>{document.getElementById("map").innerHTML='<p style="padding:80px 20px;text-align:center">데이터를 열지 못했어요. 브라우저를 최신 버전으로 업데이트해 주세요.</p>'});
+function main(RAW){
+const START="門";
+const D=new Map(RAW.map(([k,h,p,i,c,g,o,y,w,meta])=>[k,{k,h,p,i,c,g,o,y,w,meta,up:[]}]));
+// 게임에서만 잇는 연결: 풀이에 부품이 없어 갈 수 없던 글자들 (data/overrides.json의 links)
+const LINK=/*LINK*/;
+// 검수에서 부품을 바꾸거나 뺀 글자: 카드에 풀이와 다르다고 표시한다 (overrides.json에서 label이 true인 글자)
+const FIXED=new Set(/*FIXED*/);
+for(const[k,v]of Object.entries(LINK)){const d=D.get(k);d.x=[...v];d.c=[...d.c,...d.x]}
+// 시트에 없는 부품도 길목으로 쓴다(카드는 글자와 쓰이는 한자만)
+for(const d of [...D.values()])for(const c of d.c)if(!D.has(c))D.set(c,{k:c,h:"시트에 없는 부품",p:"",i:"",c:[],g:99,o:9999,y:"",w:"",ext:true,up:[]});
+for(const d of D.values())for(const c of new Set(d.c))D.get(c).up.push(d.k);
+const order=(a,b)=>D.get(a).g-D.get(b).g||D.get(a).o-D.get(b).o;
+for(const d of D.values())d.up.sort(order);
+// 둘레의 한자: 이 글자가 들어간 한자. 없으면 비운다(정상).
+const related=k=>D.get(k).up;
+const map=document.getElementById("map"),dlg=document.getElementById("reveal");
+let cur=START,moving=false;
+const still=matchMedia("(prefers-reduced-motion:reduce)");
+// 기기 글꼴에 없는 글자(네모로 깨짐)는 "부품"이라고 적는다
+const board = document.getElementById('pick');
+// Retain the shared footer links without spending the phone's map area on navigation.
+const siteFooter = document.querySelector('.info-wrap > .site-footer');
+if (siteFooter) {
+  const compactFooter = matchMedia('(max-width:680px), (max-height:660px)');
+  const menu = document.createElement('details'), summary = document.createElement('summary'), links = document.createElement('div');
+  menu.className = 'game-footer-menu';
+  summary.textContent = '사이트 정보';
+  menu.append(summary, links);
+  function updateFooter() {
+    if (compactFooter.matches && !menu.isConnected) {
+      links.append(...siteFooter.childNodes);
+      siteFooter.append(menu);
+    } else if (!compactFooter.matches && menu.isConnected) {
+      siteFooter.replaceChildren(...links.childNodes);
+      menu.open = false;
+    }
+  }
+  updateFooter();
+  compactFooter.addEventListener('change', updateFooter);
+}
+const setTrails = createTrails(board, map, dlg, still);
+const miss=new Map();let boxes;
+function px(t){const c=document.createElement("canvas");c.width=c.height=60;const x=c.getContext("2d");x.font='600 40px "Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif CJK JP",serif';x.textBaseline="top";x.fillText(t,5,5);return c.toDataURL()}
+function show(k){const d=D.get(k);if(!d||(!d.ext&&k.codePointAt(0)<=0xffff))return k;
+ if(!miss.has(k)){boxes=boxes||new Set([" ","\u{10FFFD}","\u{2FFFD}","\u{3FFFD}"].map(px));miss.set(k,boxes.has(px(k)))}
+ return miss.get(k)?"부품":k}
+function button(glyph, kind, x, y, size, label) {
+  const b = document.createElement('button'), ink = document.createElement('span');
+  const names = {current:'cur tile', related:'rel', component:'part cell'};
+  b.type = 'button';
+  b.className = 'n board-node ' + names[kind];
+  b.dataset.k = glyph;
+  b.dataset.kind = kind;
+  ink.lang = 'ja';
+  ink.textContent = show(glyph);
+  b.toggleAttribute('data-missing', ink.textContent !== glyph);
+  b.append(ink);
+  b.style.left = x + 'px';
+  b.style.top = y + 'px';
+  b.style.width = b.style.height = size + 'px';
+  b.setAttribute('aria-label', label);
+  if (kind === 'current') {
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-controls', dlg.id);
+    b.onclick = () => card(glyph, b);
+  } else b.onclick = () => go(glyph, b);
+  return b;
+}
+
+// Sample equal distances along the ellipse so narrow screens do not bunch letters at its tips.
+function arcPoints(rx, ry, start, span, count, closed, phase = 0) {
+  if (!count) return [];
+  const segments = 96, lengths = [0];
+  let px = rx * Math.cos(start), py = ry * Math.sin(start);
+  for (let i = 1; i <= segments; i++) {
+    const angle = start + span * i / segments;
+    const x = rx * Math.cos(angle), y = ry * Math.sin(angle);
+    lengths.push(lengths[i - 1] + Math.hypot(x - px, y - py));
+    px = x; py = y;
+  }
+  let step = 1;
+  return Array.from({length:count}, (_, i) => {
+    const fraction = closed ? (i + phase) / count : count === 1 ? .5 : i / (count - 1);
+    const distance = fraction * lengths[segments];
+    while (step < segments && lengths[step] < distance) step++;
+    const t = (distance - lengths[step - 1]) / (lengths[step] - lengths[step - 1] || 1);
+    const angle = start + span * (step - 1 + t) / segments;
+    return [rx * Math.cos(angle), ry * Math.sin(angle)];
+  });
+}
+
+function fitMap(width, height, count, hasParts) {
+  const halfW = width / 2, halfH = height / 2, margin = 6;
+  const center = Math.max(1, Math.min(128, width * .26, height * .20));
+  if (count <= 9) {
+    const size = Math.min(72, width * .13, height * .12);
+    const rx = Math.max(1, Math.min(halfW - size / 2 - margin, 330));
+    const ry = Math.max(1, Math.min(halfH - size / 2 - margin, 270));
+    const span = count < 4 ? Math.PI * .28 * Math.max(0, count - 1) : Math.PI * 1.06;
+    const points = arcPoints(rx, ry, -Math.PI / 2 - span / 2, span, count, false);
+    return {center, size, points};
+  }
+  const full = !hasParts;
+  function ringsFor(size) {
+    const rx = halfW - size / 2 - margin, ry = halfH - size / 2 - margin;
+    const short = Math.min(rx, ry), inner = Math.min(center, 2.3 * size) / Math.SQRT2 + size * .56 + 3;
+    const rings = [];
+    let capacity = 0;
+    for (let radius = short; radius >= inner; radius -= size * 1.08 + 2) {
+      const a = rx * radius / short, b = ry * radius / short;
+      const circumference = Math.PI * (3 * (a + b) - Math.sqrt((3*a + b) * (a + 3*b)));
+      const slots = Math.floor(circumference / (full ? 1 : 2) / (size * 1.13 + 2)) + (full ? 0 : 1);
+      if (slots) { rings.push({a, b, slots}); capacity += slots; }
+    }
+    return {rings, capacity};
+  }
+  let low = 1, high = Math.max(1, Math.floor(Math.min(56, width * .13, height * .12)));
+  while (low < high) {
+    const next = Math.ceil((low + high) / 2);
+    if (ringsFor(next).capacity >= count) low = next;
+    else high = next - 1;
+  }
+  const size = low, {rings, capacity} = ringsFor(size);
+  const points = [];
+  let slotsSoFar = 0;
+  for (const [i, ring] of rings.reverse().entries()) {
+    slotsSoFar += ring.slots;
+    const onRing = Math.round(count * slotsSoFar / capacity) - points.length;
+    points.push(...arcPoints(ring.a, ring.b, full ? -Math.PI / 2 : -Math.PI,
+      full ? 2 * Math.PI : Math.PI, onRing, full, i % 2 * .5));
+  }
+  return {center:Math.min(center, 2.3 * size), size, points};
+}
+
+let drawnWidth = 0, drawnHeight = 0;
+function draw(fade = true, focus = false) {
+ const W = map.clientWidth, H = map.clientHeight;
+ if (W < 40 || H < 40) return;
+ drawnWidth = W;
+ drawnHeight = H;
+ const d = D.get(cur), list = related(cur), ps = d.c;
+ const n = list.length, np = ps.length, cx = W / 2, cy = H / 2;
+ const {center:cs, size:rs, points:pos} = fitMap(W, H, n, np > 0);
+ board.toggleAttribute('data-compact', rs <= 28);
+ const gapP = np > 1 ? Math.min(150, (W - 12) / np) : 0;
+ const pr = Math.min(92, H * .16, np > 1 ? gapP - 6 : 92);
+ const py = Math.min(cy - pr / 2 - 6, cs / 2 + pr / 2 + Math.min(100, H * .13));
+
+ const cv = document.getElementById('cv');
+ cv.classList.toggle('arriving', fade);
+ const relatives = list.map((k, i) => {
+   const [x,y] = pos[i];
+   const b = button(k, 'related', cx+x, cy+y, rs, '관계 한자 ' + k + ', 이 글자로 이동');
+   if (n > 9) b.classList.add('many');
+   return b;
+ });
+ const components = ps.map((k, i) => button(k, 'component', cx+(i-(np-1)/2)*gapP, cy+py, pr, '부수 한자 ' + k + ', 이 글자로 이동'));
+ const center = button(cur, 'current', cx, cy, cs, '현재 한자 ' + cur + ' ' + d.h + '. 카드 보기');
+ cv.replaceChildren(...relatives, ...components, center);
+ board.removeAttribute('data-moving');
+ setTrails(center, relatives, components);
+ document.getElementById('map-location').textContent = show(cur);
+ map.setAttribute('aria-label', cur + '의 관계 한자와 부수 한자');
+ if (focus) center.focus({preventScroll:true});
+ document.title = cur + ' · 한자 별길';
+}
+
+function remember(k) {
+  try { history.pushState(null, '', '#' + encodeURIComponent(k)); } catch { /* Sandboxed previews may deny history writes. */ }
+}
+let arrivalTimer = 0;
+function visit(k, focus) {
+  clearTimeout(arrivalTimer);
+  moving = false;
+  if (k !== cur) remember(k);
+  cur = k;
+  draw(true, focus);
+}
+function go(k, b) {
+  if (moving || k === cur) return;
+  const keyboard = b.matches(':focus-visible');
+  const arrive = () => visit(k, keyboard);
+  if (still.matches) { arrive(); return; }
+  moving = true;
+  board.setAttribute('data-moving', '');
+  b.classList.add('go');
+  const center = map.querySelector('.cur');
+  for (const node of map.querySelectorAll('.n')) if (node !== b) node.style.opacity = '0';
+  requestAnimationFrame(() => { b.style.left = center.style.left; b.style.top = center.style.top; });
+  arrivalTimer = setTimeout(arrive, 340);
+}
+
+const closeSearch = setupSearch(D, (glyph) => visit(glyph, true));
+
+let press = null, dragged = false;
+map.addEventListener('pointerdown', e => { dragged = false; press = [e.clientX, e.clientY]; });
+window.addEventListener('pointermove', e => {
+  if (press && Math.hypot(e.clientX - press[0], e.clientY - press[1]) > 6) dragged = true;
+});
+window.addEventListener('pointerup', () => { press = null; });
+window.addEventListener('pointercancel', () => { press = null; });
+map.addEventListener('click', e => {
+  if (dragged && e.detail) { e.stopPropagation(); e.preventDefault(); }
+  dragged = false;
+}, true);
+const esc=t=>t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const MARK={"㉧":"음독","㉭":"훈독","㉫":"특수"},tag=m=>`<span class="tag">${MARK[m]}</span>`;
+function soundHTML(y){if(!y||y==="無し")return "";
+ return `<section><h3>발음</h3>${y.split(" | ").map(t=>`<p class="yl">${MARK[t[0]]?tag(t[0]):""}<span lang="ja">${esc(MARK[t[0]]?t.slice(1).trim():t)}</span></p>`).join("")}</section>`}
+function wordsHTML(w){if(!w)return "";let html="",m="";const groups=[];
+ for(const raw of w.split("\n")){const t=raw.trim();if(!t||t==="-")continue;if(MARK[t]){m=t;groups.push({m,l:[]});continue}if(!groups.length)groups.push({m:"",l:[]});groups.at(-1).l.push(t)}
+ for(const g of groups)if(g.l.length)html+=`<div class="grp">${g.m?tag(g.m):"<span></span>"}<ul>${g.l.map(t=>{const x=t.match(/^(.+?)\(([^()]+)\)\s*(.+)$/);return x?`<li><span class="w" lang="ja">${esc(x[1])}</span> <span class="rd" lang="ja">${esc(x[2])}</span> <span>${esc(x[3])}</span></li>`:`<li>${esc(t)}</li>`}).join("")}</ul></div>`;
+ return html?`<section><h3>예시 단어</h3>${html}</section>`:""}
+const inStudy = /^https?:$/.test(location.protocol) && location.pathname.startsWith('/learn/game/');
+const mediaBase = inStudy ? '/media/image1/' : 'https://kanjimanabo.com/media/image1/';
+const dictionary = inStudy ? '/kanji/' : 'https://kanjimanabo.com/kanji/';
+const face = document.getElementById('card'), artwork = document.getElementById('artwork');
+const extra = document.getElementById('extra'), extraBody = document.getElementById('extra-content');
+const detailsLink = document.getElementById('detail-link'), landing = document.getElementById('landing');
+const turn = document.getElementById('turn'), closeButton = document.getElementById('close');
+const lightInk = new Set([...'問間開閉閑聞門']);
+const darkInk = new Set([...'簡口']);
+let origin, flight, artFrame = 0, activeCard, startedOutside = false;
+
+function showArtwork(d, ink) {
+  if (artwork.dataset.glyph === d.k && artwork.querySelector('img')?.naturalWidth) return;
+  artwork.dataset.glyph = d.k;
+  const status = document.createElement('span');
+  if (d.ext) {
+    status.textContent = show(d.k);
+    status.lang = 'ja';
+    artwork.replaceChildren(status);
+    return;
+  }
+  const image = new Image(480, 480);
+  image.alt = d.h.replaceAll(' | ', ', ') + ' 암기 그림';
+  image.hidden = true;
+  status.className = 'art-status';
+  status.setAttribute('role', 'status');
+  status.textContent = '그림을 불러오는 중…';
+  artwork.replaceChildren(image, status);
+  image.onload = () => {
+    if (image.parentNode !== artwork) return;
+    image.hidden = false;
+    status.remove();
+    // On the same-origin study page, pick lettering for the illustrated caption area.
+    // In a standalone file the automatic face uses CSS contrast without reading remote pixels.
+    if (ink !== 'auto' || !inStudy) return;
+    const sampler = document.createElement('canvas');
+    sampler.width = sampler.height = 16;
+    const brush = sampler.getContext('2d');
+    if (!brush) return;
+    try {
+      brush.drawImage(image, 0, image.naturalHeight * .65, image.naturalWidth, image.naturalHeight * .35, 0, 0, 16, 16);
+      const {data} = brush.getImageData(0, 0, 16, 16);
+      let bright = 0, dark = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        const luma = (.213 * data[i] + .715 * data[i + 1] + .072 * data[i + 2]) / 255;
+        if (luma > .62) bright++;
+        if (luma < .46) dark++;
+      }
+      if (bright > 170 || dark > 170) face.dataset.ink = bright > dark ? 'dark' : 'light';
+    } catch { /* Cross-origin images still display with adaptive lettering. */ }
+  };
+  image.onerror = () => {
+    if (image.parentNode === artwork) status.textContent = '그림을 불러오지 못했어요. 인터넷 연결을 확인하세요.';
+  };
+  // Opening the card is the only operation that requests its WebP.
+  cancelAnimationFrame(artFrame);
+  artFrame = requestAnimationFrame(() => {
+    if (dlg.open && activeCard === d.k && image.parentNode === artwork) image.src = mediaBase + d.i + '.webp';
+  });
+}
+
+function componentInfo(title, parts) {
+  return '<section><h3>' + title + '</h3><p class="uses" lang="ja">' + (parts.map(show).join(' ') || '없음') + '</p></section>';
+}
+
+function card(k, trigger = null) {
+  const d = D.get(k);
+  if (!d) return;
+  if (flight) { flight.onfinish = null; flight.cancel(); flight = null; }
+  if (origin) origin.classList.remove('is-away');
+  origin = trigger;
+  activeCard = k;
+  document.getElementById('glyph').textContent = show(k);
+  document.getElementById('back-glyph').textContent = show(k);
+  document.getElementById('meaning').textContent = d.ext ? '부품' : d.h.replaceAll(' | ', '\n');
+  const meta = document.getElementById('card-meta');
+  meta.textContent = d.meta || '';
+  meta.hidden = !meta.textContent;
+  document.getElementById('explanation').textContent = d.ext ? '시트에 카드가 없는 부품이에요.' : d.p;
+  detailsLink.hidden = !!d.ext;
+  if (d.ext) detailsLink.removeAttribute('href');
+  else detailsLink.href = dictionary + encodeURIComponent(k) + '/';
+  const ink = darkInk.has(k) ? 'dark' : lightInk.has(k) ? 'light' : 'auto';
+  face.dataset.ink = ink;
+  face.toggleAttribute('data-part', !!d.ext);
+  let details = '', label = [];
+  if (d.ext) {
+    details = componentInfo('쓰이는 한자', d.up); label.push('쓰이는 한자');
+  } else {
+    if (FIXED.has(k)) {
+      label.push('게임에서 쓰는 부품 (풀이와 다름)');
+      details += componentInfo('게임에서 쓰는 부품 (풀이와 다름)', d.c);
+    }
+    if (d.x) { label.push('게임에서 이은 부품'); details += componentInfo('게임에서 이은 부품', d.x); }
+    const readings = soundHTML(d.y), words = wordsHTML(d.w);
+    if (readings) label.push('발음');
+    if (words) label.push('예시 단어');
+    details += readings + words;
+  }
+  extra.querySelector('summary').textContent = label.join(' · ');
+  extraBody.innerHTML = details;
+  extra.open = !!d.ext;
+  extra.hidden = !details;
+  if (!dlg.open) dlg.showModal();
+  dlg.scrollTop = 0;
+  showArtwork(d, ink);
+  closeButton.focus({preventScroll:true});
+  if (origin) origin.classList.add('is-away');
+  flip('opening');
+}
+
+function poses() {
+  const from = origin.getBoundingClientRect(), end = landing.getBoundingClientRect();
+  const x = from.left + from.width/2 - end.left - end.width/2;
+  const y = from.top + from.height/2 - end.top - end.height/2;
+  return [
+    {transform:'translate(' + x + 'px,' + y + 'px) scale(' + from.width/end.width + ') perspective(1000px) rotateY(-180deg)', '--front-face':'hidden','--back-face':'visible'},
+    {transform:'translate(0,0) scale(1) perspective(1000px) rotateY(0deg)', '--front-face':'visible','--back-face':'hidden'}
+  ];
+}
+function settle() {
+  if (flight) { flight.onfinish = null; flight.cancel(); flight = null; }
+  if (dlg.dataset.phase === 'closing') {
+    dlg.close();
+    if (origin?.isConnected) { origin.classList.remove('is-away'); origin.focus({preventScroll:true}); }
+    origin = null;
+  } else {
+    dlg.dataset.phase = 'open';
+    dlg.dispatchEvent(new Event('cardopened'));
+  }
+}
+function flip(phase) {
+  dlg.dataset.phase = phase;
+  if (!origin?.isConnected || still.matches || !turn.animate) { settle(); return; }
+  if (!flight) {
+    flight = turn.animate(poses(), {duration:620,easing:'cubic-bezier(.4,.06,.24,1)',fill:'both'});
+    flight.onfinish = settle;
+    if (phase === 'closing') flight.currentTime = 620;
+  }
+  if (phase === 'closing') {
+    if (flight.currentTime > 0) flight.reverse();
+    else settle();
+  }
+}
+function dismiss() { if (dlg.open && dlg.dataset.phase !== 'closing') flip('closing'); }
+function resetCard() {
+  if (flight) { flight.onfinish = null; flight.cancel(); flight = null; }
+  if (origin) origin.classList.remove('is-away');
+  cancelAnimationFrame(artFrame);
+  activeCard = origin = null;
+}
+closeButton.addEventListener('click', dismiss);
+dlg.addEventListener('cancel', e => { e.preventDefault(); dismiss(); });
+dlg.addEventListener('pointerdown', e => { startedOutside = e.target === dlg; });
+dlg.addEventListener('click', e => { if (startedOutside && e.target === dlg) dismiss(); });
+dlg.addEventListener('close', () => { if (!dlg.open) resetCard(); });
+still.addEventListener('change', () => { if (still.matches && flight) settle(); });
+window.addEventListener('resize', () => { if (flight && origin?.isConnected) flight.effect.setKeyframes(poses()); });
+
+
+function fromHash() {
+  clearTimeout(arrivalTimer);
+  moving = false;
+  closeSearch();
+  if (dlg.open) { resetCard(); dlg.close(); }
+  let glyph = '';
+  try { glyph = decodeURIComponent(location.hash.slice(1)); } catch { /* Use the starting glyph. */ }
+  cur = D.has(glyph) ? glyph : START;
+  draw(false);
+}
+addEventListener('popstate', fromHash);
+function resizeMap() {
+  if (moving || dlg.open || (map.clientWidth === drawnWidth && map.clientHeight === drawnHeight)) return;
+  draw(false);
+}
+new ResizeObserver(resizeMap).observe(map);
+dlg.addEventListener('close', resizeMap);
+if (location.hash === '#test' || window.TEST) {
+  window.T = {D, MARK, card, dlg, draw, set(k) { cur = k; draw(false); }};
+}
+fromHash();
+}
+function setupSearch(entries, navigate) {
+  const form = document.querySelector('.star-search');
+  const input = form.querySelector('input'), panel = form.querySelector('.star-suggestions');
+  const list = form.querySelector('[role="listbox"]'), empty = form.querySelector('.star-empty');
+  const compact = text => text.normalize('NFC').replace(/\s+/g, '');
+  const words = [...entries.values()].filter(d => !d.ext).map(d => ({
+    entry:d, names:d.h.split(' | ').map(compact)
+  }));
+  let matches = [], active = -1, composing = false, finishingComposition = false;
+
+  function close() {
+    panel.hidden = true;
+    input.setAttribute('aria-expanded', 'false');
+    input.removeAttribute('aria-activedescendant');
+    active = -1;
+  }
+  function select(glyph) {
+    input.value = '';
+    close();
+    navigate(glyph);
+  }
+  function results() {
+    matches = [];
+    const raw = input.value.trim(), query = compact(raw);
+    if (!query) { close(); return; }
+    if (entries.has(raw)) matches.push({entry:entries.get(raw), rank:0});
+    else {
+      for (const {entry, names} of words) {
+        let rank = Infinity;
+        for (const name of names) {
+          if (name === query) rank = 0;
+          else if (name.startsWith(query)) rank = Math.min(rank, 1);
+          else if (name.includes(query)) rank = Math.min(rank, 2);
+        }
+        if (rank < Infinity) matches.push({entry, rank});
+      }
+      matches.sort((a,b) => a.rank - b.rank || a.entry.g - b.entry.g || a.entry.o - b.entry.o);
+    }
+    active = -1;
+    input.removeAttribute('aria-activedescendant');
+    list.replaceChildren(...matches.map(({entry}, i) => {
+      const row = document.createElement('li'), glyph = document.createElement('span');
+      row.id = 'star-match-' + i;
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-selected', 'false');
+      row.dataset.k = entry.k;
+      glyph.lang = 'ja';
+      glyph.textContent = entry.k;
+      row.append(glyph, document.createTextNode(entry.ext ? '부품' : entry.h.replaceAll(' | ', ' · ')));
+      return row;
+    }));
+    empty.hidden = matches.length > 0;
+    panel.hidden = false;
+    panel.scrollTop = 0;
+    input.setAttribute('aria-expanded', 'true');
+  }
+  function highlight(next) {
+    if (active >= 0) list.children[active].setAttribute('aria-selected', 'false');
+    active = next;
+    const row = list.children[active];
+    row.setAttribute('aria-selected', 'true');
+    input.setAttribute('aria-activedescendant', row.id);
+    const top = row.offsetTop, bottom = top + row.offsetHeight;
+    if (top < panel.scrollTop) panel.scrollTop = top;
+    else if (bottom > panel.scrollTop + panel.clientHeight) panel.scrollTop = bottom - panel.clientHeight;
+  }
+  input.addEventListener('input', results);
+  input.addEventListener('focus', () => { if (input.value) results(); });
+  input.addEventListener('compositionstart', () => { composing = true; });
+  input.addEventListener('compositionend', () => { composing = false; results(); });
+  input.addEventListener('keydown', event => {
+    if (event.isComposing || composing || event.keyCode === 229) {
+      if (event.key === 'Enter') {
+        finishingComposition = true;
+        setTimeout(() => { finishingComposition = false; }, 0);
+      }
+      return;
+    }
+    if (event.key === 'Escape') { event.preventDefault(); close(); return; }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    if (panel.hidden) results();
+    if (!matches.length) return;
+    event.preventDefault();
+    const step = event.key === 'ArrowDown' ? 1 : -1;
+    highlight(active < 0 ? (step > 0 ? 0 : matches.length - 1) : (active + step + matches.length) % matches.length);
+  });
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    if (composing || finishingComposition) return;
+    if (panel.hidden) results();
+    if (active >= 0) select(matches[active].entry.k);
+    else if (matches.length === 1 || (matches[0]?.rank === 0 && matches[1]?.rank !== 0)) select(matches[0].entry.k);
+    else input.focus({preventScroll:true});
+  });
+  list.addEventListener('click', event => {
+    const row = event.target.closest('[role="option"]');
+    if (row) select(row.dataset.k);
+  });
+  document.addEventListener('pointerdown', event => { if (!form.contains(event.target)) close(); });
+  form.addEventListener('focusout', event => { if (event.relatedTarget && !form.contains(event.relatedTarget)) close(); });
+  return () => { input.value = ''; close(); };
+}
+
+function createTrails(board, map, dialog, reducedMotion) {
+  const canvas = board.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return () => {};
+
+  const fork = Symbol('component junction');
+  const points = new Map(), nodeSelections = new Map();
+  let rootKey, buttons = [], componentKeys = [], floaters = [], links = [], idleRoutes = [];
+  const travelTime = 575, rippleTime = 190;
+  let idleStep = travelTime;
+  let trackRgb, endDot, width = 0, height = 0;
+  let elapsed = 0, lastPaint = 0, frame = 0, pending = 0, lastFrame = null, inView = false;
+  let hovered, candidate, focused, active, hoverTimer;
+
+  function readPalette() {
+    const style = getComputedStyle(board);
+    trackRgb = style.getPropertyValue('--track-rgb').trim().split(/\s+/).map(Number);
+    endDot = style.getPropertyValue('--end-dot').trim();
+  }
+
+  function selection(route, key) {
+    return {key, route, nodes: new Set([key, ...route.flatMap(link => [link.near, link.far])])};
+  }
+
+  // Key by the actual node. The same component can occur more than once in a glyph.
+  function setNodes(center, relatives, components) {
+    clearTimeout(hoverTimer);
+    hovered = candidate = focused = active = null;
+    rootKey = center;
+    buttons = [center, ...relatives, ...components];
+    componentKeys = components;
+    points.clear();
+    nodeSelections.clear();
+    for (const button of buttons) {
+      const x = parseFloat(button.style.left), y = parseFloat(button.style.top);
+      points.set(button, {x, y, baseX: x, baseY: y, radius: parseFloat(button.style.width) / 2});
+    }
+    points.set(fork, {radius: 0});
+    floaters = relatives.map((button, i) => ({key: button, glyph: button.firstElementChild,
+      phase: i * 2.1, speed: 2 * Math.PI / (5300 + i * 430)}));
+    function link(near, far, inward, parents = []) {
+      return {near, far, inward, parents, light: 0, opacity: 1};
+    }
+    const outward = relatives.map(node => link(center, node, false));
+    const stem = link(center, fork, true);
+    const inward = components.map(node => link(fork, node, true, [stem]));
+    links = components.length ? [...outward, stem, ...inward] : outward;
+    for (const branch of [...outward, ...inward]) {
+      branch.selection = selection([branch, ...branch.parents], branch.far);
+      nodeSelections.set(branch.far, branch.selection);
+    }
+    stem.selection = selection([stem, ...inward]);
+    nodeSelections.set(center, selection(links, center));
+    idleRoutes = [];
+    for (let i = 0; i < Math.max(outward.length, inward.length); i++) {
+      if (outward[i]) idleRoutes.push(outward[i].selection.route);
+      if (inward[i]) idleRoutes.push(inward[i].selection.route);
+    }
+    idleStep = idleRoutes.length > 1 ? travelTime * .8 : travelTime + rippleTime;
+    elapsed = lastPaint = 0;
+    lastFrame = null;
+    syncMotion();
+    requestPaint();
+  }
+
+  function updateGlyphs() {
+    for (const {key, glyph, phase, speed} of floaters) {
+      const p = points.get(key);
+      const amplitude = Math.min(p.radius * .15, 5);
+      const dx = reducedMotion.matches ? 0 : amplitude * .62 * Math.cos(elapsed * speed * .78 + phase);
+      const dy = reducedMotion.matches ? 0 : amplitude * Math.sin(elapsed * speed + phase);
+      p.x = p.baseX + dx;
+      p.y = p.baseY + dy;
+      // Only the ink moves. The button stays put under a pointer or a finger.
+      glyph.style.transform = reducedMotion.matches ? 'none' : `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px)`;
+    }
+  }
+
+  function positionLinks(root) {
+    if (componentKeys.length) {
+      const start = root.y + root.radius;
+      const top = Math.min(...componentKeys.map(key => points.get(key).y - points.get(key).radius));
+      Object.assign(points.get(fork), {x: root.x, y: start + (top - start) * .44});
+    }
+    for (const link of links) {
+      const a = points.get(link.near), b = points.get(link.far);
+      const distance = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const dx = (b.x - a.x) / distance, dy = (b.y - a.y) / distance;
+      let start = a.radius, end = b.radius;
+      if (!link.inward) {
+        start = a === root ? a.radius / Math.max(Math.abs(dx), Math.abs(dy)) + 6 : a.radius * .77;
+        end = b.radius * .77;
+      }
+      link.length = Math.max(0, distance - start - end);
+      // Orient every segment in the direction of light: parts → current → relatives.
+      link.x = link.inward ? b.x - dx * end : a.x + dx * start;
+      link.y = link.inward ? b.y - dy * end : a.y + dy * start;
+      link.dx = link.inward ? -dx : dx;
+      link.dy = link.inward ? -dy : dy;
+    }
+    for (const link of links) {
+      const distanceFromRoot = link.parents.reduce((sum, parent) => sum + parent.length, 0);
+      link.offset = link.inward ? -distanceFromRoot - link.length : distanceFromRoot;
+    }
+  }
+
+  // The drawing origin is the start of the segment, with local x pointing along the flow.
+  function stroke(start, end, color, weight) {
+    ctx.beginPath();
+    ctx.moveTo(start, 0);
+    ctx.lineTo(end, 0);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = weight;
+    ctx.stroke();
+  }
+  function dot(x, radius, color) {
+    ctx.beginPath();
+    ctx.arc(x, 0, radius, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+  function trackFade(link) {
+    const gradient = ctx.createLinearGradient(0, 0, link.length, 0);
+    const rgb = trackRgb.map(channel => Math.round(channel + (255 - channel) * link.light)).join(',');
+    // Tracks are strongest at each outer kanji. An incoming spark runs against this fade.
+    let start = 0, end = 1;
+    if (link.inward) {
+      const stem = link.far === fork;
+      start = stem ? .5 : 1;
+      end = stem ? 0 : .5;
+    }
+    gradient.addColorStop(0, `rgba(${rgb},${start})`);
+    gradient.addColorStop(1, `rgba(${rgb},${end})`);
+    return gradient;
+  }
+
+  function drawTrack(link) {
+    ctx.setLineDash([1.2, 4]);
+    ctx.globalAlpha = link.opacity;
+    stroke(0, link.length, trackFade(link), 1.15);
+    ctx.setLineDash([]);
+    if (link.far !== fork) {
+      const outerEnd = link.inward ? 0 : link.length;
+      dot(outerEnd, 2.2, endDot);
+      if (link.light > .01) {
+        ctx.globalAlpha = link.opacity * link.light;
+        dot(outerEnd, 1.65, '#fff');
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPulse(link, head, speed) {
+    const length = link.length;
+    const arrival = (head - length) / speed;
+    if (head < 0 || arrival >= rippleTime) return;
+    const tail = Math.min(30, Math.max(10, length * .30));
+    if (head < length + tail && length > 0) {
+      const gradient = ctx.createLinearGradient(head - tail, 0, head, 0);
+      gradient.addColorStop(0, 'rgba(255,255,255,0)');
+      gradient.addColorStop(.7, 'rgba(255,255,255,.8)');
+      gradient.addColorStop(1, '#fff');
+      const start = Math.max(0, head - tail), end = Math.min(length, head);
+      ctx.shadowColor = '#fff';
+      ctx.shadowBlur = 5;
+      stroke(start, end, gradient, 3);
+      ctx.shadowBlur = 0;
+    }
+    if (head < length) {
+      const bloom = ctx.createRadialGradient(head, 0, 0, head, 0, 10);
+      bloom.addColorStop(0, '#fff');
+      bloom.addColorStop(.36, 'rgba(255,255,255,.88)');
+      bloom.addColorStop(1, 'rgba(255,255,255,0)');
+      dot(head, 10, bloom);
+      dot(head, 2.65, '#fff');
+    } else if (link.near !== fork) {
+      // The shared joint is not a kanji. A ripple lands only at a node.
+      const t = arrival / rippleTime;
+      ctx.globalAlpha = link.opacity * (1 - t) * .95;
+      ctx.beginPath();
+      ctx.arc(length, 0, 2.5 + 9 * t, 0, 2 * Math.PI);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.6 * (1 - t) + .45;
+      ctx.stroke();
+      ctx.globalAlpha = link.opacity;
+    }
+  }
+
+  function routeBounds(route) {
+    const start = Math.min(...route.map(link => link.offset));
+    const end = Math.max(...route.map(link => link.offset + link.length));
+    return {start, span: end - start};
+  }
+
+  function signal(route, age) {
+    const {start, span} = routeBounds(route);
+    const speed = span / travelTime;
+    return {route, speed, distance: start + age * speed};
+  }
+
+  function visibleLights() {
+    if (reducedMotion.matches || !idleRoutes.length) return [];
+    const index = Math.floor(elapsed / idleStep);
+    const age = elapsed - index * idleStep;
+    // Pointer and keyboard focus affect brightness only. Every route keeps its place on the same clock.
+    const lights = [signal(idleRoutes[index % idleRoutes.length], age)];
+    if (index > 0 && idleRoutes.length > 1 && age + idleStep < travelTime + rippleTime) {
+      lights.push(signal(idleRoutes[(index - 1) % idleRoutes.length], age + idleStep));
+    }
+    return lights;
+  }
+
+
+
+  function paint() {
+    const root = points.get(rootKey);
+    if (!root || !width || !height) return;
+    updateGlyphs();
+    positionLinks(root);
+    const lights = visibleLights();
+    const blend = reducedMotion.matches ? 1 : 1 - Math.exp(-(elapsed - lastPaint) / 58);
+    lastPaint = elapsed;
+    ctx.clearRect(0, 0, width, height);
+    for (const link of links) {
+      const lit = active?.route.includes(link) ? 1 : 0;
+      const opacity = active && !lit ? .14 : 1;
+      link.light += (lit - link.light) * blend;
+      link.opacity += (opacity - link.opacity) * blend;
+      ctx.save();
+      ctx.transform(link.dx, link.dy, -link.dy, link.dx, link.x, link.y);
+      ctx.lineCap = 'round';
+      drawTrack(link);
+      ctx.globalAlpha = link.opacity;
+      for (const light of lights) {
+        if (light.speed > 0 && light.route.includes(link)) drawPulse(link, light.distance - link.offset, light.speed);
+      }
+      ctx.restore();
+    }
+  }
+
+  function requestPaint() {
+    if (!pending) pending = requestAnimationFrame(() => { pending = 0; paint(); });
+  }
+
+  function measure() {
+    width = map.clientWidth;
+    height = map.clientHeight;
+    if (!width || !height) return;
+    const scale = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    ctx.setTransform(canvas.width / width, 0, 0, canvas.height / height, 0, 0);
+    requestPaint();
+  }
+
+  function selectPath() {
+    const next = hovered || focused;
+    if (active === next) return;
+    active = next;
+    for (const button of buttons) {
+      button.toggleAttribute('data-lit', active?.key === button);
+      button.toggleAttribute('data-muted', !!active && !active.nodes.has(button));
+    }
+    requestPaint();
+  }
+
+  function hover(next) {
+    if (candidate === next) return;
+    clearTimeout(hoverTimer);
+    candidate = next;
+    hovered = null;
+    selectPath();
+    if (!next) return;
+    const lightUp = () => { hovered = next; selectPath(); };
+    if (reducedMotion.matches) lightUp();
+    else hoverTimer = setTimeout(lightUp, 90);
+  }
+
+  function pointerTarget(event) {
+    if (event.pointerType === 'touch') return;
+    const button = event.target.closest('.n');
+    if (button) return hover(nodeSelections.get(button));
+    const rect = map.getBoundingClientRect();
+    const x = event.clientX - rect.left, y = event.clientY - rect.top;
+    let nearest = null, best = 7;
+    for (const link of links) {
+      const u = Math.min(link.length, Math.max(0, (x - link.x) * link.dx + (y - link.y) * link.dy));
+      const distance = Math.hypot(x - link.x - u * link.dx, y - link.y - u * link.dy);
+      if (distance < best) { nearest = link.selection; best = distance; }
+    }
+    hover(nearest);
+  }
+
+  function tick(now) {
+    if (lastFrame === null) lastFrame = now;
+    const delta = now - lastFrame;
+    if (delta >= 1000 / 30 - 1) {
+      elapsed += delta;
+      lastFrame = now;
+      paint();
+    }
+    frame = requestAnimationFrame(tick);
+  }
+
+  function syncMotion() {
+    cancelAnimationFrame(frame);
+    frame = 0;
+    lastFrame = null;
+    if (reducedMotion.matches || !links.length) requestPaint();
+    else if (inView && !document.hidden && !dialog.open) frame = requestAnimationFrame(tick);
+  }
+
+  board.addEventListener('pointerover', pointerTarget);
+  board.addEventListener('pointermove', pointerTarget);
+  board.addEventListener('pointerleave', () => hover(null));
+  board.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') hover(null); });
+  board.addEventListener('focusin', e => {
+    if (!e.target.matches('.n:focus-visible')) return;
+    hover(null); focused = nodeSelections.get(e.target); selectPath();
+  });
+  board.addEventListener('focusout', () => { focused = null; selectPath(); });
+  window.addEventListener('blur', () => { focused = null; hover(null); selectPath(); });
+  new ResizeObserver(measure).observe(map);
+  readPalette();
+  measure();
+  new MutationObserver(() => { readPalette(); requestPaint(); })
+    .observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+  new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; syncMotion(); }).observe(board);
+  new MutationObserver(syncMotion).observe(dialog, {attributes:true, attributeFilter:['open']});
+  document.addEventListener('visibilitychange', syncMotion);
+  reducedMotion.addEventListener('change', syncMotion);
+  return setNodes;
+}
+
+</script>
+<script>
+(() => {
+  const surface = document.getElementById('landing');
+  const card = document.getElementById('card');
+  const dialog = document.getElementById('reveal');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  let frame = 0;
+  let bounds;
+  let pointer;
+  let x = .37, y = .28;
+
+  function rest() {
+    cancelAnimationFrame(frame);
+    frame = 0;
+    bounds = undefined;
+    pointer = undefined;
+    x = .37;
+    y = .28;
+    card.removeAttribute('data-active');
+    for (const key of ['--x','--y','--turn-x','--turn-y']) card.style.removeProperty(key);
+  }
+
+  function illuminate(nextX, nextY) {
+    if (dialog.dataset.phase !== 'open') return;
+    x = Math.max(0, Math.min(1, nextX));
+    y = Math.max(0, Math.min(1, nextY));
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      card.setAttribute('data-active', '');
+      card.style.setProperty('--x', (x * 100).toFixed(1) + '%');
+      card.style.setProperty('--y', (y * 100).toFixed(1) + '%');
+      if (!reduceMotion.matches) {
+        card.style.setProperty('--turn-x', ((.5 - y) * 10).toFixed(1) + 'deg');
+        card.style.setProperty('--turn-y', ((x - .5) * 13).toFixed(1) + 'deg');
+      }
+    });
+  }
+
+  function lightAtPointer() {
+    if (!pointer || dialog.dataset.phase !== 'open') return;
+    bounds ??= surface.getBoundingClientRect();
+    illuminate((pointer.x - bounds.left) / bounds.width, (pointer.y - bounds.top) / bounds.height);
+  }
+
+  function point(event) {
+    pointer = {x: event.clientX, y: event.clientY};
+    lightAtPointer();
+  }
+
+  surface.addEventListener('pointerenter', point);
+  surface.addEventListener('pointerdown', point);
+  surface.addEventListener('pointermove', point, { passive: true });
+  surface.addEventListener('pointerleave', rest);
+  surface.addEventListener('pointercancel', rest);
+  surface.addEventListener('pointerup', event => { if (event.pointerType !== 'mouse') rest(); });
+  dialog.addEventListener('cardopened', lightAtPointer);
+  window.addEventListener('resize', rest);
+  window.addEventListener('scroll', () => { bounds = undefined; }, { passive: true });
+  card.addEventListener('blur', rest);
+  dialog.addEventListener('close', rest);
+  card.addEventListener('keydown', event => {
+    const directions = { ArrowLeft: [-.15, 0], ArrowRight: [.15, 0], ArrowUp: [0, -.15], ArrowDown: [0, .15] };
+    const direction = directions[event.key];
+    if (!direction) return;
+    event.preventDefault();
+    illuminate(x + direction[0], y + direction[1]);
+  });
+  reduceMotion.addEventListener('change', rest);
+})();
+</script>
+</body>
+</html>

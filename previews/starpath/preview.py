@@ -1,0 +1,151 @@
+"""Serve the local study menu with the single-file kanji adventure build."""
+
+import argparse
+import io
+import re
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import urlsplit
+
+
+HERE = Path(__file__).resolve().parent
+SITE = HERE.parents[1] / "dist"
+GAME = HERE / "dist/starpath.html"
+COVER = "/images/quiz-preview-starpath.webp"
+DARK_COVER = "/images/quiz-preview-starpath-dark.webp"
+GAME_TITLE = "한자 별길"
+GAME_DESCRIPTION = "부수 한자와 관련 한자의 계보를 따라 떠나는 별자리 여행"
+CHOICE_GUIDE = '<p id="choiceGuide" class="quiz-guide">한자를 보고 네 가지 보기에서 <strong class="learning-action">알맞은 뜻과 음을 골라</strong> 보세요.</p>'
+STUDY_PATHS = {"/learn/", "/learn/choice/", "/reading/"}
+UPCOMING = re.compile(r'<div class="quiz-upcoming">\s*<strong>한자 게임</strong>\s*<span>준비 중</span>\s*</div>')
+MODE = f'''<a class="quiz-tile" href="/learn/game/" aria-labelledby="starpath-name" aria-describedby="starpath-description">
+  <picture class="quiz-cover">
+    <source data-dark-preview media="not all" srcset="{DARK_COVER}">
+    <img src="{COVER}" alt="문 문(門) 둘레에 관계 한자가 펼쳐진 한자 별길 화면" width="960" height="540" loading="lazy" decoding="async">
+  </picture>
+  <span class="quiz-tile-caption">
+    <strong id="starpath-name">{GAME_TITLE}</strong>
+    <span class="quiz-tile-description" id="starpath-description">{GAME_DESCRIPTION}</span>
+  </span>
+</a>'''
+SHELF_STYLE = """<style>
+#quizOptions .quiz-modes { display: contents; }
+#choiceGuide { display: none; margin-bottom: 14px; }
+#gameView:has(> #choice-card:not([hidden]), > #gamePlay:not([hidden]) #gameChoices:not([hidden])) > #choiceGuide { display: block; }
+@media (551px <= width <= 800px) { #quizOptions .quiz-shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>"""
+
+
+def choice_settings(html):
+    # Keep the site's fieldsets, radio templates, question counts and start button.
+    settings = fragment(html, r'<div id="gameSetup" class="game-settings">.*?(?=\s*<p id="gameSetupError")')
+    layout = settings
+    for field, default in (("Jlpt", "전체 등급"), ("Grade", "전체 학년")):
+        group = fragment(settings, rf'<fieldset id="game{field}"[^>]*>.*?</fieldset>')
+        label_id, value_id = f"choice{field}Label", f"choice{field}Value"
+        picker = group.replace("<legend>", f'<legend id="{label_id}">', 1).replace(
+            "</legend>", f'''</legend>
+                <details class="choice-picker" id="choice{field}Picker">
+                  <summary aria-labelledby="{label_id} {value_id}"><span id="{value_id}">{default}</span></summary>''', 1
+        ).replace("</fieldset>", "</details></fieldset>", 1)
+        layout = layout.replace(group, picker, 1)
+    controls = '<div class="quiz-start-controls">'
+    if controls not in settings:
+        raise ValueError("사지선다 시작 영역을 찾을 수 없습니다.")
+    layout = layout.replace(
+        '<div id="gameSetup" class="game-settings">',
+        '''<div id="gameSetup" class="game-settings">
+              <div class="choice-range">
+                <h2>난이도 선택</h2>''', 1
+    ).replace(controls, f'''</div>
+              {controls}
+                <h2>이번 연습</h2>
+                <p id="choiceRangeSummary" role="status">전체 한자</p>''', 1)
+    style = (HERE / "choice-setup.css").read_text(encoding="utf-8")
+    script = (HERE / "choice-setup.js").read_text(encoding="utf-8")
+    return (html.replace(settings, layout, 1)
+            .replace("</head>", f"<style>{style}</style></head>", 1)
+            .replace("</body>", f"<script>{script}</script></body>", 1))
+
+
+def study_menu(path="/learn/"):
+    # Choice, reading and the shelf share the same document on in-page navigation.
+    html = (SITE / path.lstrip("/") / "index.html").read_text(encoding="utf-8")
+    html, count = UPCOMING.subn(MODE, html)
+    if count != 1:
+        raise ValueError("현재 빌드에서 한자 게임 준비 중 카드를 찾을 수 없습니다.")
+    html = html.replace("<li>한자 게임 · 준비 중</li>", f'<li><a href="/learn/game/">{GAME_TITLE}</a> · {GAME_DESCRIPTION}</li>')
+    choice_panel = '<section id="choice-card"'
+    html = html.replace(choice_panel, f'{CHOICE_GUIDE}\n        {choice_panel}', 1)
+    return choice_settings(html).replace("</head>", SHELF_STYLE + "</head>", 1).encode("utf-8")
+
+
+def fragment(html, pattern):
+    match = re.search(pattern, html, re.DOTALL)
+    if not match:
+        raise ValueError(f"Shared study markup missing: {pattern}")
+    return match.group()
+
+
+def game_page():
+    study = (SITE / "learn/choice/index.html").read_text(encoding="utf-8")
+    game = GAME.read_text(encoding="utf-8")
+    # Use just the study shell and its shared stylesheet and controls.
+    # The choice and reading apps do not need to run on the map.
+    theme = fragment(study, r"<script>[^<]*manabo-theme-v1[^<]*</script>")
+    consent_init = fragment(study, r'<script[^>]*>[^<]*window\.clarity\s*=[^<]*</script>')
+    styles = fragment(study, r'<link [^>]*href="/assets/site-info-[^"]+\.css"[^>]*>')
+    controls = fragment(study, r'<script [^>]*src="/assets/site-info-[^"]+\.js"[^>]*></script>')
+    icon = fragment(study, r'<link rel="icon" [^>]*>')
+    navigation = fragment(study, r'<div class="wrap info-wrap">.*?</nav></div>')
+    back = fragment(study, r'<div id="choiceBack" class="story-view">.*?</div>')
+    footer = fragment(study, r'<footer class="site-footer">.*?</footer>')
+    game = game.replace('<link rel="icon" href="data:,">', "\n".join([theme, consent_init, styles, controls, icon]), 1)
+    game = game.replace('<body class="standalone">', f"<body>{navigation}\n{back}", 1)
+    return game.replace("</body>", f"{footer}</div></body>", 1).encode("utf-8")
+
+
+class Preview(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(SITE), **kwargs)
+
+    def translate_path(self, path):
+        target = Path(super().translate_path(path))
+        if urlsplit(path).path in {COVER, DARK_COVER}:
+            return str(HERE / target.name)
+        return str(target)
+
+    def send_head(self):
+        if urlsplit(self.path).path == "/learn/game":
+            target = urlsplit(self.path)._replace(path="/learn/game/").geturl()
+            self.send_response(308)
+            self.send_header("Location", target)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return None
+        path = urlsplit(self.path).path.removesuffix("index.html")
+        if path not in STUDY_PATHS and path != "/learn/game/":
+            return super().send_head()
+        try:
+            data = game_page() if path == "/learn/game/" else study_menu(path)
+        except (OSError, ValueError) as exc:
+            self.log_error("%s", exc)
+            self.send_error(503, "Local study preview unavailable")
+            return None
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        return io.BytesIO(data)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--port", type=int, default=49190)
+    port = parser.parse_args().port
+    study_menu()
+    game_page()
+    with ThreadingHTTPServer(("127.0.0.1", port), Preview) as server:
+        print(f"http://127.0.0.1:{port}/learn/", flush=True)
+        server.serve_forever()
