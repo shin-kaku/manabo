@@ -6,6 +6,15 @@ const stories = JSON.parse(await readFile(new URL("../../public/data/stories.jso
 test.describe("static study materials", () => {
   test.use({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
 
+  test("character mnemonics keep the line breaks from the catalog", async ({ page }) => {
+    const rows = JSON.parse(await readFile(new URL("../../public/data/kanji.json", import.meta.url), "utf8"));
+    for (const ch of ["見", "昆", "木"]) {
+      await page.goto("/kanji/" + ch + "/");
+      const source = rows.find(row => row["한자"] === ch)["풀이"];
+      expect(await page.locator(".entry-explanation").innerText(), ch).toBe(source);
+    }
+  });
+
   test("materials and complete reading text are usable without JavaScript or data requests", async ({ page }) => {
     await page.route("**/data/*.json", (route) => route.abort());
     await page.goto("/materials/");

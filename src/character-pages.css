@@ -18,6 +18,7 @@
   padding-block-start: var(--divider-space);
 }
 .entry-section > :is(h2, p), .entry-word-header > :is(h2, p) { margin: 0; }
+.entry-explanation { white-space: pre-line; }
 .entry-word-header { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: var(--entry-content-gap); }
 .entry-word-header .study-link-hint { margin: 0; text-align: end; font-size: clamp(.75rem, 3.4vw, .875rem); }
 .entry-page a[data-study-kanji] { color: inherit; text-decoration: none; }

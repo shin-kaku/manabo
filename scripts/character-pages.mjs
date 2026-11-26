@@ -112,7 +112,7 @@ function characterEntry(row, media, block, known) {
     back: '<a data-previous-kanji hidden>← 이전 한자</a>',
     body: `<article class="entry-page" data-entry-kanji="${e(ch)}"><div class="entry-header"><h1><strong lang="ja">${e(ch)}</strong> <span class="entry-meaning">${e(ko)}</span></h1><nav class="entry-meta" aria-label="학습 범위">${categoryLinks(row)}</nav></div>
       <div class="entry-pair"><figure>${art(row, media, false)}</figure><figure>${stroke(row, media)}<figcaption>획순 · ${e(row["획"])}획</figcaption></figure></div>
-      <section class="entry-section"><h2>암기 풀이</h2><p>${linkText(row["풀이"])}</p></section>
+      <section class="entry-section"><h2>암기 풀이</h2><p class="entry-explanation">${linkText(row["풀이"])}</p></section>
       ${readings && `<section class="entry-section"><h2>일본어 읽기</h2><dl class="entry-readings">${readings}</dl></section>`}
       ${exampleGroups && `<section class="entry-section">
         <div class="entry-word-header"><h2>예시 단어</h2><p class="study-link-hint">모르는 한자는 눌러 뜻을 확인하세요.</p></div>
