@@ -21,7 +21,7 @@ async function mockData(page, options = {}) {
   return state;
 }
 const ready = (page) => expect(page.locator("#learningStatus")).toBeHidden();
-for (const path of ["/kanji/", "/quiz/choice/"]) {
+for (const path of ["/kanji/", "/learn/choice/"]) {
   test(`${path} works while stories is unavailable and never requests it`, async ({ page }) => {
     const state = await mockData(page, { storiesStatus: 503 });
     await page.goto(path);
@@ -42,7 +42,7 @@ for (const path of ["/kanji/", "/quiz/choice/"]) {
   });
 }
 
-for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], ["/quiz/choice/", "kanji"]]) {
+for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], ["/learn/choice/", "kanji"]]) {
   test(`${path} visible ${failed} error retries real requests without duplicates`, async ({ page }) => {
     const state = await mockData(page, { [`${failed}Status`]: 503 });
     await page.goto(path);
@@ -54,7 +54,7 @@ for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], 
     await page.locator("#learningRetry").click();
     await ready(page);
     expect(state[`${failed}Calls`]).toBe(3);
-    if (path === "/quiz/choice/") {
+    if (path === "/learn/choice/") {
       const grades = new Set(kanji.map(row => row["학년"]).filter(value => value && value !== "참고"));
       await expect(page.locator("#gameGrade input[type=radio]")).toHaveCount(grades.size + 1);
     } else {
@@ -67,7 +67,7 @@ for (const [path, failed] of [["/reading/", "stories"], ["/reading/", "kanji"], 
 
 test("quiz and reading share loaded data and can open standalone kanji details", async ({ page }) => {
   const state = await mockData(page, { storiesStatus: 503 });
-  await page.goto("/quiz/");
+  await page.goto("/learn/");
   await expect(page.locator("#choose-reading")).toBeVisible();
   expect(state.kanjiCalls).toBe(0);
   expect(state.storiesCalls).toBe(0);
@@ -219,7 +219,7 @@ test("quiz completion, insufficient pool, and valid restart never retain stale r
   const smallPool = kanji.slice(0, 5).map((row, index) => ({ ...row,
     학년: index < 4 ? "초등학교 1학년" : "초등학교 2학년", 등급: "JLPT N5" }));
   await mockData(page, { kanji: smallPool });
-  await page.goto("/quiz/choice/");
+  await page.goto("/learn/choice/");
   await ready(page);
   await page.locator('#gameGrade input[value="초등학교 1학년"]').check();
   await page.locator("#gameStart").click();

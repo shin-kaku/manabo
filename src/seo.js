@@ -13,11 +13,11 @@ export const studySeo = {
   choice: {
     title: "마나보 | 사지선다",
     description: "JLPT·학년과 문제 수를 고른 뒤 네 가지 보기에서 한자의 뜻과 음을 맞혀 보세요.",
-    canonical: "https://kanjimanabo.com/quiz/choice/",
+    canonical: "https://kanjimanabo.com/learn/choice/",
   },
   game: {
-    title: "마나보 | 한자 퀴즈",
+    title: "마나보 | 한자 학습",
     description: "JLPT나 학년을 골라 사지선다로 한자의 뜻과 음을 복습하고, 독해로 한국어 문장 속 한자를 읽어 보세요.",
-    canonical: "https://kanjimanabo.com/quiz/",
+    canonical: "https://kanjimanabo.com/learn/",
   },
 };

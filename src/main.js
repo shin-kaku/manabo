@@ -10,6 +10,7 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
         storyView: document.getElementById("storyView"),
         gameView: document.getElementById("gameView"),
         navGame: document.getElementById("navGame"),
+        choiceBack: document.getElementById("choiceBack"),
         choiceSetup: document.getElementById("choice-card"),
         choiceLink: document.getElementById("choose-choice"),
         readingLink: document.getElementById("choose-reading"),
@@ -350,7 +351,7 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
         });
         return b;
       }
-      const sectionPaths = { story: "/reading/", game: "/quiz/", choice: "/quiz/choice/" };
+      const sectionPaths = { story: "/reading/", game: "/learn/", choice: "/learn/choice/" };
       function sectionFromPath(pathname) {
         const path = pathname.replace(/\/index\.html$/, "/").replace(/\/?$/, "/");
         return Object.keys(sectionPaths).find(section => sectionPaths[section] === path);
@@ -383,6 +384,7 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
         document.querySelector('meta[property="og:description"]').content = seo.description;
         document.querySelector('link[rel="canonical"]').href = seo.canonical;
         document.querySelector('meta[property="og:url"]').content = seo.canonical;
+        els.choiceBack.hidden = section !== "choice";
         els.storyView.hidden = !story;
         els.gameView.hidden = story;
         if (!els.gamePlay.hidden) resetGame();

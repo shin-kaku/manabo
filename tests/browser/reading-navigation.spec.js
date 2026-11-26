@@ -126,7 +126,7 @@ test("a new reader entry or different story starts at the beginning", async ({ p
 });
 
 test("the quiz hub opens the reader and its JLPT and grade stories", async ({ page }) => {
-  await page.goto("/quiz/");
+  await page.goto("/learn/");
   await page.locator("#choose-reading").click();
   await expect(page).toHaveURL(/\/reading\/$/);
   await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-1").title);
@@ -147,25 +147,25 @@ test("the quiz hub opens the reader and its JLPT and grade stories", async ({ pa
 
 test("exiting a bookmarked story at either end restores the reader link in the hub", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const exits = page.locator("#storyView").getByRole("link", { name: "독해 나가기", exact: true });
+  const exits = page.locator("#storyView").getByRole("link", { name: "한자 학습으로", exact: true });
   for (const position of [0, 1]) {
     await page.goto("/reading/?story=story-12");
     await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-12").title);
     await expect(exits).toHaveCount(2);
     await expect(exits.first()).toBeInViewport();
     await exits.nth(position).click();
-    await expect(page).toHaveURL(/\/quiz\/$/);
+    await expect(page).toHaveURL(/\/learn\/$/);
     await expect(page.locator("#choose-reading")).toBeFocused();
   }
 });
 
 test("the quiz gallery links to a dedicated choice setup and skips the unreleased game", async ({ page }) => {
-  await page.goto("/quiz/");
+  await page.goto("/learn/");
   const shelf = page.locator(".quiz-shelf");
   const choice = shelf.getByRole("link", { name: "사지선다", exact: true });
   const reading = shelf.getByRole("link", { name: "독해", exact: true });
   await expect(shelf.getByRole("link")).toHaveCount(2);
-  await expect(choice).toHaveAttribute("href", "/quiz/choice/");
+  await expect(choice).toHaveAttribute("href", "/learn/choice/");
   await expect(reading).toHaveAttribute("href", "/reading/");
   await expect(choice.locator("picture img")).toBeVisible();
   await expect(reading.locator("picture img")).toBeVisible();
@@ -177,7 +177,7 @@ test("the quiz gallery links to a dedicated choice setup and skips the unrelease
   await expect(upcoming.locator("a, button, img")).toHaveCount(0);
   await expect(page.locator("#choice-card")).toBeHidden();
   await choice.press("Enter");
-  await expect(page).toHaveURL(/\/quiz\/choice\/$/);
+  await expect(page).toHaveURL(/\/learn\/choice\/$/);
   await expect(page.locator("#choice-card")).toBeVisible();
   await expect(shelf).toBeHidden();
   const jlpt = page.locator("#gameJlpt");
@@ -195,9 +195,9 @@ test("the quiz gallery links to a dedicated choice setup and skips the unrelease
   await expect(page.locator("#gameProgress")).toHaveText("1 / 25");
   await page.locator("#gameExit").click();
   await expect(start).toBeFocused();
-  await expect(page).toHaveURL(/\/quiz\/choice\/$/);
+  await expect(page).toHaveURL(/\/learn\/choice\/$/);
   await page.locator(".quiz-exit").click();
-  await expect(page).toHaveURL(/\/quiz\/$/);
+  await expect(page).toHaveURL(/\/learn\/$/);
   await expect(choice).toBeVisible();
 });
 
@@ -209,7 +209,7 @@ test("a quiz link clicked before the study script loads opens the reader", async
     await route.continue();
   });
   try {
-    await page.goto("/quiz/", { waitUntil: "commit" });
+    await page.goto("/learn/", { waitUntil: "commit" });
     await page.locator("#choose-reading").click({ noWaitAfter: true });
     await page.waitForURL("**/reading/", { waitUntil: "commit" });
   } finally { resume(); }
@@ -220,16 +220,18 @@ test("legacy quiz bookmarks open the matching page, and browser Back and Forward
   await page.goto("/quiz/#reading-setup");
   await expect(page).toHaveURL(/\/reading\/$/);
   await expect(page.locator("#storyTitle")).toHaveText(stories.find(story => story.id === "story-1").title);
+  await page.goto("/quiz/choice/?via=bookmark");
+  await expect(page).toHaveURL(/\/learn\/choice\/\?via=bookmark$/);
   await page.goto("/quiz/#choice-card");
-  await expect(page).toHaveURL(/\/quiz\/choice\/$/);
+  await expect(page).toHaveURL(/\/learn\/choice\/$/);
   await expect(page.locator("#gameStart")).toBeVisible();
   await page.locator(".quiz-exit").click();
   await expect(page.locator("#choose-choice")).toBeVisible();
   await page.goBack();
-  await expect(page).toHaveURL(/\/quiz\/choice\/$/);
+  await expect(page).toHaveURL(/\/learn\/choice\/$/);
   await expect(page.locator("#gameStart")).toBeVisible();
   await page.goForward();
-  await expect(page).toHaveURL(/\/quiz\/$/);
+  await expect(page).toHaveURL(/\/learn\/$/);
   await expect(page.locator("#choose-choice")).toBeVisible();
 });
 
@@ -237,16 +239,16 @@ test.describe("mobile quiz selector", () => {
   test.use({ viewport: { width: 375, height: 812 }, hasTouch: true });
 
   test("touch opens the reader directly and the textbook tab opens its own page", async ({ page }) => {
-    await page.goto("/quiz/");
+    await page.goto("/learn/");
     const nav = page.getByRole("navigation", { name: "콘텐츠 전환" });
-    await expect(nav.getByRole("link")).toHaveText(["한자 도감", "한자 퀴즈", "한자 교재"]);
-    await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 퀴즈");
+    await expect(nav.getByRole("link")).toHaveText(["한자 도감", "한자 학습", "한자 교재"]);
+    await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 학습");
     const shelf = page.locator(".quiz-shelf");
     await expect(shelf.getByRole("link")).toHaveCount(2);
     const upcoming = shelf.locator(".quiz-upcoming:last-child");
     await expect(upcoming).toContainText("준비 중");
     await upcoming.tap();
-    await expect(page).toHaveURL(/\/quiz\/$/);
+    await expect(page).toHaveURL(/\/learn\/$/);
     await expect(page.locator("#gameStart")).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
     await page.locator("#choose-reading").tap();
@@ -267,9 +269,9 @@ for (const width of [390, 1440]) test(`switching study tabs keeps the catalog la
   await page.setViewportSize({ width, height: 844 });
   await page.addInitScript(() => localStorage.setItem("manabo-theme-v1", "dark"));
   let reference;
-  for (const path of ["/kanji/", "/quiz/", "/book/"]) {
+  for (const path of ["/kanji/", "/learn/", "/book/"]) {
     await page.goto(path);
-    const panel = path === "/quiz/" ? "#gameView" : ".info-page";
+    const panel = path === "/learn/" ? "#gameView" : ".info-page";
     const boxes = await page.evaluate(selector => {
       const elements = [
         document.querySelector(".brand-icon"), document.querySelector(".site-info-menu summary"),
@@ -284,3 +286,21 @@ for (const width of [390, 1440]) test(`switching study tabs keeps the catalog la
     expect(boxes).toEqual(reference);
   }
 });
+
+for (const width of [390, 1280]) {
+  test(`reading and choice place the learning link above the panel at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    const positions = [];
+    for (const [path, panel] of [["/reading/", ".story-layout"], ["/learn/choice/", "#gameView"]]) {
+      await page.goto(path);
+      const link = page.getByRole("link", { name: "한자 학습으로", exact: true }).first();
+      await expect(link).toHaveAttribute("href", "/learn/");
+      await expect(link).toBeInViewport();
+      const box = await link.boundingBox();
+      const content = await page.locator(panel).boundingBox();
+      expect(content.y).toBeGreaterThanOrEqual(box.y + box.height);
+      positions.push([box.x, box.y]);
+    }
+    expect(positions[1]).toEqual(positions[0]);
+  });
+}

@@ -99,7 +99,7 @@ Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 �
 | --- | --- |
 | `index.html`, `src/home.js`, `src/home.css` | 별도 홈 `/` |
 | `src/study.html` | 학습 HTML 원본 |
-| `scripts/study-pages.mjs` | `/reading/`, `/quiz/`, `/quiz/choice/` HTML 생성 |
+| `scripts/study-pages.mjs` | `/reading/`, `/learn/`, `/learn/choice/` HTML 생성 |
 | `src/materials.html`, `scripts/material-pages.mjs` | 학습 자료 모음과 학년·JLPT별 한자 카드 목록 및 독해 본문 HTML 생성 |
 | `src/main.js`, `src/styles.css` | 학습 로직과 스타일 |
 | `scripts/material-directory.mjs`, `src/material-directory.js` | 한자 도감의 검색·필터·정렬 및 목록 추가 표시 |
@@ -115,7 +115,7 @@ Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 �
 
 도감 목록은 `/kanji/`, 상세 페이지는 `/kanji/木/`와 같은 개별 주소에서 열립니다.
 사이트맵에는 각 글자의 대표 주소, 木·林·森 비교, 학년·JLPT 자료, 독해 본문도 포함합니다.
-`kanji/`, `materials/`, `reading/`, `quiz/` 아래의 HTML은 빌드 때 생성됩니다.
+`kanji/`, `materials/`, `reading/`, `learn/` 아래의 HTML은 빌드 때 생성됩니다.
 도감 본문은 `public/data/kanji.json`과 한자 상세 데이터에서 생성합니다.
 정적 독해 본문에서 `/reading/?story=story-ID`로 해당 대화형 독해를 열 수 있습니다.
 

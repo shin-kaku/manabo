@@ -22,7 +22,7 @@ for (const width of [390, 1280]) test(`theme menu persists across learning pages
   await page.screenshot({ path: testInfo.outputPath(`theme-home-dark-${width}.png`) });
   await page.keyboard.press("Escape");
   await expect(page.locator(".site-info-menu summary")).toBeFocused();
-  for (const path of ["/kanji/", "/kanji/林/", "/reading/", "/quiz/", "/quiz/choice/", "/book/", "/materials/", "/about/"]) {
+  for (const path of ["/kanji/", "/kanji/林/", "/reading/", "/learn/", "/learn/choice/", "/book/", "/materials/", "/about/"]) {
     await page.goto(path);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expect(page.locator("body")).toHaveCSS("color", "rgb(245, 245, 245)");
@@ -78,7 +78,7 @@ test("another open tab follows the saved theme without reloading", async ({ page
 test("quiz screenshots follow the selected site theme", async ({ page }) => {
   await prepare(page);
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto("/quiz/");
+  await page.goto("/learn/");
   for (const [index, suffix] of [".webp", "-dark.webp", ".webp"].entries()) {
     if (index > 0) {
       await page.locator(".site-info-menu summary").click();

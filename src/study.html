@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="/src/styles.css" />
     <style>
       @media (scripting: none) {
-        #storyView, #gameView, [data-analytics-settings], [data-theme-toggle] { display: none; }
+        #storyView, #choiceBack, #gameView, [data-analytics-settings], [data-theme-toggle] { display: none; }
       }
     </style>
     <link rel="stylesheet" href="/src/site-info.css" />
@@ -71,7 +71,7 @@
         <button id="learningRetry" type="button" hidden>다시 시도</button>
       </div>
       <section id="storyView" class="story-view" hidden>
-        <a class="story-exit" href="/quiz/"><span aria-hidden="true">←</span> 독해 나가기</a>
+        <a class="story-exit" href="/learn/"><span aria-hidden="true">←</span> 한자 학습으로</a>
         <div class="story-layout">
           <aside class="story-sidebar" aria-label="스토리 분류">
             <div class="story-group">
@@ -89,18 +89,21 @@
             </div>
             <h1 id="storyTitle" class="story-title" tabindex="-1"></h1>
             <div id="storyCopy" class="story-copy"></div>
-            <a class="story-exit" href="/quiz/"><span aria-hidden="true">←</span> 독해 나가기</a>
+            <a class="story-exit" href="/learn/"><span aria-hidden="true">←</span> 한자 학습으로</a>
           </article>
         </div>
       </section>
 
+      <div id="choiceBack" class="story-view" hidden>
+        <a class="story-exit quiz-exit" href="/learn/"><span aria-hidden="true">←</span> 한자 학습으로</a>
+      </div>
       <section id="gameView" class="game-view content-panel" hidden>
         <div id="quizOptions" class="quiz-options">
           <p class="quiz-guide"><strong class="learning-action">카드를 눌러</strong> 한자의 뜻과 음을 맞히거나 문장 속 한자를 우리말로 읽어 보세요.</p>
-          <h1 class="quiz-heading">한자 퀴즈</h1>
+          <h1 class="quiz-heading">한자 학습</h1>
           <div class="quiz-shelf">
             <div class="quiz-modes">
-              <a class="quiz-tile" href="/quiz/choice/" id="choose-choice" aria-labelledby="choice-name">
+              <a class="quiz-tile" href="/learn/choice/" id="choose-choice" aria-labelledby="choice-name">
                 <picture class="quiz-cover">
                   <source data-dark-preview media="not all" srcset="/images/quiz-preview-choice-dark.webp">
                   <img src="/images/quiz-preview-choice.webp" alt="나무 그림과 木의 네 가지 보기에서 나무 목을 고른 화면" width="960" height="540" decoding="async">
@@ -128,7 +131,6 @@
           </div>
         </div>
         <section id="choice-card" class="quiz-mode-panel" hidden>
-          <a class="story-exit quiz-exit" href="/quiz/"><span aria-hidden="true">←</span> 퀴즈 선택으로</a>
           <div class="quiz-setup">
             <h1 id="choiceTitle" class="quiz-heading" tabindex="-1">사지선다</h1>
             <div id="gameSetup" class="game-settings">

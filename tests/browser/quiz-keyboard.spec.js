@@ -9,7 +9,7 @@ test("keyboard focus follows quiz questions, results and settings", async ({ pag
   await page.addInitScript(() => localStorage.setItem("manabo-analytics-consent-v1", JSON.stringify({ choice: "denied", at: Date.now() })));
   await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.fulfill({ body: "" }));
   await page.route("**/data/kanji.json", route => route.fulfill({ json: pool }));
-  await page.goto("/quiz/choice/");
+  await page.goto("/learn/choice/");
   await expect(page.locator("#learningStatus")).toBeHidden();
   await page.locator('#gameGrade input[value="초등학교 1학년"]').check();
   await page.locator("#gameStart").focus();

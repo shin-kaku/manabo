@@ -1,3 +1,9 @@
 /textbook            /book/  301
 /textbook/           /book/  301
 /textbook/index.html /book/  301
+/quiz             /learn/  301
+/quiz/            /learn/  301
+/quiz/index.html  /learn/  301
+/quiz/choice             /learn/choice/  301
+/quiz/choice/            /learn/choice/  301
+/quiz/choice/index.html  /learn/choice/  301

@@ -13,8 +13,8 @@ dist-ssr
 .wrangler
 # Generated from src/study.html by the Vite config.
 /reading/index.html
-/quiz/index.html
-/quiz/choice/index.html
+/learn/index.html
+/learn/choice/index.html
 # Generated from src/materials.html and public/data by the Vite config.
 /materials/
 /kanji/

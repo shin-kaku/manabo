@@ -39,7 +39,7 @@ async function watchQuiz(page) {
 }
 
 async function startQuiz(page) {
-  await page.goto("/quiz/choice/", { waitUntil: "domcontentloaded" });
+  await page.goto("/learn/choice/", { waitUntil: "domcontentloaded" });
   await expect(page.locator("#gameStart")).toBeEnabled();
   await page.locator("#gameStart").click();
   await expect(page.locator(".game-choice")).toHaveCount(4);
@@ -69,7 +69,7 @@ test.beforeEach(async ({ page }) => {
 test("the quiz hub and reader show their content without any picture address lookup", async ({ page }) => {
   const requests = await watchQuiz(page);
   await page.unroute("**/data/kanji.json");
-  await page.goto("/quiz/");
+  await page.goto("/learn/");
   await expect(page.locator("#choose-reading")).toBeVisible();
   await page.locator("#choose-reading").click();
   await expect(page.locator("#storyCopy p").first()).toBeVisible();

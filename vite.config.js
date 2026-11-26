@@ -64,7 +64,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: Object.fromEntries(
-        ["index", "textbook/index", "materials/kanji/index", ...studyPages.map((page) => `${page.path}/index`), ...materials.map(path => `${path}/index`), "about/index", "privacy-policy/index", "copyright/index", "contact/index"].map(
+        ["index", "textbook/index", "quiz/index", "quiz/choice/index", "materials/kanji/index", ...studyPages.map((page) => `${page.path}/index`), ...materials.map(path => `${path}/index`), "about/index", "privacy-policy/index", "copyright/index", "contact/index"].map(
           (page) => [page, fileURLToPath(new URL(`./${page}.html`, import.meta.url))],
         ),
       ),

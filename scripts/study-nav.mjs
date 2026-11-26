@@ -1,6 +1,6 @@
 const tabs = [
   ["navKanji", "한자 도감", "/kanji/"],
-  ["navGame", "한자 퀴즈", "/quiz/"],
+  ["navGame", "한자 학습", "/learn/"],
   ["navBooks", "한자 교재", "/book/"],
 ];
 
