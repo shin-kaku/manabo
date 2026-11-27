@@ -1122,12 +1122,11 @@ function createTrails(board, map, dialog, reducedMotion) {
     ctx.globalAlpha = link.opacity;
     stroke(0, link.length, trackFade(link), 1.15);
     ctx.setLineDash([]);
-    if (link.far !== fork) {
-      const outerEnd = link.inward ? 0 : link.length;
-      dot(outerEnd, 2.2, endDot);
+    if (!link.inward) {
+      dot(link.length, 2.2, endDot);
       if (link.light > .01) {
         ctx.globalAlpha = link.opacity * link.light;
-        dot(outerEnd, 1.65, '#fff');
+        dot(link.length, 1.65, '#fff');
       }
     }
     ctx.globalAlpha = 1;
