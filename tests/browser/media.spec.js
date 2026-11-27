@@ -9,7 +9,7 @@ const row = rows.find(row => row.한자 === "車");
 const artPath = media.items.image2[driveFileId(row["이미지 2"])].detail.url;
 const cardPath = media.items.image2[driveFileId(row["이미지 2"])].card.url;
 const strokePath = media.items.stroke[driveFileId(row["움직이는 획순"])].detail.url;
-const svg = await readFile(new URL("../../public/strokes/車.svg", import.meta.url));
+const svg = await readFile(new URL("../fixtures/strokes/車.svg", import.meta.url));
 const art = await sharp({ create: { width: 480, height: 480, channels: 3, background: "white" } }).webp().toBuffer();
 
 for (const width of [320, 390, 768, 1280]) {

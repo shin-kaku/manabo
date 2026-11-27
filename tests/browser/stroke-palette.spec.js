@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import sharp from "sharp";
 
-const carSvg = await readFile(new URL("../../public/strokes/車.svg", import.meta.url));
+const carSvg = await readFile(new URL("../fixtures/strokes/車.svg", import.meta.url));
 
 async function colors(image) {
   const png = await image.screenshot({ animations: "allow" });

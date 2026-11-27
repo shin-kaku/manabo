@@ -10,7 +10,7 @@ const illustration = media.items.image2[illustrationId].detail.url;
 const illustrationCard = media.items.image2[illustrationId].card.url;
 const animation = media.items.stroke[driveFileId(car["움직이는 획순"])].detail.url;
 const diagram = media.items.stroke[driveFileId(car["획순 이미지"])].detail.url;
-const svg = await readFile(new URL("../../public/strokes/車.svg", import.meta.url));
+const svg = await readFile(new URL("../fixtures/strokes/車.svg", import.meta.url));
 
 for (const reducedMotion of ["reduce", "no-preference"]) {
   test(`failed catalog images recover to the illustration source and original Q diagram under ${reducedMotion}`, async ({ page }) => {

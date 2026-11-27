@@ -133,7 +133,7 @@ test("R animation and Q diagram both sync; the detail card prefers R and retains
   const directory = await mkdtemp(join(tmpdir(), "manabo-r-q-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const kanji = { 한자: "車", "움직이는 획순": sourceUrl("animation"), "획순 이미지": sourceUrl("q") };
-  const animated = await readFile(new URL("../public/strokes/車.svg", import.meta.url));
+  const animated = await readFile(new URL("../tests/fixtures/strokes/車.svg", import.meta.url));
   const sources = new Map([["animation", animated], ["q", svg]]);
   const metadata = new Map([...sources].map(([id, bytes]) => [id, { md5Checksum: hash(bytes, "md5"), size: bytes.length }]));
   const { catalog } = await syncMedia({ rows: [kanji], enabledKinds: ["stroke"], directory, metadata, readSource: async id => sources.get(id) });
@@ -162,7 +162,7 @@ test("Drive sync preserves the embedded color scheme only for opted-in stroke SV
 
 test("all five SVG trials retain numbered strokes, native themes and reduced motion", async () => {
   for (const [kanji, count] of Object.entries({ 車: 7, 犬: 4, 見: 7, 空: 8, 校: 10 })) {
-    const file = await readFile(new URL(`../public/strokes/${kanji}.svg`, import.meta.url));
+    const file = await readFile(new URL(`../tests/fixtures/strokes/${kanji}.svg`, import.meta.url));
     const xml = validateSvg(file).toString("utf8");
     assert.equal((xml.match(/<animate\b/g) || []).length, count, kanji);
     assert.equal((await optimize(file, "stroke"))[0].strokeCount, count);
