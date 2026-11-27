@@ -7,6 +7,7 @@
   <link rel="canonical" href="https://kanjimanabo.com/learn/game/">
   <meta name="description" content="부수와 관련 한자를 연결해 탐험하는 마나보 한자 별길">
   <link rel="icon" href="data:,">
+  <style data-standalone-theme>/*THEME_TOGGLE_CSS*/</style>
   <script>
     if (!document.documentElement.hasAttribute('data-theme')) {
       const scheme = matchMedia('(prefers-color-scheme: dark)');
@@ -29,7 +30,7 @@
       unicode-range: U+25AD7;
     }
     body.standalone{
-      --bg:#f1f1f1;--paper:#fff;--ink:#181817;--muted:#707070;--line:#d9d9d9;--accent:#bc002d;
+      --bg:#f1f1f1;--paper:#fff;--ink:#181817;--muted:#707070;--line:#d9d9d9;--accent:#bc002d;--accent-soft:#f8e6ea;
       color-scheme:light;min-width:0;margin:0;min-height:100svh;background:var(--bg)
     }
     :root[data-theme="dark"] body.standalone{
@@ -37,6 +38,8 @@
     }
     .starpath{
       --node-edge:var(--paper);--key-edge:var(--paper);--key-divider:#c4c6c5;
+      --sky-ink:rgb(58 58 58 / .38);--current-halo:rgb(255 255 255 / .60);
+      --planet-rim-rgb:255 255 255;
       --track-rgb:195 197 196;--end-dot:#a9adac;
       --glow-edge:#fff;--glow-halo:rgb(255 255 255 / .95);
       --ko:"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -47,12 +50,14 @@
     }
     :root[data-theme="dark"] .starpath{
       --node-edge:var(--line);--key-edge:#686868;--key-divider:var(--line);
+      --sky-ink:rgb(255 255 255 / .82);--current-halo:rgb(255 255 255 / .12);
+      --planet-rim-rgb:0 0 0;
       --track-rgb:115 122 124;--end-dot:#a6acae;
       --glow-edge:rgb(255 255 255 / .6);--glow-halo:rgb(255 255 255 / .28)
     }
     .starpath,.starpath *{box-sizing:border-box}
-    .starpath :where(button){font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-    .starpath :focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+    .starpath :where(button:not(.theme-toggle)){font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .starpath :focus-visible:where(:not(.theme-toggle)){outline:3px solid var(--accent);outline-offset:4px}
     .frame{max-width:890px;margin:auto;padding:0 var(--gutter)}
     .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0}
     .tile,.cell,.flip-back{
@@ -60,6 +65,8 @@
       border:1px solid var(--node-edge);border-radius:6%;background:var(--paper);color:var(--ink);
       box-shadow:0 2px 6px rgb(0 0 0 / .07);
     }
+    .tile,.flip-back{border-radius:50%}
+    .tile{box-shadow:0 2px 7px rgb(0 0 0 / .08),0 0 16px 3px var(--current-halo)}
     .tile span,.flip-back span{font:500 39cqi/1 var(--ja)}
     .board-node.is-away{visibility:hidden}
     html:has(#reveal[open]){overflow:hidden}
@@ -71,53 +78,53 @@
     .reveal[data-phase="closing"]::backdrop{animation:scrim-out 280ms ease-in both}
     @keyframes scrim-in{from{opacity:0}to{opacity:1}}
     @keyframes scrim-out{from{opacity:1}to{opacity:0}}
-    .card-preview{position:relative;flex:none;margin:auto;width:var(--card-side)}
-    .landing{position:relative;aspect-ratio:1}
+    .card-preview{
+      position:relative;flex:none;margin:auto;pointer-events:none;
+      width:min(calc(100% - 2 * var(--gutter)),max(360px,var(--card-side)));
+    }
+    .landing{
+      --planet-limb:
+        radial-gradient(circle closest-side, transparent 72%, rgb(var(--planet-rim-rgb) / .04) 82%,
+          rgb(var(--planet-rim-rgb) / .20) 91%, rgb(var(--planet-rim-rgb) / .47) 97%, rgb(var(--planet-rim-rgb) / .80) 100%),
+        radial-gradient(ellipse 86% 82% at 60% 32%, transparent 54%, rgb(var(--planet-rim-rgb) / .10) 78%, rgb(var(--planet-rim-rgb) / .34) 100%);
+      position:relative;width:min(100%,var(--card-side));aspect-ratio:1;margin-inline:auto;
+    }
     .turn,.flip-back,.stage{position:absolute;inset:0}
     .turn{transform-style:preserve-3d}
-    .flip-back{visibility:var(--back-face,hidden);transform:rotateY(180deg);border-width:3px}
+    .flip-back{
+      visibility:var(--back-face,hidden);transform:rotateY(180deg);border:0;
+      background:var(--planet-limb),var(--paper);
+    }
     .stage{visibility:var(--front-face,visible);isolation:isolate;container-type:inline-size}
     .reveal:not([data-phase="open"]) .stage{pointer-events:none;perspective:none}
     .reveal:not([data-phase="open"]) #card{transform:none;transition:none}
-    .card-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+    .card-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;pointer-events:auto}
+    .reveal[data-phase="open"] .star-card{pointer-events:auto}
     .close{transition:opacity 180ms ease}
-    .reveal:not([data-phase="open"]) .detail-link{visibility:hidden}
+    .reveal:not([data-phase="open"]) :is(.detail-link,.caption){visibility:hidden}
     .reveal[data-phase="opening"] .close{animation:scrim-in 180ms 100ms both}
     .reveal[data-phase="closing"] .close{opacity:0}
     .close{display:flex;align-items:center;gap:5px;min-height:44px;padding:0 0 0 12px;border:0;background:transparent;color:inherit;font-size:14px}
     .close span[aria-hidden]{font:300 23px/1 system-ui,sans-serif}
     .reveal :focus-visible{outline-color:#fff}
     .star-card{
-      --rim:6.5px;
-      --letter-ink:#fffdf5;
       position:relative;width:100%;aspect-ratio:1;
-      border:var(--rim) solid #fff;border-radius:calc(2 * var(--rim) + 9px);overflow:hidden;
-      background:#fff;
-      outline-offset:5px;box-shadow:0 14px 30px -20px rgb(0 0 0 / .44);font-family:var(--ko);
+      border:0;border-radius:50%;overflow:hidden;background:#171717;
+      outline-offset:5px;box-shadow:0 0 3px rgb(0 0 0 / .33),0 12px 24px -13px rgb(0 0 0 / .48);font-family:var(--ko);
     }
-    .star-card[data-ink="dark"]{
-      --letter-ink:#182326;
-    }
-    @supports (width: 1cqi) {
-      .star-card{--rim:clamp(5px,1.925cqi,8px)}
-    }
-    .artwork{position:absolute;inset:0;isolation:isolate;overflow:hidden;background:#28352e}
-    .star-card[data-ink="dark"] .artwork{background:#f3f0e7}
+    .artwork{position:absolute;inset:0;isolation:isolate;overflow:hidden;pointer-events:none;background:#28352e}
     .artwork img{display:block;width:100%;height:100%;object-fit:contain}
     .artwork img[hidden]{display:none}
-    .art-status{position:absolute;inset:33% 0 auto;text-align:center;font-size:14px;color:var(--letter-ink)}
+    .art-status{position:absolute;inset:50% 15% auto;transform:translateY(-50%);text-align:center;font-size:14px;color:#fff}
     .caption{
-      position:absolute;inset:auto 0 0;
-      padding:0 clamp(15px,4vw,25px) clamp(15px,4vw,25px);
-      color:var(--letter-ink);
+      display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;gap:4px;margin-top:12px;
+      color:#fffdf8;text-align:center;pointer-events:auto;word-break:keep-all;overflow-wrap:anywhere;
     }
-    .identity{display:flex;align-items:center;gap:13px}
-    .star-glyph{font:500 clamp(42px,10vw,58px)/1 var(--ja)}
-    .meaning{margin:0;font:600 clamp(18px,4.5vw,22px)/1.2 var(--ko);letter-spacing:-.04em}
-    .meta{margin:4px 0 0;font-size:12px;font-weight:500}
+    .identity{display:flex;align-items:baseline;justify-content:center;gap:6px;margin:0;max-width:100%}
+    .star-glyph{font:500 20px/1.2 var(--ja)}
+    .meaning{min-width:0;font:600 14px/1.4 var(--ko)}
     .explanation{
-      margin:9px 0 0;font-family:var(--ko),"Manabo Card Radical";
-      font-size:clamp(14px,3.6vw,16px);line-height:1.5;word-break:keep-all;overflow-wrap:anywhere;
+      margin:0;max-width:100%;text-wrap:balance;font:13px/1.5 var(--ko),"Manabo Card Radical";
     }
     .detail-link{display:inline-flex;min-height:44px;padding-inline-end:12px;align-items:center;gap:7px;color:#fff;font:600 14px/1.4 var(--ko);text-decoration:none}
     .detail-link:is(:hover,:focus-visible){text-decoration:underline;text-underline-offset:3px}
@@ -231,7 +238,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 }
 .star-search { position: relative; }
 .star-search label { display: block; margin-bottom: 7px; font-weight: 650; }
-.star-search-field { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; }
+.star-search-field, .star-night-guide .theme-toggle { border: 1px solid var(--line); border-radius: var(--control-radius, 8px); }
+.star-search-field { display: flex; align-items: center; }
+.star-night-guide .theme-toggle { justify-content: center; padding: 8px; }
 .star-search-field:focus-within { border-color: var(--accent); }
 .star-search-field input {
   flex: 1; min-width: 0; width: 100%; height: 42px; margin: 0; padding: 0 0 0 11px;
@@ -257,7 +266,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 .board-key .location { color: var(--ink); font-weight: 600; }
 .board-key ul { list-style: none; padding: 0; margin: 9px 0 0; display: grid; gap: 8px; }
 .board-key i { position: relative; display: inline-block; width: 16px; flex: none; }
-.star-help { margin: 13px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; word-break: keep-all; }
+.star-help, .star-night-guide { font-size:12px; }
+.star-help { margin: 13px 0 0; color: var(--muted); line-height: 1.6; word-break: keep-all; }
+.star-night-guide {
+  display:grid; justify-items:start; align-items:center; gap:6px;
+  margin-top:13px; padding-top:12px; border-top:1px solid var(--line);
+  color:var(--muted); line-height:1.55; word-break:keep-all;
+}
+.star-night-guide p { margin:0; }
+.star-night-guide strong { white-space:nowrap; }
+:root[data-theme="dark"] .star-night-guide > :not(.star-night-menu-tip),
+:root[data-theme="dark"] .standalone .star-night-guide, .standalone .star-night-menu-tip { display:none; }
 .standalone .learning-action { color: var(--accent); font-weight: 700; }
 .key-relation { height: 2px; }
 .key-relation::before {
@@ -274,8 +293,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   width: 13px; height: 13px; flex: none; border: 1px solid var(--key-edge); background: var(--paper);
   box-shadow: 0 1px 3px rgb(0 0 0 / .14);
 }
-.key-current { border-radius: 2px; }
-.key-cell { border-radius: 50%; }
+.board-key .key-current { border-radius:50%; box-shadow:0 1px 3px rgb(0 0 0 / .14),0 0 5px var(--current-halo); }
+.board-key .key-cell { width:12px; height:12px; border:0; border-radius:50%; box-shadow:0 1px 4px rgb(0 0 0 / .14); }
+:root[data-theme="dark"] .board-key .key-cell { background:var(--line); }
 .stage { perspective: 900px; touch-action: pan-y pinch-zoom; }
 #card {
   --x: 37%;
@@ -300,7 +320,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   opacity: .38;
 }
 .artwork::after {
-  background: radial-gradient(ellipse at var(--x) var(--y), rgb(255 255 242 / .24), transparent 42%);
+  background: var(--planet-limb),
+    radial-gradient(ellipse at var(--x) var(--y), rgb(255 255 242 / .24), transparent 42%);
 }
 #card[data-active] .artwork::before { opacity: .62; }
 @media (prefers-reduced-motion: reduce) {
@@ -331,7 +352,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     #map, .connections { position: absolute; inset: 0; width:100%; height:100%; }
     #cv { position:relative; width:100%; height:100%; }
     .connections { pointer-events: none; }
-    .board[data-moving] .connections { opacity: 0; }
     .n { position: absolute; translate: -50% -50%; display: grid; place-items: center;
       padding: 0; line-height: 1; container-type: inline-size; color: var(--ink);
       -webkit-user-select: none; user-select: none; touch-action: manipulation;
@@ -340,23 +360,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .n > span { pointer-events: none; transition: text-shadow 180ms ease; }
     .n[data-muted] { opacity: .22; }
     .n[data-lit] > span { text-shadow: 0 0 3px var(--glow-edge), 0 0 8px var(--glow-halo); }
-    .n:is(.tile,.cell)[data-lit] { box-shadow: 0 2px 6px rgb(0 0 0 / .07), 0 0 0 1px var(--glow-edge), 0 0 12px 3px var(--glow-halo); }
+    .n.tile[data-lit] { box-shadow: 0 2px 6px rgb(0 0 0 / .07), 0 0 0 1px var(--glow-edge), 0 0 12px 3px var(--glow-halo); }
+    .n.cell[data-lit] { box-shadow:0 2px 6px rgb(0 0 0 / .07),0 0 12px 3px var(--glow-halo); }
     .rel { border: 0; background: transparent; border-radius: 50%; }
     .rel.many > span { background: var(--bg); font-size: 67cqi; }
     .board[data-compact] .rel.many > span { font-size: 83cqi; }
     .rel > span { font: 500 54cqi/1 var(--ja); }
-    .cell { border-radius: 50%; }
+    .cell { border:0; border-radius:50%; box-shadow:0 1px 3px rgb(0 0 0 / .06); }
+    .cell::before { content:""; position:absolute; inset:-5.56%; border-radius:50%; }
     .cell > span { font: 500 47cqi/1 var(--ja); }
     .n[data-missing] > span { font: 500 24cqi/1 var(--ko); }
     .starpath [hidden] { display: none !important; }
-    .star-card[data-ink="auto"] .caption { color: white; mix-blend-mode: difference; }
-    .star-card[data-part] .artwork { display: grid; place-items: start center; padding-top: 16%; background: var(--paper); color: var(--ink); }
+    .star-card[data-part] .artwork { display: grid; place-items: center; background: var(--paper); color: var(--ink); }
     .star-card[data-part] .artwork > span { font: 500 clamp(40px,14vw,80px)/1 var(--ja); }
-    .star-card[data-part] .caption { color: var(--ink); }
     .card-toolbar:has(.detail-link[hidden]) { justify-content: flex-end; }
     .reveal[open] { display: flex; flex-direction: column; align-items: center; overflow: auto; padding: max(8px, env(safe-area-inset-top)) 0 max(8px, env(safe-area-inset-bottom)); }
-    .explanation, .meaning { white-space: pre-line; }
-    .caption { max-height: 62%; overflow-y: auto; scrollbar-width: thin; }
     .go { z-index: 2; transition: left .32s ease, top .32s ease; }
     @media (prefers-reduced-motion: no-preference) {
       #cv.arriving :is(.rel, .part) { animation: map-arrival .25s ease-out; }
@@ -367,14 +385,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       .info-wrap:has(> .starpath) > .site-footer { margin-top: clamp(18px, 4vh, 32px); }
       .starpath { min-height: min-content; }
       .starpath .gallery { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(300px,1fr); gap: 6px; }
-      .star-sidebar { padding: 10px 12px; }
-      .star-search { display: flex; align-items: center; gap: 10px; }
-      .star-search label { flex: none; margin: 0; }
-      .star-search-field { flex: 1; min-width: 0; }
+      .star-sidebar {
+        display: grid; grid-template-columns: max-content minmax(0,1fr); column-gap: 10px;
+        inline-size: min(100%, 400px); justify-self: center; padding: 10px 12px;
+      }
+      .star-sidebar > * { grid-column: 1 / -1; }
+      .star-search, .star-night-guide { display: grid; grid-template-columns: subgrid; column-gap: inherit; align-items: center; }
+      .star-search label { margin: 0; }
+      .star-search-field { min-width: 0; }
       .board-key { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 0; padding: 0; border: 0; font-size: 12px; }
       .board-key ul { display: flex; gap: 10px; margin: 0; }
       .board-key li, .board-key .location { gap: 5px; }
-      .star-help { margin-top: 5px; font-size: 12px; line-height: 1.45; }
+      .star-help { margin-top: 5px; line-height: 1.45; }
+      .star-night-guide { row-gap:4px; margin-top:8px; padding-top:8px; }
+      .star-night-guide p { grid-column:1 / -1; }
+      .star-night-guide .theme-toggle { grid-column:2; }
     }
     @media (max-height: 660px), (max-width: 680px) and (max-height: 740px) {
       .info-wrap:has(> .starpath) > .site-header { padding-block: 4px; min-height: 0; }
@@ -391,15 +416,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       .board-key { margin-top: 5px; padding-top: 5px; }
       .board-key ul { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 3px 0; }
       .board-key li { gap: 4px; }
-      .star-help { margin-top: 5px; font-size: 12px; line-height: 1.4; }
+      .star-help { margin-top: 5px; line-height: 1.4; }
     }
     @media (min-width: 481px) and (max-height: 359px) {
       .star-search label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-    }
-    @media (max-height: 460px) {
-      .star-glyph { font-size: clamp(30px,14cqi,48px); }
-      .meaning { font-size: 16px; }
-      .explanation { margin-top: 5px; font-size: 13px; }
     }
     @media (prefers-reduced-motion: reduce) { .n, .n > span { transition: none; } }
 
@@ -411,26 +431,31 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   <div class="frame">
     <main class="gallery">
       <h1 class="sr-only">한자 별길</h1>
-      <aside class="star-sidebar" aria-label="한자 검색과 지도 안내">
+      <aside class="star-sidebar" aria-label="별 찾기와 지도 안내">
         <form class="star-search" role="search">
-          <label for="star-query">한자 검색</label>
+          <label for="star-query">별 찾기</label>
           <div class="star-search-field">
             <input id="star-query" type="search" role="combobox" aria-controls="star-matches" aria-expanded="false" aria-autocomplete="list" placeholder="한자 또는 훈음" autocomplete="off" enterkeyhint="search">
-            <button type="submit" aria-label="검색한 한자로 이동"><span class="star-search-icon" aria-hidden="true"></span></button>
+            <button type="submit" aria-label="찾은 별로 이동"><span class="star-search-icon" aria-hidden="true"></span></button>
           </div>
           <div class="star-suggestions" hidden>
-            <ul id="star-matches" role="listbox" aria-label="찾은 한자"></ul>
-            <p class="star-empty" role="status" hidden>검색 결과가 없습니다.</p>
+            <ul id="star-matches" role="listbox" aria-label="찾은 별"></ul>
+            <p class="star-empty" role="status" hidden>아직 별길에 없는 별이에요.</p>
           </div>
         </form>
         <div class="board-key">
-          <span class="location"><i class="key-current" aria-hidden="true"></i><span>현재 위치: <span id="map-location" lang="ja" aria-live="polite">門</span></span></span>
+          <span class="location"><i class="key-current" aria-hidden="true"></i><span>현재 별: <span id="map-location" lang="ja" aria-live="polite">門</span></span></span>
           <ul aria-label="지도 범례">
-            <li><i class="key-relation" aria-hidden="true"></i>관계 한자</li>
-            <li><i class="key-cell" aria-hidden="true"></i>부수 한자</li>
+            <li><i class="key-relation" aria-hidden="true"></i>관계 별</li>
+            <li><i class="key-cell" aria-hidden="true"></i>부수 별</li>
           </ul>
         </div>
-        <p class="star-help">관계·부수 한자를 누르면 이동하고, <strong class="learning-action">가운데 한자를 누르면</strong> 카드가 열립니다.</p>
+        <p class="star-help">관계·부수 별을 누르면 이동하고, <strong class="learning-action">가운데 별을 누르면</strong> 관측할 수 있어요.</p>
+        <div class="star-night-guide">
+          <p><strong class="learning-action">밤하늘에서 보면</strong> 별길이 더 선명해요.</p>
+          <button type="button" class="theme-toggle">다크모드로 전환</button>
+          <p class="star-night-menu-tip">상단 [사이트 안내]에서 언제든 화면 모드를 바꿀 수 있어요.</p>
+        </div>
       </aside>
       <div id="pick" class="board">
         <canvas class="connections" aria-hidden="true"></canvas>
@@ -438,32 +463,29 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       </div>
     </main>
   </div>
-  <dialog id="reveal" class="reveal" aria-labelledby="glyph meaning">
+  <dialog id="reveal" class="reveal" aria-labelledby="card-title">
     <div class="card-preview">
       <div class="card-toolbar">
         <a class="detail-link" id="detail-link" target="_blank" rel="noopener noreferrer"
-           aria-labelledby="glyph detail-label" title="새 창에서 열기"><span id="detail-label">한자 상세보기</span></a>
+           aria-labelledby="glyph detail-label" title="새 창에서 열기"><span id="detail-label">착륙하기</span></a>
         <button class="close" id="close" type="button">닫기 <span aria-hidden="true">×</span></button>
       </div>
       <div class="landing" id="landing">
         <div class="turn" id="turn">
           <div class="flip-back" aria-hidden="true"><span lang="ja" id="back-glyph"></span></div>
           <div class="stage" id="stage">
-            <article class="star-card" id="card" tabindex="0" aria-labelledby="glyph meaning">
+            <article class="star-card" id="card" tabindex="0" aria-labelledby="card-title" aria-describedby="explanation">
               <div class="artwork" id="artwork"></div>
-              <div class="caption">
-                <div class="identity">
-                  <span class="star-glyph" id="glyph" lang="ja"></span>
-                  <div>
-                    <h2 class="meaning" id="meaning"></h2>
-                    <p class="meta" id="card-meta"></p>
-                  </div>
-                </div>
-                <p class="explanation" id="explanation"></p>
-              </div>
             </article>
           </div>
         </div>
+      </div>
+      <div class="caption">
+        <h2 class="identity" id="card-title">
+          <span class="star-glyph" id="glyph" lang="ja"></span>
+          <span class="meaning" id="meaning"></span>
+        </h2>
+        <p class="explanation" id="explanation"></p>
       </div>
     </div>
   </dialog>
@@ -471,13 +493,24 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 <script>
 "use strict";
 const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+document.querySelector('.star-night-guide .theme-toggle').addEventListener('click', event => {
+  const root = document.documentElement;
+  if (root.dataset.theme === 'dark') return;
+  document.querySelector('.site-info-menu [data-theme-toggle]')?.click();
+  if (root.dataset.theme !== 'dark') {
+    // The standalone file has no site menu. The shared script may also still be loading.
+    root.dataset.theme = 'dark';
+    try { localStorage.setItem('manabo-theme-v1', 'dark'); } catch {}
+  }
+  if (event.detail === 0) document.querySelector('.star-search-field button').focus({preventScroll:true});
+});
 async function load(){const st=new Blob([bytes(/*TEXT*/)]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
- const [k,h,p,c,g,o,meta]=JSON.parse(await new Response(st).text()),im=bytes(/*IMGS*/);
- return k.map((x,i)=>[x,h[i],p[i],Array.from(im.subarray(i*32,i*32+32),b=>b.toString(16).padStart(2,"0")).join(""),[...c[i]],g[i],o[i],meta[i]])}
+ const [k,h,p,c,g,o]=JSON.parse(await new Response(st).text()),im=bytes(/*IMGS*/);
+ return k.map((x,i)=>[x,h[i],p[i],Array.from(im.subarray(i*32,i*32+32),b=>b.toString(16).padStart(2,"0")).join(""),[...c[i]],g[i],o[i]])}
 load().then(main).catch(()=>{document.getElementById("map").innerHTML='<p style="padding:80px 20px;text-align:center">데이터를 열지 못했어요. 브라우저를 최신 버전으로 업데이트해 주세요.</p>'});
 function main(RAW){
 const START="門";
-const D=new Map(RAW.map(([k,h,p,i,c,g,o,meta])=>[k,{k,h,p,i,c,g,o,meta,up:[]}]));
+const D=new Map(RAW.map(([k,h,p,i,c,g,o])=>[k,{k,h,p,i,c,g,o,up:[]}]));
 // 게임에서만 잇는 연결: 풀이에 부품이 없어 갈 수 없던 글자들 (data/overrides.json의 links)
 const LINK=/*LINK*/;
 const SHAPE=/*SHAPE*/;
@@ -604,24 +637,25 @@ function draw(fade = true, focus = false) {
  const {center:cs, size:rs, points:pos} = fitMap(W, H, n, np > 0);
  board.toggleAttribute('data-compact', rs <= 28);
  const gapP = np > 1 ? Math.min(150, (W - 12) / np) : 0;
- const pr = Math.min(92, H * .16, np > 1 ? gapP - 6 : 92);
- const py = Math.min(cy - pr / 2 - 6, cs / 2 + pr / 2 + Math.min(100, H * .13));
+ const partSlot = Math.min(92, H * .16, np > 1 ? gapP - 6 : 92);
+ const partSize = partSlot * .90;
+ const py = Math.min(cy - partSlot / 2 - 6, cs / 2 + partSlot / 2 + Math.min(100, H * .13));
 
  const cv = document.getElementById('cv');
  cv.classList.toggle('arriving', fade);
  const relatives = list.map((k, i) => {
    const [x,y] = pos[i];
-   const b = button(k, 'related', cx+x, cy+y, rs, '관계 한자 ' + k + ', 이 글자로 이동');
+   const b = button(k, 'related', cx+x, cy+y, rs, '관계 별 ' + k + ', 이 별로 이동');
    if (n > 9) b.classList.add('many');
    return b;
  });
- const components = ps.map((k, i) => button(k, 'component', cx+(i-(np-1)/2)*gapP, cy+py, pr, '부수 한자 ' + k + ', 이 글자로 이동'));
- const center = button(cur, 'current', cx, cy, cs, '현재 한자 ' + cur + ' ' + d.h + '. 카드 보기');
+ const components = ps.map((k, i) => button(k, 'component', cx+(i-(np-1)/2)*gapP, cy+py, partSize, '부수 별 ' + k + ', 이 별로 이동'));
+ const center = button(cur, 'current', cx, cy, cs, '현재 별 ' + cur + ' ' + d.h + '. 관측하기');
  cv.replaceChildren(...relatives, ...components, center);
  board.removeAttribute('data-moving');
  setTrails(center, relatives, components);
  document.getElementById('map-location').textContent = show(cur);
- map.setAttribute('aria-label', cur + '의 관계 한자와 부수 한자');
+ map.setAttribute('aria-label', cur + '의 관계 별과 부수 별');
  if (focus) center.focus({preventScroll:true});
  document.title = cur + ' · 한자 별길';
 }
@@ -670,11 +704,9 @@ const dictionary = inStudy ? '/kanji/' : 'https://kanjimanabo.com/kanji/';
 const face = document.getElementById('card'), artwork = document.getElementById('artwork');
 const detailsLink = document.getElementById('detail-link'), landing = document.getElementById('landing');
 const turn = document.getElementById('turn'), closeButton = document.getElementById('close');
-const lightInk = new Set([...'問間開閉閑聞門']);
-const darkInk = new Set([...'簡口']);
 let origin, flight, artFrame = 0, activeCard, startedOutside = false;
 
-function showArtwork(d, ink) {
+function showArtwork(d) {
   if (artwork.dataset.glyph === d.k && artwork.querySelector('img')?.naturalWidth) return;
   artwork.dataset.glyph = d.k;
   const status = document.createElement('span');
@@ -695,24 +727,6 @@ function showArtwork(d, ink) {
     if (image.parentNode !== artwork) return;
     image.hidden = false;
     status.remove();
-    // On the same-origin study page, pick lettering for the illustrated caption area.
-    // In a standalone file the automatic face uses CSS contrast without reading remote pixels.
-    if (ink !== 'auto' || !inStudy) return;
-    const sampler = document.createElement('canvas');
-    sampler.width = sampler.height = 16;
-    const brush = sampler.getContext('2d');
-    if (!brush) return;
-    try {
-      brush.drawImage(image, 0, image.naturalHeight * .65, image.naturalWidth, image.naturalHeight * .35, 0, 0, 16, 16);
-      const {data} = brush.getImageData(0, 0, 16, 16);
-      let bright = 0, dark = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        const luma = (.213 * data[i] + .715 * data[i + 1] + .072 * data[i + 2]) / 255;
-        if (luma > .62) bright++;
-        if (luma < .46) dark++;
-      }
-      if (bright > 170 || dark > 170) face.dataset.ink = bright > dark ? 'dark' : 'light';
-    } catch { /* Cross-origin images still display with adaptive lettering. */ }
   };
   image.onerror = () => {
     if (image.parentNode === artwork) status.textContent = '그림을 불러오지 못했어요. 인터넷 연결을 확인하세요.';
@@ -733,20 +747,15 @@ function card(k, trigger = null) {
   activeCard = k;
   document.getElementById('glyph').textContent = show(k);
   document.getElementById('back-glyph').textContent = show(k);
-  document.getElementById('meaning').textContent = d.ext ? '부품' : d.h.replaceAll(' | ', '\n');
-  const meta = document.getElementById('card-meta');
-  meta.textContent = d.meta || '';
-  meta.hidden = !meta.textContent;
+  document.getElementById('meaning').textContent = d.ext ? '부품' : d.h.replaceAll(' | ', ' · ');
   document.getElementById('explanation').textContent = d.ext ? '시트에 카드가 없는 부품이에요.' : d.p;
   detailsLink.hidden = !!d.ext;
   if (d.ext) detailsLink.removeAttribute('href');
   else detailsLink.href = dictionary + encodeURIComponent(k) + '/';
-  const ink = darkInk.has(k) ? 'dark' : lightInk.has(k) ? 'light' : 'auto';
-  face.dataset.ink = ink;
   face.toggleAttribute('data-part', !!d.ext);
   if (!dlg.open) dlg.showModal();
   dlg.scrollTop = 0;
-  showArtwork(d, ink);
+  showArtwork(d);
   closeButton.focus({preventScroll:true});
   if (origin) origin.classList.add('is-away');
   flip('opening');
@@ -936,14 +945,59 @@ function createTrails(board, map, dialog, reducedMotion) {
   let rootKey, buttons = [], componentKeys = [], floaters = [], links = [], idleRoutes = [];
   const travelTime = 575, rippleTime = 190;
   let idleStep = travelTime;
-  let trackRgb, endDot, width = 0, height = 0;
+  let trackRgb, endDot, skyInk, width = 0, height = 0;
   let elapsed = 0, lastPaint = 0, frame = 0, pending = 0, lastFrame = null, inView = false;
   let hovered, candidate, focused, active, hoverTimer;
 
+  // Fixed sky positions (fractions of the map) stay in place when the current kanji changes.
+  const skyAnchors = [
+    [.11, .19, 4], [.79, .10, 1.3], [.86, .79, 3.6], [.24, .69, 1.4],
+    [.64, .31, 2.8], [.07, .88, 1.4], [.92, .44, 1.2],
+  ];
+  let skyStars = [], skyElapsed = 0;
+  function placeSkyStars() {
+    skyStars = [];
+    if (!width || !height) return;
+    const targetCount = width < 500 ? 12 : 21;
+    // Stagger the original pattern and try spare positions when a glyph occupies a spot.
+    for (let i = 0; skyStars.length < targetCount && i < targetCount * 12; i++) {
+      const patternIndex = i % skyAnchors.length;
+      const [u, v, r] = skyAnchors[patternIndex];
+      const pass = Math.floor(i / skyAnchors.length);
+      const x = ((u + pass * .38) % 1) * width, y = ((v + pass * .23) % 1) * height;
+      if (Math.min(x, y, width - x, height - y) < r + 2) continue;
+      if (skyStars.some(star => Math.hypot(x - star.x, y - star.y) < 14)) continue;
+      if (buttons.some(button => {
+        const p = points.get(button);
+        return Math.hypot(x - p.baseX, y - p.baseY) < p.radius + r + 6;
+      })) continue;
+      const path = new Path2D();
+      if (r < 2) {
+        path.arc(x, y, r, 0, 2 * Math.PI);
+      } else {
+        path.moveTo(x, y - r);
+        path.quadraticCurveTo(x, y, x + .8*r, y);
+        path.quadraticCurveTo(x, y, x, y + r);
+        path.quadraticCurveTo(x, y, x - .8*r, y);
+        path.quadraticCurveTo(x, y, x, y - r);
+        path.closePath();
+      }
+      skyStars.push({x, y, path, phase:i * 2.2, speed:2 * Math.PI / (3700 + patternIndex * 330)});
+    }
+  }
+  function paintSky() {
+    ctx.fillStyle = skyInk;
+    for (const star of skyStars) {
+      ctx.globalAlpha = reducedMotion.matches ? .74 : .62 + .32 * Math.sin(skyElapsed * star.speed + star.phase);
+      ctx.fill(star.path);
+    }
+    ctx.globalAlpha = 1;
+  }
   function readPalette() {
     const style = getComputedStyle(board);
     trackRgb = style.getPropertyValue('--track-rgb').trim().split(/\s+/).map(Number);
     endDot = style.getPropertyValue('--end-dot').trim();
+    skyInk = style.getPropertyValue('--sky-ink').trim();
   }
 
   function selection(route, key) {
@@ -963,6 +1017,7 @@ function createTrails(board, map, dialog, reducedMotion) {
       const x = parseFloat(button.style.left), y = parseFloat(button.style.top);
       points.set(button, {x, y, baseX: x, baseY: y, radius: parseFloat(button.style.width) / 2});
     }
+    placeSkyStars();
     points.set(fork, {radius: 0});
     floaters = relatives.map((button, i) => ({key: button, glyph: button.firstElementChild,
       phase: i * 2.1, speed: 2 * Math.PI / (5300 + i * 430)}));
@@ -1016,7 +1071,7 @@ function createTrails(board, map, dialog, reducedMotion) {
       const dx = (b.x - a.x) / distance, dy = (b.y - a.y) / distance;
       let start = a.radius, end = b.radius;
       if (!link.inward) {
-        start = a === root ? a.radius / Math.max(Math.abs(dx), Math.abs(dy)) + 6 : a.radius * .77;
+        start = a === root ? a.radius + 6 : a.radius * .77;
         end = b.radius * .77;
       }
       link.length = Math.max(0, distance - start - end);
@@ -1143,12 +1198,14 @@ function createTrails(board, map, dialog, reducedMotion) {
   function paint() {
     const root = points.get(rootKey);
     if (!root || !width || !height) return;
+    ctx.clearRect(0, 0, width, height);
+    paintSky();
+    if (board.hasAttribute('data-moving')) return;
     updateGlyphs();
     positionLinks(root);
     const lights = visibleLights();
     const blend = reducedMotion.matches ? 1 : 1 - Math.exp(-(elapsed - lastPaint) / 58);
     lastPaint = elapsed;
-    ctx.clearRect(0, 0, width, height);
     for (const link of links) {
       const lit = active?.route.includes(link) ? 1 : 0;
       const opacity = active && !lit ? .14 : 1;
@@ -1178,6 +1235,7 @@ function createTrails(board, map, dialog, reducedMotion) {
     canvas.width = Math.round(width * scale);
     canvas.height = Math.round(height * scale);
     ctx.setTransform(canvas.width / width, 0, 0, canvas.height / height, 0, 0);
+    placeSkyStars();
     requestPaint();
   }
 
@@ -1224,6 +1282,7 @@ function createTrails(board, map, dialog, reducedMotion) {
     const delta = now - lastFrame;
     if (delta >= 1000 / 30 - 1) {
       elapsed += delta;
+      skyElapsed += delta;
       lastFrame = now;
       paint();
     }
@@ -1234,7 +1293,7 @@ function createTrails(board, map, dialog, reducedMotion) {
     cancelAnimationFrame(frame);
     frame = 0;
     lastFrame = null;
-    if (reducedMotion.matches || !links.length) requestPaint();
+    if (reducedMotion.matches || !rootKey) requestPaint();
     else if (inView && !document.hidden && !dialog.open) frame = requestAnimationFrame(tick);
   }
 
@@ -1325,7 +1384,7 @@ function createTrails(board, map, dialog, reducedMotion) {
   card.addEventListener('blur', rest);
   dialog.addEventListener('close', rest);
   card.addEventListener('keydown', event => {
-    if (mobileCard.matches) return;
+    if (event.target !== card || mobileCard.matches) return;
     const directions = { ArrowLeft: [-.15, 0], ArrowRight: [.15, 0], ArrowUp: [0, -.15], ArrowDown: [0, .15] };
     const direction = directions[event.key];
     if (!direction) return;

@@ -22,7 +22,7 @@ UPCOMING = re.compile(r'<div class="quiz-upcoming">\s*<strong>한자 게임</str
 MODE = f'''<a class="quiz-tile" href="/learn/game/" aria-labelledby="starpath-name" aria-describedby="starpath-description">
   <picture class="quiz-cover">
     <source data-dark-preview media="not all" srcset="{DARK_COVER}">
-    <img src="{COVER}" alt="木에서 林과 森으로 이어지는 관계 지도와 펼친 카드의 나무 그림" width="960" height="540" loading="lazy" decoding="async">
+    <img src="{COVER}" alt="木에서 林과 森으로 이어지는 별자리 지도와 둥근 행성에 담긴 나무 목 그림" width="960" height="540" loading="lazy" decoding="async">
   </picture>
   <span class="quiz-tile-caption">
     <strong id="starpath-name">{GAME_TITLE}</strong>
@@ -75,6 +75,8 @@ def game_page(dev=False):
     footer_contents = footer.removeprefix('<footer class="site-footer">').removesuffix('</footer>')
     footer = (f'<footer class="site-footer"><div class="game-footer-full">{footer_contents}</div>'
               f'<details class="game-footer-menu"><summary>사이트 정보</summary><div>{footer_contents}</div></details></footer>')
+    # The site stylesheet already includes the theme control used by the single-file game.
+    game = re.sub(r'<style data-standalone-theme>.*?</style>', '', game, count=1, flags=re.DOTALL)
     game = game.replace('<link rel="icon" href="data:,">', "\n".join([theme, consent_init, styles, controls, icon]), 1)
     game = game.replace('<body class="standalone">', f"<body>{navigation}\n{back}", 1)
     return game.replace("</body>", f"{footer}</div></body>", 1).encode("utf-8")

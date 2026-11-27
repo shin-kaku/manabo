@@ -111,12 +111,13 @@ if (cycle) {
 
 // 3) 열 단위로 묶어 deflate-raw 압축, 그림 해시(32바이트)는 이진으로 따로.
 const col=i=>rows.map(r=>r[i]);
-const cardMeta = kanji.map(row => [row["등급"], row["학년"]].filter(Boolean).join(" · "));
-const text=JSON.stringify([col(0),col(1),col(2),col(4).map(x=>x.join("")),col(5),col(6),cardMeta]);
+const text=JSON.stringify([col(0),col(1),col(2),col(4).map(x=>x.join("")),col(5),col(6)]);
 const t=zlib.deflateRawSync(text,{level:9,memLevel:9});
 const img=Buffer.concat(rows.map(r=>r[3]?Buffer.from(r[3],"hex"):Buffer.alloc(32)));
 if(img.length!==rows.length*32)throw Error("그림 해시 길이");
 let html=fs.readFileSync(path.join(ROOT,"src","template.html"),"utf8");
+const themeToggleCss = fs.readFileSync(new URL("../../../src/theme-toggle.css", import.meta.url), "utf8");
+html = html.replace("/*THEME_TOGGLE_CSS*/", () => themeToggleCss);
 for(const [p,v] of [["/*TEXT*/",JSON.stringify(t.toString("base64"))],["/*IMGS*/",JSON.stringify(img.toString("base64"))],["/*LINK*/",JSON.stringify(links)],["/*SHAPE*/",JSON.stringify(shapes)]]){
   if(html.split(p).length!==2)throw Error("템플릿 자리표시 "+p);html=html.split(p).join(v)}
 fs.mkdirSync(path.dirname(OUT),{recursive:true});

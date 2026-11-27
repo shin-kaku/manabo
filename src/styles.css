@@ -1,3 +1,5 @@
+@import "./theme-toggle.css";
+
       :root {
         --bg: #f1f1f1;
         --paper: #fff;
@@ -81,9 +83,7 @@
         margin: 0;
         color: var(--ink);
         background: var(--bg);
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Noto Sans KR",
-          "Noto Sans JP", "Yu Gothic", sans-serif;
+        font-family: var(--site-ui-font);
         -webkit-font-smoothing: antialiased;
       }
       button,
