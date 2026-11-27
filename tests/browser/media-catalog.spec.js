@@ -126,6 +126,7 @@ for (const mode of ["close", "same glyph", "next glyph"]) {
     if (mode === "next glyph") {
       await page.locator(".game-choice").first().click();
       await page.locator("#gameNext").click();
+      await page.locator("#gameNext").click();
       current = await page.locator("#gameGlyph").innerText();
       expect(current).not.toBe(first);
     }
@@ -208,6 +209,8 @@ test("a missing WebP tries both existing Drive sources and keeps a usable glyph 
   await page.locator("#imageClose").click();
   await expect(page.locator("#gamePicture")).toBeFocused();
   await page.locator(".game-choice").first().click();
+  await expect(page.locator("#gameNext")).toBeEnabled();
+  await page.locator("#gameNext").click();
   await expect(page.locator("#gameNext")).toBeFocused();
   expect(requests.lookups).toEqual([lookup]);
   expect(requests.catalogs).toEqual([]);

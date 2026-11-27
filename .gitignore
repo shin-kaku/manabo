@@ -15,6 +15,7 @@ dist-ssr
 /reading/index.html
 /learn/index.html
 /learn/choice/index.html
+/learn/words/index.html
 # Generated from src/materials.html and public/data by the Vite config.
 /materials/
 /kanji/

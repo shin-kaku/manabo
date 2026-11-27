@@ -1,14 +1,15 @@
-export function populateQuizLevels(fieldset, orderedValues, formatLabel) {
-  const choices = fieldset.querySelector(".quiz-levels");
+export function populateQuizLevels(fieldset, orderedValues, formatLabel, accessibleLabel = formatLabel) {
+  const choices = fieldset.querySelector(".vocab-levels");
   const selectedValue = choices.querySelector("input:checked")?.value || "";
-  const all = choices.querySelector(".quiz-level");
+  const all = choices.firstElementChild;
   const options = orderedValues.map(value => {
     const option = all.cloneNode(true);
     const input = option.querySelector("input");
     input.value = value;
     input.defaultChecked = false;
     input.checked = value === selectedValue;
-    option.querySelector("span").textContent = formatLabel(value);
+    input.setAttribute("aria-label", accessibleLabel(value));
+    option.querySelector("b").textContent = formatLabel(value);
     return option;
   });
   choices.replaceChildren(all, ...options);

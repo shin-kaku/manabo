@@ -11,6 +11,7 @@
     "prepreview:study": "npm run build",
     "preview:study": "python3 previews/starpath/preview.py",
     "sync-data": "node scripts/sync-sheets.mjs",
+    "data:jlpt": "node scripts/jlpt-words.mjs",
     "sync-media": "node scripts/sync-media.mjs",
     "media:restore": "node scripts/restore-media.mjs",
     "media:check": "node scripts/check-media.mjs",

@@ -37,7 +37,9 @@ for (const path of ["/kanji/", "/learn/choice/"]) {
       await page.locator("#imageClose").click();
       await expect(page.locator("#gamePicture")).toBeFocused();
       await page.locator(".game-choice").first().click();
-      await expect(page.locator("#gameNext")).toBeVisible();
+      await expect(page.locator("#gameFeedback")).toBeHidden();
+      await page.locator("#gameNext").click();
+      await expect(page.locator("#gameFeedback")).toBeVisible();
     }
   });
 }
@@ -116,8 +118,8 @@ for (const [filter, field, value] of [
     expect(decodeURIComponent(url.pathname)).toBe(`/kanji/${character}/`);
     expect(url.searchParams.get(filter)).toBe(value);
     await expect(page.locator("[data-previous-kanji]")).toBeHidden();
-    const catalog = page.locator("[data-entry-catalog]");
-    if (!(await catalog.isVisible())) await page.locator(".site-info-menu summary").click();
+    const catalog = page.getByRole("link", { name: "한자 도감으로", exact: true });
+    await expect(catalog).toBeVisible();
     await catalog.click();
     await page.reload();
     await expect(page.locator(`#directory-${filter}`)).toHaveValue(value);
@@ -200,6 +202,8 @@ test("a keyboard-opened lookup can be dismissed and followed to the previous kan
   await expect(detail).toHaveAttribute("data-entry-kanji", "木");
   await expect(page.locator("[data-previous-kanji]")).toBeHidden();
   await expect(popover).toBeHidden();
+  await page.getByRole("link", { name: "한자 도감으로", exact: true }).press("Enter");
+  await expect(page.locator("#directory-q")).toHaveValue("木");
 });
 
 test("image zoom opens from the detail and returns keyboard focus to its opener", async ({ page }) => {
@@ -221,21 +225,25 @@ test("quiz completion, insufficient pool, and valid restart never retain stale r
   await mockData(page, { kanji: smallPool });
   await page.goto("/learn/choice/");
   await ready(page);
-  await page.locator("#choiceGradePicker summary").click();
-  await page.locator('#gameGrade input[value="초등학교 1학년"]').check();
+  await page.locator('#gameGrade label:has(input[value="초등학교 1학년"])').click();
+  await expect(page.locator("#gameScopeSummary")).toHaveText("4자 중 4문제");
   await page.locator("#gameStart").click();
   await expect(page.locator("#gameProgress")).toHaveText("1 / 4");
-  for (let i = 0; i < 4; i++) { await page.locator(".game-choice").first().click(); await page.locator("#gameNext").click(); }
-  await expect(page.locator("#gameQuestionLabel")).toHaveText("사지선다 완료");
+  for (let i = 0; i < 4; i++) {
+    await page.locator(".game-choice").first().click();
+    await page.locator("#gameNext").click();
+    await page.locator("#gameNext").click();
+  }
+  await expect(page.locator("#gameResultTitle")).toHaveText("학습 결과");
+  await expect(page.locator("#gameResultScore")).toHaveText(/^[0-4] \/ 4$/);
   await page.locator("#gameSettingsButton").click();
-  await page.locator("#choiceGradePicker summary").click();
-  await page.locator('#gameGrade input[value="초등학교 2학년"]').check();
+  await page.locator('#gameGrade label:has(input[value="초등학교 2학년"])').click();
   await page.locator("#gameStart").click();
   await expect(page.locator("#gameSetupError")).toBeVisible();
   await expect(page.locator("#gameSetup")).toBeVisible();
   await expect(page.locator("#gamePlay")).toBeHidden();
-  await expect(page.getByText("같은 조건으로 다시", { exact: true })).toBeHidden();
-  await page.locator('#gameGrade input[value="초등학교 1학년"]').check();
+  await expect(page.locator("#gameResult")).toBeHidden();
+  await page.locator('#gameGrade label:has(input[value="초등학교 1학년"])').click();
   await page.locator("#gameStart").click();
   await expect(page.locator("#gameSetupError")).toBeHidden();
   await expect(page.locator(".game-choice")).toHaveCount(4);

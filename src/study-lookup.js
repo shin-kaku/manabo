@@ -5,6 +5,7 @@ import "./study-lookup.css";
 
 const linkSelector = "a[data-study-kanji]";
 const directRegion = "[data-directory-grid], .material-character-index";
+const inlineRegion = "[data-entry-kanji], [data-study-lookup-inline]";
 const dialog = document.createElement("dialog");
 dialog.className = "kanji-popover study-lookup";
 dialog.setAttribute("aria-label", "한자 간단 정보");
@@ -63,8 +64,10 @@ async function fill(anchor) {
   meaning.textContent = "";
   meta.textContent = "";
   note.textContent = "불러오는 중…";
-  more.href = anchor.closest("[data-entry-kanji]") ? anchor.href : studyDetailHref(ch, new URL(anchor.href).search || location.search);
-  more.setAttribute("aria-label", ch + " 자세히 보기");
+  more.href = anchor.closest(inlineRegion) ? anchor.href : studyDetailHref(ch, new URL(anchor.href).search || location.search);
+  more.target = anchor.target;
+  more.rel = anchor.rel;
+  more.setAttribute("aria-label", ch + " 자세히 보기" + (anchor.target === "_blank" ? " (새 창)" : ""));
   try {
     const index = await getStudyIndex();
     if (current !== revision) return;
@@ -142,7 +145,7 @@ document.addEventListener("click", event => {
   if (!anchor || event.defaultPrevented || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   if (anchor.closest(directRegion)) return;
   event.preventDefault();
-  if (anchor.closest("[data-entry-kanji]")) {
+  if (anchor.closest(inlineRegion)) {
     show(anchor, "selected");
     more.focus({ preventScroll: true });
   } else {

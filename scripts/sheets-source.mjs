@@ -8,20 +8,25 @@ const expectedHeaders = [
 ];
 const text = value => typeof value === "string" ? value.trim() : value ?? "";
 
-export function sheetValuesToPayload(kanjiValues, storyValues) {
-  if (!Array.isArray(kanjiValues) || !Array.isArray(storyValues)) throw Error("시트 응답 형식 오류");
+function kanjiSheetRows(kanjiValues) {
+  if (!Array.isArray(kanjiValues)) throw Error("시트 응답 형식 오류");
   if (JSON.stringify(kanjiValues[0]) !== JSON.stringify(expectedHeaders)) {
     throw Error("도감 DB 열 구조가 변경되어 동기화를 중단했습니다.");
   }
-  if (storyValues.length > 4 && storyValues.slice(4).some(row => row.some(value => text(value) !== ""))) {
-    throw Error("독해 DB에 새 행이 있어 변환 방식을 확인해야 합니다.");
-  }
-  const kanji = kanjiValues.slice(1)
+  return kanjiValues.slice(1)
     .map((row, index) => ({
       ...Object.fromEntries(expectedHeaders.map((header, column) => [header, row[column] ?? ""])),
       _row: index + 2,
     }))
     .filter(row => text(row["한자"]) !== "");
+}
+
+export function sheetValuesToPayload(kanjiValues, storyValues) {
+  const kanji = kanjiSheetRows(kanjiValues);
+  if (!Array.isArray(storyValues)) throw Error("시트 응답 형식 오류");
+  if (storyValues.length > 4 && storyValues.slice(4).some(row => row.some(value => text(value) !== ""))) {
+    throw Error("독해 DB에 새 행이 있어 변환 방식을 확인해야 합니다.");
+  }
   const categories = storyValues[0] || [];
   const levels = storyValues[1] || [];
   const titles = storyValues[2] || [];
@@ -39,7 +44,7 @@ export function sheetValuesToPayload(kanjiValues, storyValues) {
   return { ok: true, kanji, stories };
 }
 
-export async function readAuthenticatedSheets({ credentials, spreadsheetId, request = fetch }) {
+export async function readAuthenticatedSheets({ credentials, spreadsheetId, request = fetch, kanjiOnly = false }) {
   if (!credentials || !/^[\w-]+$/.test(spreadsheetId || "")) throw Error("시트 인증 설정이 필요합니다.");
   let account;
   try { account = JSON.parse(credentials); } catch { throw Error("서비스 계정 JSON 형식 오류"); }
@@ -72,19 +77,20 @@ export async function readAuthenticatedSheets({ credentials, spreadsheetId, requ
   const dimensions = new Map((metadata.sheets || []).map(sheet => [sheet.properties?.title, sheet.properties?.gridProperties]));
   const kanjiGrid = dimensions.get("한자: 도감 DB");
   const storyGrid = dimensions.get("한자: 독해 DB");
-  if (!kanjiGrid || !storyGrid || kanjiGrid.columnCount !== 21 || storyGrid.columnCount !== 19 ||
-      !Number.isSafeInteger(kanjiGrid.rowCount) || !Number.isSafeInteger(storyGrid.rowCount)) {
+  const validGrid = (grid, columns) => grid?.columnCount === columns && Number.isSafeInteger(grid.rowCount);
+  if (!validGrid(kanjiGrid, 21) || (!kanjiOnly && !validGrid(storyGrid, 19))) {
     throw Error("시트의 이름 또는 열 구조가 변경되어 동기화를 중단했습니다.");
   }
   const url = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet`);
   url.searchParams.append("ranges", `'한자: 도감 DB'!A1:U${kanjiGrid.rowCount}`);
-  url.searchParams.append("ranges", `'한자: 독해 DB'!A1:S${storyGrid.rowCount}`);
+  if (!kanjiOnly) url.searchParams.append("ranges", `'한자: 독해 DB'!A1:S${storyGrid.rowCount}`);
   url.searchParams.set("valueRenderOption", "UNFORMATTED_VALUE");
   const response = await request(url, {
     headers: { authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(60000),
   });
   if (!response.ok) throw Error(`Sheets 읽기 실패: HTTP ${response.status}`);
   const data = await response.json();
-  if (data.valueRanges?.length !== 2) throw Error("시트 범위 응답 오류");
+  if (data.valueRanges?.length !== (kanjiOnly ? 1 : 2)) throw Error("시트 범위 응답 오류");
+  if (kanjiOnly) return { ok: true, kanji: kanjiSheetRows(data.valueRanges[0].values) };
   return sheetValuesToPayload(data.valueRanges[0].values, data.valueRanges[1].values);
 }

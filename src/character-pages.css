@@ -1,3 +1,4 @@
+.info-page.entry-detail { margin-top: 0; }
 .entry-page { word-break: keep-all; }
 .entry-page figure { margin: 0; }
 .info-back:has(> [data-previous-kanji]:not([hidden])) { margin-bottom: 16px; }

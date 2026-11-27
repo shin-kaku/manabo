@@ -106,7 +106,7 @@ Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 �
 | `index.html`, `src/home.js`, `src/home.css` | 별도 홈 `/` |
 | `src/study.html` | 학습 HTML 원본 |
 | `scripts/study-pages.mjs` | `/reading/`, `/learn/`, `/learn/choice/` HTML 생성 |
-| `src/materials.html`, `scripts/material-pages.mjs` | 학습 자료 모음과 학년·JLPT별 한자 카드 목록 및 독해 본문 HTML 생성 |
+| `src/materials.html`, `scripts/material-pages.mjs` | 한자 도감·상세, 단어 설정·문제, 한자 교재 HTML 생성 |
 | `src/main.js`, `src/styles.css` | 학습 로직과 스타일 |
 | `scripts/material-directory.mjs`, `src/material-directory.js` | 한자 도감의 검색·필터·정렬 및 목록 추가 표시 |
 | `scripts/character-pages.mjs`, `src/study-path.js` | 글자별 상세 페이지와 이전 한자 이동 |
@@ -120,13 +120,14 @@ Google JSON·Drive 체크섬 비교 → 변경분 변환 → 검증 → 배포 �
 | `vite.config.js`, `wrangler.jsonc` | 다중 페이지 빌드·`dist` 산출물 설정 |
 
 도감 목록은 `/kanji/`, 상세 페이지는 `/kanji/木/`와 같은 개별 주소에서 열립니다.
-사이트맵에는 각 글자의 대표 주소, 木·林·森 비교, 학년·JLPT 자료, 독해 본문도 포함합니다.
-`kanji/`, `materials/`, `reading/`, `learn/` 아래의 HTML은 빌드 때 생성됩니다.
+사이트맵에는 각 글자의 대표 주소와 木·林·森 비교, 한자 도감·학습·독해 페이지가 포함됩니다.
+`kanji/`, `book/`, `reading/`, `learn/` 아래의 HTML은 빌드 때 생성됩니다.
 도감 본문은 `public/data/kanji.json`과 한자 상세 데이터에서 생성합니다.
-정적 독해 본문에서 `/reading/?story=story-ID`로 해당 대화형 독해를 열 수 있습니다.
+`/reading/?story=story-ID`로 독해 지문을 바로 열 수 있습니다.
 
 목록에는 한자와 훈음이 표시됩니다. 검색·필터·정렬은 주소에 반영되며,
 ‘더 보기’로 다음 한자를 표시할 수 있습니다. 목록의 한자를 누르면 해당 주소로 이동합니다.
+상세 페이지의 ‘한자 도감으로’는 검색·필터·정렬을 이어받아 목록을 엽니다.
 상세 페이지 안의 다른 한자는 간단 정보를 먼저 표시합니다.
 ‘자세히 보기’로 다른 글자를 열면 ‘이전 한자’로 직전에 본 글자에 돌아갈 수 있습니다.
 

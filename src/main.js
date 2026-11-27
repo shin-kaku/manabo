@@ -22,22 +22,37 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
         gameGrade: document.getElementById("gameGrade"),
         gameJlpt: document.getElementById("gameJlpt"),
         gameCount: document.getElementById("gameCount"),
+        gameSetup: document.getElementById("gameSetup"),
+        gameSetupError: document.getElementById("gameSetupError"),
+        gameScopeSummary: document.getElementById("gameScopeSummary"),
         gameStart: document.getElementById("gameStart"),
         gamePlay: document.getElementById("gamePlay"),
+        gameAnswer: document.getElementById("gameAnswer"),
+        gameLevel: document.getElementById("gameLevel"),
         gameProgress: document.getElementById("gameProgress"),
         gameProgressBar: document.getElementById("gameProgressBar"),
-        gameScore: document.getElementById("gameScore"),
         gameQuestion: document.getElementById("gameQuestion"),
-        gameQuestionLabel: document.getElementById("gameQuestionLabel"),
+        gameQuestionNumber: document.getElementById("gameQuestionNumber"),
         gameGlyph: document.getElementById("gameGlyph"),
         gamePicture: document.getElementById("gamePicture"),
         gameChoices: document.getElementById("gameChoices"),
         gameFeedback: document.getElementById("gameFeedback"),
+        gameFeedbackText: document.getElementById("gameFeedbackText"),
+        gameAnnouncement: document.getElementById("gameAnnouncement"),
+        gameResult: document.getElementById("gameResult"),
+        gameResultTitle: document.getElementById("gameResultTitle"),
+        gameResultScope: document.getElementById("gameResultScope"),
+        gameResultScore: document.getElementById("gameResultScore"),
+        gameResultPercent: document.getElementById("gameResultPercent"),
+        gameResultBar: document.getElementById("gameResultBar"),
+        gameResultNote: document.getElementById("gameResultNote"),
         gameMistakes: document.getElementById("gameMistakes"),
-        gameMistakesTitle: document.getElementById("gameMistakesTitle"),
-        gameMistakesGuide: document.getElementById("gameMistakesGuide"),
+        gameMistakeCount: document.getElementById("gameMistakeCount"),
+        gameNoMistakes: document.getElementById("gameNoMistakes"),
         gameMistakesList: document.getElementById("gameMistakesList"),
         gameNext: document.getElementById("gameNext"),
+        gameRetryMissed: document.getElementById("gameRetryMissed"),
+        gameRetry: document.getElementById("gameRetry"),
         gameSettingsButton: document.getElementById("gameSettingsButton"),
       };
       let STORIES = [];
@@ -88,6 +103,7 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
           kanjiMap = new Map(DATA.map(row => [text(row["한자"]), row]));
           populateFilters();
           kanjiReady = true;
+          updateGameSummary();
         })().finally(() => { kanjiRequest = null; });
         return kanjiRequest;
       }
@@ -182,8 +198,8 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
             nb = Number((b.match(/N(\d)/) || [])[1] || 99);
           return nb - na || a.localeCompare(b); // N5 -> N1
         });
-        populateQuizLevels(els.gameGrade, grades.filter(value => value !== "참고"), storyDisplayLabel);
-        populateQuizLevels(els.gameJlpt, jlpts, displayLabel);
+        populateQuizLevels(els.gameGrade, grades.filter(value => value !== "참고"), shortGameGrade, fullGameGrade);
+        populateQuizLevels(els.gameJlpt, jlpts, value => value.replace(/^JLPT\s+/, ""));
       }
 
       const popover = {
@@ -387,7 +403,7 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
         els.choiceBack.hidden = section !== "choice";
         els.storyView.hidden = !story;
         els.gameView.hidden = story;
-        if (!els.gamePlay.hidden) resetGame();
+        if (gameState) resetGame();
         els.quizOptions.hidden = section !== "game";
         els.choiceSetup.hidden = section !== "choice";
         if (!pendingReading) window.scrollTo({ top: 0, behavior: "instant" });
@@ -460,15 +476,13 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
           });
       }
 
-      const gameState = {
-        pool: [],
-        questions: [],
-        wrong: [],
-        index: 0,
-        score: 0,
-        answered: false,
-        finished: false,
-      };
+      let gameState = null;
+      function fullGameGrade(value) {
+        return value.startsWith("초등학교") ? value : displayLabel(value);
+      }
+      function shortGameGrade(value) {
+        return fullGameGrade(value).replace(/^(초|중|고)(?:등)?학교\s*(\d+)학년$/, "$1$2");
+      }
       function shuffled(items) {
         const copy = items.slice();
         for (let i = copy.length - 1; i > 0; i--) {
@@ -477,9 +491,14 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
         }
         return copy;
       }
-      function getGamePool() {
-        const grade = els.gameGrade.querySelector("input:checked").value,
-          jlpt = els.gameJlpt.querySelector("input:checked").value;
+      function gameSettings() {
+        return {
+          grade: els.gameGrade.querySelector("input:checked").value,
+          jlpt: els.gameJlpt.querySelector("input:checked").value,
+          count: Number(els.gameCount.querySelector("input:checked").value),
+        };
+      }
+      function getGamePool({ grade, jlpt }) {
         return DATA.filter((d) => {
           const meaning = text(d["훈, 음"]);
           return (
@@ -490,6 +509,19 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
             (!jlpt || text(d["등급"]) === jlpt)
           );
         });
+      }
+      function updateGameSummary() {
+        if (!kanjiReady) return;
+        const settings = gameSettings();
+        const pool = getGamePool(settings);
+        const size = pool.length;
+        els.gameScopeSummary.textContent = hasFourAnswers(pool)
+          ? `${size.toLocaleString("ko-KR")}자 중 ${Math.min(settings.count, size)}문제`
+          : "보기를 만들 한자가 부족해요.";
+        els.gameSetupError.hidden = true;
+      }
+      function hasFourAnswers(pool) {
+        return new Set(pool.map(row => text(row["훈, 음"]))).size >= 4;
       }
       function makeGameChoices(question) {
         const correct = text(question["훈, 음"]),
@@ -508,124 +540,140 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
       }
       function renderGameQuestion() {
         const question = gameState.questions[gameState.index];
-        if (!question) return;
+        const number = gameState.index + 1;
         gameState.answered = false;
-        gameState.finished = false;
-        els.gameQuestion.classList.remove("result");
-        els.gameQuestionLabel.textContent = "";
-        els.gameQuestionLabel.hidden = true;
+        els.gameLevel.textContent = text(question["등급"]).replace(/^JLPT\s+/, "") ||
+          shortGameGrade(text(question["학년"])) || "한자";
+        els.gameQuestionNumber.textContent = "문제 " + number;
         els.gameGlyph.textContent = text(question["한자"]);
-        els.gamePicture.hidden = false;
-        els.gameProgress.textContent = `${gameState.index + 1} / ${gameState.questions.length}`;
-        els.gameScore.textContent = gameState.score;
-        els.gameProgressBar.style.width = `${((gameState.index + 1) / gameState.questions.length) * 100}%`;
-        els.gameFeedback.textContent = "";
-        els.gameMistakes.hidden = true;
-        els.gameMistakesList.replaceChildren();
-        els.gameChoices.hidden = false;
-        els.gameChoices.replaceChildren();
-        els.gameNext.hidden = true;
-        els.gameNext.textContent =
-          gameState.index === gameState.questions.length - 1
-            ? "결과 보기"
-            : "다음 문제";
-        els.gameSettingsButton.hidden = true;
+        els.gameProgress.textContent = `${number} / ${gameState.questions.length}`;
+        els.gameProgressBar.max = gameState.questions.length;
+        els.gameProgressBar.value = number;
+        els.gameFeedback.hidden = true;
+        els.gameAnnouncement.textContent = "";
+        els.gameChoices.disabled = false;
+        els.gameChoices.replaceChildren(els.gameChoices.firstElementChild, ...makeGameChoices(question).map(gameChoice));
+        els.gameNext.textContent = "확인";
+        els.gameNext.disabled = true;
+        els.gameQuestion.focus();
+      }
+      function gameChoice(meaning, index) {
+        const label = document.createElement("label");
+        label.className = "exam-answer game-choice";
+        const input = document.createElement("input");
+        Object.assign(input, { type: "radio", name: "gameAnswer", value: meaning });
+        input.setAttribute("aria-label", `${index + 1}번 ${meaning}`);
+        const number = document.createElement("span");
+        number.className = "answer-number";
+        number.textContent = index + 1;
+        const bubble = document.createElement("span");
+        bubble.className = "answer-bubble";
+        bubble.setAttribute("aria-hidden", "true");
+        const option = document.createElement("span");
+        option.className = "answer-text";
+        option.textContent = meaning;
+        label.append(input, number, bubble, option);
+        return label;
+      }
+      function submitGameAnswer() {
+        if (els.gamePlay.hidden) return;
+        if (gameState.answered) {
+          gameState.index++;
+          if (gameState.index === gameState.questions.length) showGameResult();
+          else renderGameQuestion();
+          return;
+        }
+        const selected = els.gameChoices.querySelector("input:checked");
+        if (!selected) return;
+        const question = gameState.questions[gameState.index];
         const correct = text(question["훈, 음"]);
-        makeGameChoices(question).forEach((label) => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "game-choice";
-          button.textContent = label;
-          button.addEventListener("click", () => {
-            if (gameState.answered) return;
-            gameState.answered = true;
-            const right = label === correct;
-            if (right) gameState.score++;
-            else gameState.wrong.push(question);
-            [...els.gameChoices.children].forEach((choice) => {
-              choice.disabled = true;
-              if (choice.textContent === correct)
-                choice.classList.add("correct");
-            });
-            if (!right) button.classList.add("wrong");
-            els.gameScore.textContent = gameState.score;
-            els.gameFeedback.textContent = right
-              ? "⭕️ | 정답입니다."
-              : `❌ | 정답은 ‘${correct}’입니다.`;
-            els.gameNext.hidden = false;
-            els.gameNext.focus();
-          });
-          els.gameChoices.append(button);
-        });
-        els.gameChoices.firstElementChild?.focus();
+        const choices = [...els.gameChoices.querySelectorAll("label")];
+        const correctIndex = choices.findIndex(choice => choice.control.value === correct);
+        const right = selected.value === correct;
+        if (right) gameState.score++;
+        else {
+          gameState.wrong.push({ question, answer: selected.value });
+          selected.closest("label").classList.add("wrong");
+        }
+        choices[correctIndex].classList.add("right");
+        gameState.answered = true;
+        els.gameChoices.disabled = true;
+        const message = `${right ? "정답 ·" : "오답 · 정답은"} ${correctIndex + 1}번 ${correct}`;
+        els.gameFeedbackText.textContent = message;
+        els.gameFeedback.hidden = false;
+        els.gameAnnouncement.textContent = message;
+        els.gameNext.textContent = gameState.index === gameState.questions.length - 1 ? "결과 보기" : "다음";
+        els.gameNext.focus();
+      }
+      function gameMistake({ question, answer }) {
+        const item = document.createElement("li");
+        const definition = document.createElement("p");
+        definition.className = "answer-definition";
+        const glyph = document.createElement("span");
+        glyph.className = "example-word";
+        glyph.lang = "ja";
+        glyph.append(makeKanjiLink(text(question["한자"])));
+        const meaning = document.createElement("span");
+        meaning.textContent = text(question["훈, 음"]);
+        definition.append(glyph, meaning);
+        const note = document.createElement("span");
+        note.className = "word-trap";
+        note.textContent = "내 답 " + answer;
+        item.append(definition, note);
+        return item;
+      }
+      function gameResultNote(rate) {
+        if (rate === 100) return "완벽해요! 다른 범위에도 도전해 볼까요?";
+        if (rate >= 80) return "거의 다 왔어요. 틀린 한자만 다시 보면 끝!";
+        if (rate >= 50) return "절반 이상 맞혔어요. 헷갈린 뜻과 음을 복습해 보세요.";
+        return "틀린 한자가 곧 공부할 한자예요. 오답부터 다시 풀어 봐요.";
       }
       function showGameResult() {
-        gameState.finished = true;
-        els.gameQuestion.classList.add("result");
-        els.gameQuestionLabel.textContent = "사지선다 완료";
-        els.gameQuestionLabel.hidden = false;
-        const rate = Math.round(
-          (gameState.score / gameState.questions.length) * 100,
-        );
-        els.gameGlyph.textContent = `${gameState.score}문제를 맞혔습니다. (정답률 ${rate}%)`;
-        els.gamePicture.hidden = true;
-        els.gameProgress.textContent = `${gameState.questions.length} / ${gameState.questions.length}`;
-        els.gameProgressBar.style.width = "100%";
-        els.gameChoices.hidden = true;
-        els.gameFeedback.textContent = "";
-        els.gameMistakes.hidden = false;
-        els.gameMistakesList.replaceChildren();
-        els.gameMistakesTitle.textContent = gameState.wrong.length
-          ? `틀린 한자 ${gameState.wrong.length}자`
-          : "틀린 한자가 없습니다.";
-        els.gameMistakesGuide.hidden = !gameState.wrong.length;
-        gameState.wrong.forEach((d) => {
-          const glyph = makeKanjiLink(text(d["한자"]));
-          glyph.classList.add("game-mistake-glyph");
-          els.gameMistakesList.append(glyph);
-        });
-        els.gameNext.textContent = "같은 조건으로 다시";
-        els.gameNext.hidden = false;
-        els.gameSettingsButton.hidden = false;
+        const { score, questions, wrong, scope } = gameState;
+        const rate = Math.round(score / questions.length * 100);
+        els.gameResultScope.textContent = scope;
+        els.gameResultScore.textContent = `${score} / ${questions.length}`;
+        els.gameResultPercent.textContent = `${rate}%`;
+        els.gameResultBar.value = rate;
+        els.gameResultNote.textContent = gameResultNote(rate);
+        els.gameMistakeCount.textContent = wrong.length;
+        els.gameMistakesList.replaceChildren(...wrong.map(gameMistake));
+        els.gameMistakes.hidden = !wrong.length;
+        els.gameNoMistakes.hidden = Boolean(wrong.length);
+        els.gameRetryMissed.hidden = !wrong.length;
+        els.gamePlay.hidden = true;
+        els.gameResult.hidden = false;
+        els.gameResultTitle.focus();
       }
       function resetGame() {
-        Object.assign(gameState, { pool: [], questions: [], wrong: [], index: 0, score: 0, answered: false, finished: false });
+        hideKanjiPopover();
+        gameState = null;
         els.gamePlay.hidden = true;
+        els.gameResult.hidden = true;
         els.choiceSetup.hidden = false;
-        els.gameQuestion.classList.remove("result");
-        els.gameQuestionLabel.hidden = true;
-        els.gameQuestionLabel.textContent = "";
-        els.gameGlyph.textContent = "";
-        els.gamePicture.hidden = true;
-        els.gameChoices.replaceChildren();
-        els.gameFeedback.textContent = "";
-        els.gameProgress.textContent = "";
-        els.gameScore.textContent = "0";
-        els.gameProgressBar.style.width = "0%";
-        els.gameNext.hidden = true;
-        els.gameSettingsButton.hidden = true;
-        els.gameMistakes.hidden = true;
         els.gameMistakesList.replaceChildren();
-        document.getElementById("gameSetupError").hidden = true;
+        els.gameSetupError.hidden = true;
+      }
+      function beginGame(pool, questions, scope) {
+        gameState = { pool, questions, scope, index: 0, score: 0, wrong: [], answered: false };
+        els.choiceSetup.hidden = true;
+        els.gameResult.hidden = true;
+        els.gameMistakesList.replaceChildren();
+        els.gamePlay.hidden = false;
+        renderGameQuestion();
       }
       function startGame() {
         resetGame();
         if (!kanjiReady) return;
-        const pool = getGamePool(),
-          count = Math.min(Number(els.gameCount.value) || 10, pool.length);
-        if (pool.length < 4 || new Set(pool.map((row) => text(row["훈, 음"]))).size < 4) {
-          document.getElementById("gameSetupError").hidden = false;
+        const settings = gameSettings();
+        const pool = getGamePool(settings);
+        if (!hasFourAnswers(pool)) {
+          els.gameSetupError.hidden = false;
           els.gameGrade.querySelector("input:checked").focus();
           return;
         }
-        gameState.pool = pool;
-        gameState.questions = shuffled(pool).slice(0, count);
-        gameState.wrong = [];
-        gameState.index = 0;
-        gameState.score = 0;
-        els.choiceSetup.hidden = true;
-        els.gamePlay.hidden = false;
-        renderGameQuestion();
+        const scope = [settings.jlpt, fullGameGrade(settings.grade)].filter(Boolean).join(" · ") || "전체 한자";
+        beginGame(pool, shuffled(pool).slice(0, settings.count), scope);
       }
       function returnToGameSettings() {
         resetGame();
@@ -653,21 +701,34 @@ import { isHistoryReturn, trackHistoryScroll } from "./scroll-history.js";
           (target === "game" ? sourceCard : destinationTitle).focus({ preventScroll: true });
         });
       }
+      els.gameSetup.addEventListener("change", updateGameSummary);
       els.gameStart.addEventListener("click", startGame);
       els.gamePicture.addEventListener("click", () => {
-        const question = gameState.questions[gameState.index];
-        if (question && !gameState.finished)
-          openImageViewer(question, els.gamePicture);
+        const question = gameState?.questions[gameState.index];
+        if (question) openImageViewer(question, els.gamePicture);
       });
-      els.gameNext.addEventListener("click", () => {
-        if (gameState.finished) {
-          startGame();
-          return;
+      els.gameChoices.addEventListener("change", () => { els.gameNext.disabled = false; });
+      els.gameAnswer.addEventListener("submit", event => { event.preventDefault(); submitGameAnswer(); });
+      document.addEventListener("keydown", event => {
+        if (els.gamePlay.hidden || activeModal() || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ||
+            event.isComposing || event.target.closest("a, details, dialog, .site-header, .site-footer")) return;
+        if (event.key === "Enter" && (!event.target.closest("button") || event.target === els.gameNext)) {
+          event.preventDefault();
+          if (!event.repeat) submitGameAnswer();
+        } else if (/^[1-4]$/.test(event.key) && !els.gameChoices.disabled) {
+          event.preventDefault();
+          const input = els.gameChoices.querySelectorAll("input")[Number(event.key) - 1];
+          input.checked = true;
+          input.focus();
+          els.gameNext.disabled = false;
         }
-        gameState.index++;
-        if (gameState.index >= gameState.questions.length) showGameResult();
-        else renderGameQuestion();
       });
+      els.gameRetryMissed.addEventListener("click", () => {
+        const { pool, wrong, scope } = gameState;
+        hideKanjiPopover();
+        beginGame(pool, shuffled(wrong.map(item => item.question)), scope);
+      });
+      els.gameRetry.addEventListener("click", startGame);
       document.getElementById("gameExit").addEventListener("click", returnToGameSettings);
       els.gameSettingsButton.addEventListener("click", returnToGameSettings);
       popover.go.addEventListener("click", () => {

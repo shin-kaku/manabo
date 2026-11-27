@@ -41,7 +41,7 @@ export function materialDirectory(kanji, levels, grades) {
 <nav class="material-character-index directory-grid" data-directory-grid aria-label="한자 목록">${links.join("")}</nav>
 <p data-directory-message role="status" hidden></p>
 <button type="button" class="directory-more" data-directory-more hidden>더 보기</button><button type="button" data-directory-retry hidden>다시 시도</button>
-<noscript><p><a href="/materials/#kanji-materials">학년별 한자 전체 보기</a> · <a href="/materials/#jlpt-materials">JLPT별 한자 전체 보기</a></p></noscript>
+<noscript><p>한자를 검색하거나 전체 목록을 보려면 자바스크립트를 켜 주세요.</p></noscript>
 </section>`,
   };
 }

@@ -43,6 +43,4 @@ export function setupEntryNavigation(entry) {
     previous.setAttribute("aria-label", "이전 한자 " + ch);
     previous.hidden = false;
   }
-  const catalog = document.querySelector("[data-entry-catalog]");
-  if (catalog) catalog.href = studyDirectory + studyQuery(search);
 }

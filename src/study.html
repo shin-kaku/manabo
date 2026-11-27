@@ -33,6 +33,7 @@
       }
     </style>
     <link rel="stylesheet" href="/src/site-info.css" />
+    <link rel="stylesheet" href="/src/study-quiz.css" />
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://kanjimanabo.com/#website","name":"마나보","alternateName":"칸지 마나보","url":"https://kanjimanabo.com/","inLanguage":"ko","description":"마나보(칸지 마나보)는 그림과 암기 풀이로 일본어 한자를 배우는 학습 사이트입니다. 한자의 뜻과 음독·훈독을 익히고, 독해와 문제로 복습해 보세요."}</script>
     <script type="text/javascript">
     window.clarity = window.clarity || function () {
@@ -50,7 +51,6 @@
           <summary>사이트 안내</summary>
           <nav class="header-info-links" aria-label="상단 사이트 안내">
             <button class="theme-toggle" type="button" data-theme-toggle>다크모드로 전환</button>
-            <a href="/materials/">학습 자료 모음</a>
             <a href="/about/">사이트 소개</a>
             <a href="/privacy-policy/">개인정보처리방침</a>
             <a href="/copyright/">저작권 및 이용 안내</a>
@@ -113,113 +113,121 @@
                   <span class="quiz-tile-description" id="choice-description">보는 순간 뜻과 음이 떠오를 때까지, 기억을 꺼내는 훈련</span>
                 </span>
               </a>
-              <a class="quiz-tile" href="/reading/" id="choose-reading" aria-labelledby="reading-name" aria-describedby="reading-description">
+              <a class="quiz-tile" href="/learn/words/" aria-labelledby="words-name" aria-describedby="words-description">
                 <picture class="quiz-cover">
-                  <source data-dark-preview media="not all" srcset="/images/quiz-preview-reading-dark.webp">
-                  <img src="/images/quiz-preview-reading.webp" alt="독해 지문의 ‘木재’에서 木을 눌러 나무 목의 뜻풀이를 펼친 화면" width="960" height="540" decoding="async">
+                  <source data-dark-preview media="not all" srcset="/images/quiz-preview-words-dark.webp">
+                  <img src="/images/quiz-preview-words.webp" alt="大木의 읽기를 고르는 문제에서 1번 たいぼく에 빨간 원으로 채점한 화면" width="960" height="540" loading="lazy" decoding="async">
                 </picture>
                 <span class="quiz-tile-caption">
-                  <strong id="reading-name">독해</strong>
-                  <span class="quiz-tile-description" id="reading-description">한 문장에 급수 한자 전부. 문장 속 한자를 우리말로 막힘없이 읽으면 JLPT 정복</span>
+                  <strong id="words-name">단어</strong>
+                  <span class="quiz-tile-description" id="words-description">JLPT 시험지 그대로, 동그라미 치며 읽기와 표기를 익히는 실전 연습</span>
                 </span>
               </a>
             </div>
+            <a class="quiz-tile" href="/reading/" id="choose-reading" aria-labelledby="reading-name" aria-describedby="reading-description">
+              <picture class="quiz-cover">
+                <source data-dark-preview media="not all" srcset="/images/quiz-preview-reading-dark.webp">
+                <img src="/images/quiz-preview-reading.webp" alt="독해 지문의 ‘木재’에서 木을 눌러 나무 목의 뜻풀이를 펼친 화면" width="960" height="540" decoding="async">
+              </picture>
+              <span class="quiz-tile-caption">
+                <strong id="reading-name">독해</strong>
+                <span class="quiz-tile-description" id="reading-description">급수 한자를 모두 담은 한 문장. 막힘없이 읽으면 그&nbsp;급수는 정복</span>
+              </span>
+            </a>
             <div class="quiz-upcoming">
               <strong>한자 게임</strong>
               <span>준비 중</span>
             </div>
           </div>
         </div>
-        <section id="choice-card" class="quiz-mode-panel" hidden>
-          <div class="quiz-setup">
-            <h1 id="choiceTitle" class="quiz-heading" tabindex="-1">사지선다</h1>
-            <div id="gameSetup" class="game-settings">
-              <fieldset id="gameJlpt" class="quiz-level-group">
-                <legend>JLPT</legend>
-                <div class="quiz-levels">
-                  <label class="quiz-level">
-                    <input type="radio" name="gameJlpt" value="" checked>
-                    <span>전체</span>
-                  </label>
+        <div class="vocab-page choice-quiz">
+          <section id="choice-card" class="quiz-mode-panel" aria-labelledby="choiceTitle" hidden>
+            <div class="vocab-heading">
+              <h1 id="choiceTitle" tabindex="-1">사지선다</h1>
+              <p>JLPT·학년 범위와 문제 수를 고르고, 한자의 뜻과 음을 맞혀 보세요.</p>
+            </div>
+            <div id="gameSetup">
+              <div class="choice-filters">
+                <fieldset id="gameJlpt">
+                  <legend>JLPT</legend>
+                  <div class="vocab-levels">
+                    <label><input type="radio" name="gameJlpt" value="" checked><b>전체</b></label>
+                  </div>
+                </fieldset>
+                <fieldset id="gameGrade">
+                  <legend>학년</legend>
+                  <div class="vocab-levels">
+                    <label><input type="radio" name="gameGrade" value="" checked><b>전체</b></label>
+                  </div>
+                </fieldset>
+              </div>
+              <div class="vocab-setup-footer">
+                <fieldset id="gameCount">
+                  <legend>문제 수</legend>
+                  <div class="vocab-counts choice-counts">
+                    <label><input type="radio" name="gameCount" value="10" checked>10문제</label>
+                    <label><input type="radio" name="gameCount" value="25">25문제</label>
+                    <label><input type="radio" name="gameCount" value="50">50문제</label>
+                  </div>
+                </fieldset>
+                <div class="vocab-start-actions">
+                  <p class="vocab-note" id="gameScopeSummary" role="status"></p>
+                  <button id="gameStart" class="vocab-primary" type="button" disabled>시작하기</button>
                 </div>
-              </fieldset>
-              <fieldset id="gameGrade" class="quiz-level-group">
-                <legend>학년</legend>
-                <div class="quiz-levels">
-                  <label class="quiz-level">
-                    <input type="radio" name="gameGrade" value="" checked>
-                    <span>전체</span>
-                  </label>
-                </div>
-              </fieldset>
-              <div class="quiz-start-controls">
-                <div class="game-setting">
-                  <label for="gameCount">문제 수</label>
-                  <span class="select-field">
-                    <select id="gameCount" class="control">
-                      <option value="10">10문제</option>
-                      <option value="25">25문제</option>
-                      <option value="50">50문제</option>
-                    </select>
-                  </span>
-                </div>
-                <button id="gameStart" class="game-start" type="button" disabled>사지선다 시작하기</button>
               </div>
             </div>
-
-            <p id="gameSetupError" class="game-feedback" role="alert" hidden>조건에 맞는 한자가 부족합니다. 다른 학년이나 JLPT를 선택해 주세요.</p>
-          </div>
-        </section>
-        <section id="gamePlay" class="game-play" aria-labelledby="playTitle" hidden>
-          <div class="game-play-heading">
-            <h1 id="playTitle" class="game-title">사지선다</h1>
-            <button id="gameExit" class="game-settings-button" type="button">설정으로</button>
-          </div>
-          <div class="game-progress-meta">
-            <span id="gameProgress">1 / 10</span>
-            <span>점수 <b id="gameScore">0</b></span>
-          </div>
-          <div class="game-progress-track" aria-hidden="true">
-            <div id="gameProgressBar" class="game-progress-bar"></div>
-          </div>
-          <div id="gameQuestion" class="game-question">
-            <div
-              id="gameQuestionLabel"
-              class="game-question-label"
-              hidden
-            ></div>
-            <div id="gameGlyph" class="game-glyph"></div>
-            <button id="gamePicture" class="game-picture" type="button">
-              그림 보기
-            </button>
-          </div>
-          <div id="gameChoices" class="game-choices"></div>
-          <div
-            id="gameFeedback"
-            class="game-feedback"
-            aria-live="polite"
-          ></div>
-          <div id="gameMistakes" class="game-mistakes" hidden>
-            <div class="info-section-heading game-mistakes-heading">
-              <div id="gameMistakesTitle" class="game-mistakes-title"></div>
-              <p id="gameMistakesGuide" class="detail-link-guide">한자를 눌러 정보를 확인하세요.</p>
+            <p id="gameSetupError" class="vocab-status" role="alert" hidden>조건에 맞는 한자가 부족합니다. 다른 학년이나 JLPT를 선택해 주세요.</p>
+          </section>
+          <section id="gamePlay" aria-label="사지선다 문제" hidden>
+            <div class="exam-heading">
+              <div class="choice-exam-range">
+                <span class="level-stamp" id="gameLevel"></span>
+                <button class="choice-exit" id="gameExit" type="button">설정으로</button>
+              </div>
+              <span id="gameProgress" class="exam-counter"></span>
+              <progress id="gameProgressBar" aria-label="문제 진행"></progress>
             </div>
-            <div id="gameMistakesList" class="game-mistakes-list"></div>
-          </div>
-          <div class="game-actions">
-            <button
-              id="gameSettingsButton"
-              class="game-settings-button"
-              type="button"
-              hidden
-            >
-              처음으로
-            </button>
-            <button id="gameNext" class="game-next" type="button" hidden>
-              다음 문제
-            </button>
-          </div>
-        </section>
+            <form id="gameAnswer">
+              <div class="exam-paper">
+                <p class="exam-direction"><strong id="gameQuestionNumber"></strong><span>한자의 뜻과 음으로 알맞은 것을 고르세요.</span></p>
+                <div id="gameQuestion" class="exam-word choice-prompt" tabindex="-1" role="group" aria-labelledby="gameQuestionNumber gameGlyph">
+                  <span id="gameGlyph" lang="ja"></span>
+                  <button class="vocab-secondary" id="gamePicture" type="button">그림 보기</button>
+                </div>
+                <fieldset id="gameChoices" class="exam-options" aria-describedby="gameShortcuts"><legend class="vocab-sr">답 선택</legend></fieldset>
+              </div>
+              <div id="gameFeedback" class="exam-feedback" hidden><strong id="gameFeedbackText"></strong></div>
+              <div class="exam-controls">
+                <p class="exam-shortcuts" id="gameShortcuts">키보드 <kbd>1</kbd>~<kbd>4</kbd>로 답을 고르고 <kbd>Enter</kbd>로 제출하거나 다음으로 넘어가세요.</p>
+                <button id="gameNext" class="vocab-primary" type="submit" disabled>확인</button>
+              </div>
+              <p class="vocab-sr" id="gameAnnouncement" role="status"></p>
+            </form>
+          </section>
+          <section id="gameResult" aria-labelledby="gameResultTitle" hidden>
+            <div class="vocab-heading">
+              <h1 id="gameResultTitle" tabindex="-1">학습 결과</h1>
+              <p id="gameResultScope"></p>
+            </div>
+            <div class="vocab-score">
+              <strong id="gameResultScore"></strong>
+              <span id="gameResultPercent"></span>
+              <progress id="gameResultBar" aria-label="전체 정답률" max="100"></progress>
+              <p class="vocab-note" id="gameResultNote"></p>
+            </div>
+            <section id="gameMistakes" hidden>
+              <h2>틀린 한자 <span class="quiz-mistake-count" id="gameMistakeCount"></span></h2>
+              <p class="vocab-note">한자를 눌러 정보를 확인하세요.</p>
+              <ul id="gameMistakesList" class="quiz-review-list"></ul>
+            </section>
+            <p id="gameNoMistakes" class="vocab-note" hidden>틀린 한자가 없어요</p>
+            <div class="result-actions">
+              <button id="gameRetryMissed" class="vocab-primary" type="button" hidden>오답만 다시 풀기</button>
+              <button id="gameRetry" type="button">새 문제로 다시 풀기</button>
+              <button id="gameSettingsButton" type="button">설정 바꾸기</button>
+            </div>
+          </section>
+        </div>
       </section>
       <footer class="site-footer">
         <nav class="footer-links" aria-label="사이트 안내">

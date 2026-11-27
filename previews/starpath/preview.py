@@ -17,7 +17,6 @@ COVER = "/images/quiz-preview-starpath.webp"
 DARK_COVER = "/images/quiz-preview-starpath-dark.webp"
 GAME_TITLE = "한자 별길"
 GAME_DESCRIPTION = "한 글자에서 출발해 이어진 계보를 밝혀 가는 탐험"
-CHOICE_GUIDE = '<p id="choiceGuide" class="quiz-guide">한자를 보고 네 가지 보기에서 <strong class="learning-action">알맞은 뜻과 음을 골라</strong> 보세요.</p>'
 STUDY_PATHS = {"/learn/", "/learn/choice/", "/reading/"}
 UPCOMING = re.compile(r'<div class="quiz-upcoming">\s*<strong>한자 게임</strong>\s*<span>준비 중</span>\s*</div>')
 MODE = f'''<a class="quiz-tile" href="/learn/game/" aria-labelledby="starpath-name" aria-describedby="starpath-description">
@@ -32,42 +31,8 @@ MODE = f'''<a class="quiz-tile" href="/learn/game/" aria-labelledby="starpath-na
 </a>'''
 SHELF_STYLE = """<style>
 #quizOptions .quiz-modes { display: contents; }
-#choiceGuide { display: none; margin-bottom: 14px; }
-#gameView:has(> #choice-card:not([hidden]), > #gamePlay:not([hidden]) #gameChoices:not([hidden])) > #choiceGuide { display: block; }
 @media (551px <= width <= 800px) { #quizOptions .quiz-shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>"""
-
-
-def choice_settings(html):
-    # Keep the site's fieldsets, radio templates, question counts and start button.
-    settings = fragment(html, r'<div id="gameSetup" class="game-settings">.*?(?=\s*<p id="gameSetupError")')
-    layout = settings
-    for field, default in (("Jlpt", "전체 등급"), ("Grade", "전체 학년")):
-        group = fragment(settings, rf'<fieldset id="game{field}"[^>]*>.*?</fieldset>')
-        label_id, value_id = f"choice{field}Label", f"choice{field}Value"
-        picker = group.replace("<legend>", f'<legend id="{label_id}">', 1).replace(
-            "</legend>", f'''</legend>
-                <details class="choice-picker" id="choice{field}Picker">
-                  <summary aria-labelledby="{label_id} {value_id}"><span id="{value_id}">{default}</span></summary>''', 1
-        ).replace("</fieldset>", "</details></fieldset>", 1)
-        layout = layout.replace(group, picker, 1)
-    controls = '<div class="quiz-start-controls">'
-    if controls not in settings:
-        raise ValueError("사지선다 시작 영역을 찾을 수 없습니다.")
-    layout = layout.replace(
-        '<div id="gameSetup" class="game-settings">',
-        '''<div id="gameSetup" class="game-settings">
-              <div class="choice-range">
-                <h2>난이도 선택</h2>''', 1
-    ).replace(controls, f'''</div>
-              {controls}
-                <h2>이번 연습</h2>
-                <p id="choiceRangeSummary" role="status">전체 한자</p>''', 1)
-    style = (HERE / "choice-setup.css").read_text(encoding="utf-8")
-    script = (HERE / "choice-setup.js").read_text(encoding="utf-8")
-    return (html.replace(settings, layout, 1)
-            .replace("</head>", f"<style>{style}</style></head>", 1)
-            .replace("</body>", f"<script>{script}</script></body>", 1))
 
 
 def study_menu(path="/learn/"):
@@ -75,15 +40,13 @@ def study_menu(path="/learn/"):
     html = (SITE / path.lstrip("/") / "index.html").read_text(encoding="utf-8")
     # Production publishing has already applied these changes to dist. Serve
     # that finished page directly instead of trying to transform it twice.
-    if 'id="starpath-name"' in html and 'id="choiceRangeSummary"' in html and 'id="choiceGuide"' in html:
+    if 'id="starpath-name"' in html:
         return html.encode("utf-8")
     html, count = UPCOMING.subn(MODE, html)
     if count != 1:
         raise ValueError("현재 빌드에서 한자 게임 준비 중 카드를 찾을 수 없습니다.")
     html = html.replace("<li>한자 게임 · 준비 중</li>", f'<li><a href="/learn/game/">{GAME_TITLE}</a> · {GAME_DESCRIPTION}</li>')
-    choice_panel = '<section id="choice-card"'
-    html = html.replace(choice_panel, f'{CHOICE_GUIDE}\n        {choice_panel}', 1)
-    return choice_settings(html).replace("</head>", SHELF_STYLE + "</head>", 1).encode("utf-8")
+    return html.replace("</head>", SHELF_STYLE + "</head>", 1).encode("utf-8")
 
 
 def fragment(html, pattern):

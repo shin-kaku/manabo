@@ -159,12 +159,13 @@ test("exiting a bookmarked story at either end restores the reader link in the h
   }
 });
 
-test("the quiz gallery links to choice, reading and Starpath", async ({ page }) => {
+test("the study gallery orders choice, words, reading and Starpath", async ({ page }) => {
   await page.goto("/learn/");
   const shelf = page.locator(".quiz-shelf");
   const choice = shelf.getByRole("link", { name: "사지선다", exact: true });
   const reading = shelf.getByRole("link", { name: "독해", exact: true });
-  await expect(shelf.getByRole("link")).toHaveCount(3);
+  await expect(shelf.locator(".quiz-tile-caption strong")).toHaveText(["사지선다", "단어", "독해", "한자 별길"]);
+  await expect(shelf.getByRole("link", { name: "단어", exact: true })).toHaveAttribute("href", "/learn/words/");
   await expect(choice).toHaveAttribute("href", "/learn/choice/");
   await expect(choice).toHaveAccessibleDescription("보는 순간 뜻과 음이 떠오를 때까지, 기억을 꺼내는 훈련");
   await expect(reading).toHaveAttribute("href", "/reading/");
@@ -183,11 +184,10 @@ test("the quiz gallery links to choice, reading and Starpath", async ({ page }) 
   await expect(jlpt.locator('input[value=""]')).toBeChecked();
   await expect(grade.locator('input[value=""]')).toBeChecked();
   const n5 = jlpt.locator('input[value="JLPT N5"]');
-  await jlpt.locator("summary").click();
-  await n5.check();
+  await jlpt.locator('label:has(input[value="JLPT N5"])').click();
   await expect(n5).toBeChecked();
   await expect(jlpt.locator('input[value=""]')).not.toBeChecked();
-  await page.locator("#gameCount").selectOption("25");
+  await page.locator('#gameCount label:has(input[value="25"])').click();
   const start = page.locator("#gameStart");
   await start.click();
   await expect(page.locator("#gamePlay .game-choice")).toHaveCount(4);
@@ -243,7 +243,7 @@ test.describe("mobile quiz selector", () => {
     await expect(nav.getByRole("link")).toHaveText(["한자 도감", "한자 학습", "한자 교재"]);
     await expect(nav.locator('[aria-current="page"]')).toHaveText("한자 학습");
     const shelf = page.locator(".quiz-shelf");
-    await expect(shelf.getByRole("link")).toHaveCount(3);
+    await expect(shelf.getByRole("link")).toHaveCount(4);
     await expect(shelf.getByRole("link", { name: "한자 별길", exact: true })).toHaveAttribute("href", "/learn/game/");
     await expect(page.locator("#gameStart")).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);

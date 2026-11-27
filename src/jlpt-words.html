@@ -1,0 +1,95 @@
+<section id="vocab-setup" aria-labelledby="setup-title">
+  <div class="vocab-heading">
+    <h1 id="setup-title" tabindex="-1">단어</h1>
+    <p>모드와 급수, 문제 수를 고른 뒤 ‘시작하기’를 누르세요.</p>
+  </div>
+  <form id="vocab-settings" data-word-counts="[[WORD_COUNTS]]">
+    <fieldset>
+      <legend>모드<small>(여러 개 고를 수 있어요)</small></legend>
+      <div class="vocab-modes">
+        <label class="mode-option">
+          <input type="checkbox" name="mode" value="reading" checked>
+          <strong>읽기 고르기<small lang="ja">漢字読み</small></strong>
+          <span class="mode-note">한자 단어 ‘<span lang="ja">学校</span>’를 보고 알맞은 읽기 ‘<span lang="ja">がっこう</span>’를 골라요.</span>
+        </label>
+        <label class="mode-option">
+          <input type="checkbox" name="mode" value="spelling">
+          <strong>한자 고르기<small lang="ja">表記</small></strong>
+          <span class="mode-note">히라가나 ‘<span lang="ja">がっこう</span>’를 보고 알맞은 한자 표기 ‘<span lang="ja">学校</span>’를 골라요.</span>
+        </label>
+      </div>
+    </fieldset>
+    <fieldset aria-labelledby="vocab-level-label" aria-describedby="vocab-level-note">
+      <legend class="vocab-level-legend">
+        <span class="vocab-level-heading">
+          <span id="vocab-level-label">급수<small>(여러 개 고를 수 있어요)</small></span>
+          <span class="vocab-note" id="vocab-level-note">급수는 학습 참고용이에요.</span>
+        </span>
+      </legend>
+      <div class="vocab-levels">
+        <label><input type="checkbox" name="level" value="N5" checked><b>N5</b><small><span>[[N5]]</span>단어</small></label>
+        <label><input type="checkbox" name="level" value="N4"><b>N4</b><small><span>[[N4]]</span>단어</small></label>
+        <label><input type="checkbox" name="level" value="N3"><b>N3</b><small><span>[[N3]]</span>단어</small></label>
+        <label><input type="checkbox" name="level" value="N2"><b>N2</b><small><span>[[N2]]</span>단어</small></label>
+        <label><input type="checkbox" name="level" value="N1"><b>N1</b><small><span>[[N1]]</span>단어</small></label>
+      </div>
+    </fieldset>
+    <div class="vocab-setup-footer">
+      <fieldset><legend>문제 수</legend>
+        <div class="vocab-counts">
+          <label><input type="radio" name="count" value="10">10문제</label>
+          <label><input type="radio" name="count" value="20" checked>20문제</label>
+          <label><input type="radio" name="count" value="30">30문제</label>
+          <label><input type="radio" name="count" value="40">40문제</label>
+          <label><input type="radio" name="count" value="50">50문제</label>
+        </div>
+      </fieldset>
+      <div class="vocab-start-actions">
+        <p class="vocab-note" id="vocab-summary" role="status"></p>
+        <button class="vocab-primary" id="vocab-start" type="submit" disabled>시작하기</button>
+      </div>
+    </div>
+  </form>
+  <p class="vocab-status" id="vocab-status" role="status"></p>
+  <noscript><p>문제를 풀려면 브라우저에서 자바스크립트를 켜 주세요.</p></noscript>
+</section>
+<section id="vocab-exam" aria-label="단어 문제" hidden>
+  <div class="exam-heading">
+    <span class="level-stamp" id="exam-level"></span>
+    <span class="exam-counter" id="exam-counter"></span>
+    <progress id="exam-progress" aria-label="문제 진행"></progress>
+  </div>
+  <form id="vocab-answer">
+    <div class="exam-paper">
+      <p class="exam-direction" lang="ja"><strong id="exam-section"></strong><span id="exam-instruction" data-directions="[[WORD_DIRECTIONS]]"></span></p>
+      <div class="exam-word" tabindex="-1" id="exam-prompt" role="group" aria-labelledby="exam-section exam-word exam-meaning"><span id="exam-word" lang="ja"></span><span id="exam-meaning"></span></div>
+      <fieldset class="exam-options" id="exam-options" aria-describedby="exam-shortcuts"><legend class="vocab-sr">답 선택</legend></fieldset>
+    </div>
+    <div id="exam-feedback" class="exam-feedback" hidden></div>
+    <div class="exam-controls">
+      <p class="exam-shortcuts" id="exam-shortcuts">키보드 <kbd>1</kbd>~<kbd>4</kbd>로 답을 고르고 <kbd>Enter</kbd>로 제출하거나 다음으로 넘어가세요.</p>
+      <button class="vocab-primary" type="submit" id="exam-submit" disabled>확인</button>
+    </div>
+    <p class="vocab-sr" role="status" id="exam-announcement"></p>
+  </form>
+</section>
+<section id="vocab-result" aria-labelledby="result-title" hidden>
+  <div class="vocab-heading"><h1 id="result-title" tabindex="-1">학습 결과</h1><p id="result-scope"></p></div>
+  <div class="vocab-score">
+    <strong id="result-score"></strong>
+    <span id="result-percent"></span>
+    <progress id="result-progress" aria-label="전체 정답률" max="100"></progress>
+    <p class="vocab-note" id="result-encouragement"></p>
+  </div>
+  <div class="result-stats" id="result-stats"></div>
+  <section id="mistake-review" hidden>
+    <h2>틀린 단어 <span class="quiz-mistake-count" id="mistake-count"></span></h2>
+    <ul class="quiz-review-list" id="result-words" data-study-lookup-inline></ul>
+  </section>
+  <p class="vocab-note" id="mistake-empty" hidden>틀린 단어가 없어요</p>
+  <div class="result-actions">
+    <button class="vocab-primary" id="retry-missed" type="button">오답만 다시 풀기</button>
+    <button id="retry-session" type="button">새 문제로 다시 풀기</button>
+    <button id="edit-settings" type="button">설정 바꾸기</button>
+  </div>
+</section>

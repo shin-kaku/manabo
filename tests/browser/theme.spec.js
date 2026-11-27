@@ -22,7 +22,7 @@ for (const width of [390, 1280]) test(`theme menu persists across learning pages
   await page.screenshot({ path: testInfo.outputPath(`theme-home-dark-${width}.png`) });
   await page.keyboard.press("Escape");
   await expect(page.locator(".site-info-menu summary")).toBeFocused();
-  for (const path of ["/kanji/", "/kanji/林/", "/reading/", "/learn/", "/learn/choice/", "/book/", "/materials/", "/about/"]) {
+  for (const path of ["/kanji/", "/kanji/林/", "/reading/", "/learn/", "/learn/choice/", "/book/", "/about/", "/copyright/"]) {
     await page.goto(path);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expect(page.locator("body")).toHaveCSS("color", "rgb(245, 245, 245)");
@@ -85,7 +85,7 @@ test("quiz screenshots follow the selected site theme", async ({ page }) => {
       await page.locator("[data-theme-toggle]").click();
       await page.keyboard.press("Escape");
     }
-    for (const [mode, label] of [["choice", "사지선다"], ["reading", "독해"], ["starpath", "한자 별길"]]) {
+    for (const [mode, label] of [["choice", "사지선다"], ["words", "단어"], ["reading", "독해"], ["starpath", "한자 별길"]]) {
       const image = page.locator(".quiz-shelf").getByRole("link", { name: label, exact: true }).locator("picture img");
       await expect(image).toBeVisible();
       await expect.poll(() => image.evaluate(img =>

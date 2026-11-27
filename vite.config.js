@@ -20,8 +20,19 @@ writeStudyPages();
 writeKanjiListData();
 const materials = generateMaterials();
 
+function removedMaterials(req, res, next) {
+  const path = new URL(req.url, "http://localhost").pathname;
+  if (!/^\/materials(?:\/|$)/.test(path)) return next();
+  res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+  res.end("페이지를 찾을 수 없습니다.");
+}
+
 export default defineConfig({
   plugins: [{
+    name: "removed-materials",
+    configureServer(server) { server.middlewares.use(removedMaterials); },
+    configurePreviewServer(server) { server.middlewares.use(removedMaterials); },
+  }, {
     name: "home-study-navigation",
     transformIndexHtml(html, context) {
       if (context.path === "/index.html" || context.path === "/") return html.replace("<!-- STUDY_NAV -->", studyNavigation());
@@ -72,11 +83,11 @@ export default defineConfig({
       server.watcher.on("change", (path) => {
         if (/\/public\/data\/(kanji|media)\.json$/.test(path)) writeKanjiListData();
         if (path === studyTemplatePath) writeStudyPages();
-        if (path === studyTemplatePath ||
+        if (path === studyTemplatePath || path.endsWith("/src/jlpt-words.html") || path.endsWith("/data/jlpt-words/counts.json") ||
             /\/src\/(materials\.html|(?:entry-art-zoom|material-directory-data|study-path|reading-groups|kanji-components|media|image-sources)\.js)$/.test(path) ||
             /\/scripts\/(material-directory|material-pages|character-pages|html)\.mjs$/.test(path) ||
-            /\/public\/data\/(kanji|stories|media)\.json$/.test(path)) generateMaterials();
-        if (/\/previews\/starpath\/(?:src\/template\.html|data\/(?:shapes|overrides)\.json|scripts\/build\.mjs|choice-setup\.(?:css|js)|preview\.py)$/.test(path)) {
+            /\/public\/data\/(kanji|media)\.json$/.test(path)) generateMaterials();
+        if (/\/previews\/starpath\/(?:src\/template\.html|data\/(?:shapes|overrides)\.json|scripts\/build\.mjs|preview\.py)$/.test(path)) {
           server.ws.send({ type: "full-reload" });
         }
       });
@@ -94,7 +105,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: Object.fromEntries(
-        ["index", "textbook/index", "quiz/index", "quiz/choice/index", "materials/kanji/index", ...studyPages.map((page) => `${page.path}/index`), ...materials.map(path => `${path}/index`), "about/index", "privacy-policy/index", "copyright/index", "contact/index"].map(
+        ["index", "textbook/index", "quiz/index", "quiz/choice/index", ...studyPages.map((page) => `${page.path}/index`), ...materials.map(path => `${path}/index`), "about/index", "privacy-policy/index", "copyright/index", "contact/index"].map(
           (page) => [page, fileURLToPath(new URL(`./${page}.html`, import.meta.url))],
         ),
       ),
